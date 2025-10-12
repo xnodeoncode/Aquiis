@@ -1,0 +1,359 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using Aquiis.WebUI.Data
+@using Aquiis.WebUI.Components.PropertyManagement.Properties
+@using Aquiis.WebUI.Components.PropertyManagement.Leases
+@using Aquiis.WebUI.Components.PropertyManagement
+@using Aquiis.WebUI.Components.Account
+
+@inject NavigationManager NavigationManager
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Dashboard - Property Management</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <AuthorizeView Roles="PropertyManager" Context="pmContext">
+            <Authorized>
+                <h1>Property Management Dashboard</h1>
+
+                @if (isLoading)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>@totalProperties</h4>
+                                            <p class="card-text">Total Properties</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-building" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-success">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>@availableProperties</h4>
+                                            <p class="card-text">Available Properties</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-info">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>@totalTenants</h4>
+                                            <p class="card-text">Total Tenants</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-warning">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>@activeLeases</h4>
+                                            <p class="card-text">Active Leases</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-file-text" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Available Properties</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (availablePropertiesList.Any())
+                                    {
+                                        <div class="list-group list-group-flush">
+                                            @foreach (var property in availablePropertiesList)
+                                            {
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">
+                                                            <a href="/properties/view/@property.Id" class="text-decoration-none">
+                                                                @property.Address
+                                                            </a>
+                                                        </h6>
+                                                        <small class="text-muted">@property.City, @property.State - @property.PropertyType</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <span class="badge bg-success mb-1">Available</span>
+                                                        <br>
+                                                        <small class="text-muted">@property.MonthlyRent.ToString("C")</small>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No available properties found.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Pending Leases</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (pendingLeases.Any())
+                                    {
+                                        <div class="list-group list-group-flush">
+                                            @foreach (var lease in pendingLeases)
+                                            {
+                                                <div class="list-group-item">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">
+                                                            <a href="/leases/view/@lease.Id" class="text-decoration-none">
+                                                                @lease.Property.Address
+                                                            </a>
+                                                        </h6>
+                                                        <small>@lease.CreatedDate.ToString("MMM dd, yyyy")</small>
+                                                    </div>
+                                                    <p class="mb-1">@lease.Tenant.FullName</p>
+                                                    <div class="d-flex justify-content-between">
+                                                        <small class="text-muted">Start: @lease.StartDate.ToString("MMM dd, yyyy")</small>
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No pending leases found.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Administrator" Context="adminContext">
+            <Authorized>
+                <h1>Administrator Dashboard</h1>
+
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="card text-white bg-primary">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h4>@totalAccounts</h4>
+                                                    <p class="card-text">Total Accounts</p>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-white bg-success">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h4>@activeAccounts</h4>
+                                                    <p class="card-text">Active Accounts</p>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-white bg-info">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h4>@usersOnline</h4>
+                                                    <p class="card-text">Users Online</p>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="bi bi-lock-fill" style="font-size: 2rem;"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-white bg-warning">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h4>@lockedAccounts</h4>
+                                                    <p class="card-text">Locked Accounts</p>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="bi bi-file-text" style="font-size: 2rem;"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }   
+            </Authorized>
+        </AuthorizeView>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center py-5">
+            <div class="container">
+                <h1 class="display-4">Property Management System</h1>
+                <p class="lead">Manage your rental properties, tenants, leases, and payments with ease.</p>
+                <hr class="my-4">
+                <p>Sign in to access your dashboard and manage your properties.</p>
+                <div class="btn-group">
+                    <a class="btn btn-primary btn-lg" href="/Account/Login" role="button">Sign In</a>
+                    <a class="btn btn-outline-primary btn-lg" href="/Account/Register" role="button">Create Account</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-building display-1 text-primary"></i>
+                            <h5 class="card-title">Property Management</h5>
+                            <p class="card-text">Track and manage all your rental properties in one place.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-people display-1 text-success"></i>
+                            <h5 class="card-title">Tenant Management</h5>
+                            <p class="card-text">Manage tenant information, leases, and communications.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-credit-card display-1 text-info"></i>
+                            <h5 class="card-title">Payment Tracking</h5>
+                            <p class="card-text">Track rent payments, invoices, and financial records.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool isLoading = true;
+    private int totalProperties = 0;
+    private int availableProperties = 0;
+    private int totalTenants = 0;
+    private int activeLeases = 0;
+
+    private int lockedAccounts = 0;
+
+    private int totalAccounts = 0;
+    private int activeAccounts = 0;
+
+    private int usersOnline = 0;
+    
+    private List<Property> availablePropertiesList = new();
+    private List<Lease> pendingLeases = new List<Lease>();
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            await LoadDashboardData();
+        }
+        isLoading = false;
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var authState = await AuthenticationStateTask;
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(userId))
+            return;
+
+        // Load summary counts
+        totalProperties = await DbContext.Properties.CountAsync(p => p.UserId == userId);
+        availableProperties = await DbContext.Properties.CountAsync(p => p.IsAvailable && p.UserId == userId);
+        //totalTenants = await DbContext.Tenants.CountAsync(t => t.UserId == userId);
+        //activeLeases = await DbContext.Leases.CountAsync(l => l.Status == "Active" && l.UserId == userId);
+
+        // Load available properties and pending leases
+        availablePropertiesList = await DbContext.Properties
+            .Where(p => p.UserId == userId && p.IsAvailable)
+            .OrderByDescending(p => p.CreatedDate)
+            .Take(5)
+            .ToListAsync();
+
+        // pendingLeases = await DbContext.Leases
+        //    .Include(l => l.Property)
+        //    .Include(l => l.Tenant)
+        //    .Where(l => l.UserId == userId && l.Status == "Pending")
+        //    .OrderByDescending(l => l.CreatedDate)
+        //    .Take(5)
+        //    .ToListAsync();
+    }
+}

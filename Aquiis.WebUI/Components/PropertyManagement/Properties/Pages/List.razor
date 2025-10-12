@@ -1,0 +1,278 @@
+@page "/propertymanagement/properties"
+@using Aquiis.WebUI.Components.PropertyManagement
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager Navigation
+@inject PropertyManagementService PropertyManagementService
+@inject IJSRuntime JSRuntime
+
+@attribute [Authorize(Roles = "PropertyManager")]
+@rendermode InteractiveServer
+<h3>Properties</h3>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Properties</h1>
+    <button class="btn btn-primary" @onclick="CreateProperty">
+        <i class="bi bi-plus-lg"></i> Add Property
+    </button>
+</div>
+
+@if (properties == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (!properties.Any())
+{
+    <div class="alert alert-info">
+        <h4>No Properties Found</h4>
+        <p>Get started by adding your first property to the system.</p>
+        <button class="btn btn-primary" @onclick="CreateProperty">Add First Property</button>
+    </div>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search properties..." @bind="searchTerm" @onkeyup="FilterProperties" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" @bind="selectedPropertyStatus" @bind:after="FilterProperties">
+                <option value="">All Properties</option>
+                <option value="Available">Available</option>
+                <option value="Pending">Pending Lease</option>
+                <option value="Occupied">Occupied</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                <i class="bi bi-x-circle"></i> Clear Filters
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6>Available</h6>
+                    <h4>@availableCount</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6>Pending Lease</h6>
+                    <h4>@pendingCount</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6>Occupied</h6>
+                    <h4>@occupiedCount</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6>Total Properties</h6>
+                    <h4>@filteredProperties.Count</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h6>Total Rent/Month</h6>
+                    <h4>@totalMonthlyRent.ToString("C")</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var property in filteredProperties)
+        {
+            <div class="col-md-6 col-lg-4 mb-4" id="property-@property.Id">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title">@property.Address</h5>
+                            <span class="badge @GetStatusBadgeClass(property.Status)">
+                                @property.Status
+                            </span>
+                        </div>
+                        <p class="text-muted mb-2">@property.City, @property.State @property.ZipCode</p>
+                        <p class="card-text mb-2">@property.Description</p>
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <small class="text-muted">Bedrooms</small>
+                                <div class="fw-bold">@property.Bedrooms</div>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">Bathrooms</small>
+                                <div class="fw-bold">@property.Bathrooms</div>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">Sq Ft</small>
+                                <div class="fw-bold">@property.SquareFeet.ToString("N0")</div>
+                            </div>
+                        </div>
+                        <div class="text-center mb-3">
+                            <span class="h4 text-primary">@property.MonthlyRent.ToString("C")</span>
+                            <small class="text-muted">/month</small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100">
+                            <button class="btn btn-outline-primary" @onclick="() => ViewProperty(property.Id)">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick="() => EditProperty(property.Id)">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-outline-danger" @onclick="() => DeleteProperty(property.Id)">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<Property> properties = new();
+    private List<Property> filteredProperties = new();
+    private string searchTerm = string.Empty;
+    private string selectedPropertyStatus = string.Empty;
+    private int availableCount = 0;
+    private int pendingCount = 0;
+    private int occupiedCount = 0;
+    private decimal totalMonthlyRent = 0;
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? PropertyId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load properties from API or service
+        
+        await LoadProperties();
+        FilterProperties();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && PropertyId.HasValue)
+        {
+            await JSRuntime.InvokeVoidAsync("scrollToElement", $"property-{PropertyId.Value}");
+        }
+    }
+
+    private async Task LoadProperties()
+    {
+        var authState = await AuthenticationStateTask;
+        var userId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if(string.IsNullOrEmpty(userId)){
+            properties = new List<Property>();
+            return;
+        }
+
+        properties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId??string.Empty);
+    }
+
+    private void FilterProperties()
+    {
+        if (properties == null)
+        {
+            filteredProperties = new();
+            return;
+        }
+
+        filteredProperties = properties.Where(p =>
+            (string.IsNullOrEmpty(searchTerm) ||
+             p.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.City.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.State.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.ZipCode.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.PropertyType.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(selectedPropertyStatus) || p.Status == selectedPropertyStatus)
+        ).ToList();
+        
+        CalculateMetrics();
+    }
+
+    private void CalculateMetrics(){
+        if (filteredProperties != null)
+        {
+            availableCount = filteredProperties.Count(p => p.Status == "Available");
+            pendingCount = filteredProperties.Count(p => p.Status == "Pending");
+            occupiedCount = filteredProperties.Count(p => p.Status == "Occupied");
+            totalMonthlyRent = filteredProperties.Sum(p => p.MonthlyRent);
+        }
+    }
+
+    private void CreateProperty(){
+        Navigation.NavigateTo("/propertymanagement/properties/add");
+    }
+
+    private void ViewProperty(int propertyId)
+    {
+        Navigation.NavigateTo($"/propertymanagement/properties/view/{propertyId}");
+    }
+
+   private void EditProperty(int propertyId)
+   {
+       Navigation.NavigateTo($"/propertymanagement/properties/edit/{propertyId}");
+   }
+
+   private async Task DeleteProperty(int propertyId)
+   {
+       var authState = await AuthenticationStateTask;
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(userId))
+            return;
+
+        await PropertyManagementService.DeletePropertyAsync(propertyId, userId);
+
+        // Add confirmation dialog in a real application
+        await LoadProperties();
+        FilterProperties();
+        CalculateMetrics();
+   }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedPropertyStatus = string.Empty;
+        FilterProperties();
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "Pending" => "bg-info",
+            "Occupied" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
