@@ -105,12 +105,28 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
         #region Leases
 
+        public async Task<List<Lease>> GetLeasesAsync()
+        {
+            return await _dbContext.Leases
+                .Include(l => l.Property)
+                .Where(l => !l.IsDeleted)
+                .ToListAsync();
+        }
+
         public async Task<List<Lease>> GetActiveLeasesByPropertyIdAsync(int propertyId)
         {
             var leases = await _dbContext.Leases.Where(l => l.PropertyId == propertyId).ToListAsync();
             return leases
                 .Where(l => l.IsActive)
                 .ToList();
+        }
+
+        public async Task<List<Lease>> GetLeasesByTenantIdAsync(int tenantId)
+        {
+            return await _dbContext.Leases
+                .Include(l => l.Property)
+                .Where(l => l.TenantId == tenantId && !l.IsDeleted)
+                .ToListAsync();
         }
 
     #endregion
@@ -127,17 +143,17 @@ namespace Aquiis.WebUI.Components.PropertyManagement
            .ToListAsync();
    }
 
-        public async Task<Tenant?> GetTenantByIdAsync(int tenantId)
-        {
-            return await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId && !t.IsDeleted);
-        }
+    public async Task<Tenant?> GetTenantByIdAsync(int tenantId)
+    {
+        return await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId && !t.IsDeleted);
+    }
 
-        public async Task<List<Tenant>> GetTenantsByUserIdAsync(string userId)
-        {
-            return await _dbContext.Tenants
-                .Where(t => t.UserId == userId && !t.IsDeleted)
-                .ToListAsync();
-        }
+    public async Task<List<Tenant>> GetTenantsByUserIdAsync(string userId)
+    {
+        return await _dbContext.Tenants
+            .Where(t => t.UserId == userId && !t.IsDeleted)
+            .ToListAsync();
+    }
 
    public async Task AddTenantAsync(Tenant tenant)
    {
