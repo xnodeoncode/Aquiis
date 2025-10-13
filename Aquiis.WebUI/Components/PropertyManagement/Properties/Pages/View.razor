@@ -1,1 +1,227 @@
 @page "/propertymanagement/properties/view/{PropertyId:int}"
+
+@using Aquiis.WebUI.Components.PropertyManagement.Properties
+@using Aquiis.WebUI.Components.PropertyManagement.Leases
+@using Aquiis.WebUI.Components.PropertyManagement
+
+@inject PropertyManagementService PropertyManagementService
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+@if (property == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="alert alert-danger">
+        <h4>Access Denied</h4>
+        <p>You don't have permission to view this property.</p>
+        <a href="/properties" class="btn btn-primary">Back to Properties</a>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Property Details</h1>
+        <div class="btn-group">
+            <button class="btn btn-primary" @onclick="EditProperty">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button class="btn btn-secondary" @onclick="BackToList">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Property Information</h5>
+                    <span class="badge @(property.IsAvailable ? "bg-success" : "bg-warning")">
+                        @(property.IsAvailable ? "Available" : "Occupied")
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <strong>Address:</strong>
+                            <p class="mb-1">@property.Address</p>
+                            <small class="text-muted">@property.City, @property.State @property.ZipCode</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Property Type:</strong>
+                            <p>@property.PropertyType</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Monthly Rent:</strong>
+                            <p class="text-success fw-bold">@property.MonthlyRent.ToString("C")</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <strong>Bedrooms:</strong>
+                            <p>@property.Bedrooms</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>Bathrooms:</strong>
+                            <p>@property.Bathrooms</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>Square Feet:</strong>
+                            <p>@property.SquareFeet.ToString("N0")</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(property.Description))
+                    {
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <strong>Description:</strong>
+                                <p>@property.Description</p>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Created:</strong>
+                            <p>@property.CreatedDate.ToString("MMMM dd, yyyy")</p>
+                        </div>
+                        @if (property.LastModified.HasValue)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <strong>Last Modified:</strong>
+                                <p>@property.LastModified.Value.ToString("MMMM dd, yyyy")</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" @onclick="EditProperty">
+                            <i class="bi bi-pencil"></i> Edit Property
+                        </button>
+                        @if (property.IsAvailable)
+                        {
+                            <button class="btn btn-outline-success" @onclick="CreateLease">
+                                <i class="bi bi-file-plus"></i> Create Lease
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-info" @onclick="ViewLeases">
+                                <i class="bi bi-file-text"></i> View Leases
+                            </button>
+                        }
+                        <button class="btn btn-outline-secondary" @onclick="ViewDocuments">
+                            <i class="bi bi-folder"></i> View Documents
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (activeLeases.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Active Leases</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var lease in activeLeases)
+                        {
+                            <div class="border-bottom pb-2 mb-2">
+                                <strong>@lease.Tenant?.FullName</strong>
+                                <br />
+                                <small class="text-muted">
+                                    @lease.StartDate.ToString("MMM dd, yyyy") - @lease.EndDate.ToString("MMM dd, yyyy")
+                                </small>
+                                <br />
+                                <small class="text-success">@lease.MonthlyRent.ToString("C")/month</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+@code {
+    [Parameter]
+    public int PropertyId { get; set; }
+
+    List<Lease> activeLeases = new();  
+
+    private bool isAuthorized = true; 
+
+    private Property? property;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProperty();
+    }
+
+    private async Task LoadProperty()
+    {
+        var authState = await AuthenticationStateTask;
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            isAuthorized = false;
+            return;
+        }
+        property = await PropertyManagementService.GetPropertyByIdAsync(PropertyId);
+        if (property == null)
+        {
+            isAuthorized = false;
+            return;
+        }
+        activeLeases = await PropertyManagementService.GetActiveLeasesByPropertyIdAsync(PropertyId);
+    }
+
+    private void EditProperty()
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/properties/edit/{PropertyId}");
+    }
+
+    private void CreateLease()
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/leases/create/{PropertyId}");
+    }
+
+    private void ViewLeases()
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/leases/view/{PropertyId}");
+    }
+
+    private void ViewDocuments()
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/documents/{PropertyId}");
+    }
+
+    private void BackToList()
+    {
+        NavigationManager.NavigateTo("/propertymanagement/properties");
+    }
+}

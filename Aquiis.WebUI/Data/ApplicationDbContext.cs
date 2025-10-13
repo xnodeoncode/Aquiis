@@ -16,6 +16,8 @@ namespace Aquiis.WebUI.Data
         }
 
         public DbSet<Property> Properties { get; set; }
+        public DbSet<Lease> Leases { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
 
     }
 }

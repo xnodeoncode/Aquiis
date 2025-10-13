@@ -47,6 +47,10 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Tenants {
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? LastModified { get; set; }
 
+        public string LastModifiedBy { get; set; } = string.Empty;
+
+        public bool IsDeleted { get; set; }
+
         // Navigation properties
         public virtual ICollection<Lease> Leases { get; set; } = new List<Lease>();
 

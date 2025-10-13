@@ -1,4 +1,4 @@
-@page "/propertymanagement/properties/add"
+@page "/propertymanagement/properties/create"
 @using Aquiis.WebUI.Components.PropertyManagement.Properties
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
@@ -10,7 +10,6 @@
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = "PropertyManager")]
-<h3>Add Property</h3>
 
 <div class="row">
     <div class="col-md-8">

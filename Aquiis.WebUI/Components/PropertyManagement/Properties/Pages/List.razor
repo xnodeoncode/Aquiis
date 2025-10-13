@@ -7,7 +7,6 @@
 
 @attribute [Authorize(Roles = "PropertyManager")]
 @rendermode InteractiveServer
-<h3>Properties</h3>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Properties</h1>
@@ -193,7 +192,8 @@ else
             return;
         }
 
-        properties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId??string.Empty);
+        var allProperties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId ?? string.Empty);
+        properties = allProperties.Where(p=>p.IsDeleted==false).ToList();
     }
 
     private void FilterProperties()
@@ -229,7 +229,7 @@ else
     }
 
     private void CreateProperty(){
-        Navigation.NavigateTo("/propertymanagement/properties/add");
+        Navigation.NavigateTo("/propertymanagement/properties/create");
     }
 
     private void ViewProperty(int propertyId)

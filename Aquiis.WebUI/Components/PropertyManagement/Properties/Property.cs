@@ -50,6 +50,10 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Properties
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? LastModified { get; set; }
 
+        public string LastModifiedBy { get; set; } = string.Empty;
+
+        public bool IsDeleted { get; set; } = false;
+
         // Navigation properties
         public virtual ICollection<Lease> Leases { get; set; } = new List<Lease>();
         public virtual ICollection<Document> Documents { get; set; } = new List<Document>();

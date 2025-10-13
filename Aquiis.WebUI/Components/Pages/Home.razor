@@ -7,8 +7,10 @@
 @using Aquiis.WebUI.Components.PropertyManagement.Leases
 @using Aquiis.WebUI.Components.PropertyManagement
 @using Aquiis.WebUI.Components.Account
+@using Aquiis.WebUI.Components.PropertyManagement.Tenants
 
 @inject NavigationManager NavigationManager
+@inject PropertyManagementService PropertyManagementService
 @inject ApplicationDbContext DbContext
 
 <PageTitle>Dashboard - Property Management</PageTitle>
@@ -107,7 +109,7 @@
                                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <h6 class="mb-1">
-                                                            <a href="/properties/view/@property.Id" class="text-decoration-none">
+                                                            <a href="/propertymanagement/properties/view/@property.Id" class="text-decoration-none">
                                                                 @property.Address
                                                             </a>
                                                         </h6>
@@ -143,7 +145,7 @@
                                                 <div class="list-group-item">
                                                     <div class="d-flex w-100 justify-content-between">
                                                         <h6 class="mb-1">
-                                                            <a href="/leases/view/@lease.Id" class="text-decoration-none">
+                                                            <a href="propertymanagement/leases/view/@lease.Id" class="text-decoration-none">
                                                                 @lease.Property.Address
                                                             </a>
                                                         </h6>
@@ -314,6 +316,10 @@
     private List<Property> availablePropertiesList = new();
     private List<Lease> pendingLeases = new List<Lease>();
 
+    private List<Property> properties = new List<Property>();
+    private List<Lease> leases = new List<Lease>();
+    private List<Tenant> tenants = new List<Tenant>();
+
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
@@ -336,18 +342,19 @@
             return;
 
         // Load summary counts
-        totalProperties = await DbContext.Properties.CountAsync(p => p.UserId == userId);
-        availableProperties = await DbContext.Properties.CountAsync(p => p.IsAvailable && p.UserId == userId);
+        var allProperties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId);
+        properties = allProperties.Where(p => !p.IsDeleted).ToList();
+        totalProperties = properties.Count;
+        availableProperties = properties.Count(p => p.IsAvailable);
         //totalTenants = await DbContext.Tenants.CountAsync(t => t.UserId == userId);
         //activeLeases = await DbContext.Leases.CountAsync(l => l.Status == "Active" && l.UserId == userId);
 
         // Load available properties and pending leases
-        availablePropertiesList = await DbContext.Properties
+        availablePropertiesList = properties
             .Where(p => p.UserId == userId && p.IsAvailable)
             .OrderByDescending(p => p.CreatedDate)
             .Take(5)
-            .ToListAsync();
-
+            .ToList();
         // pendingLeases = await DbContext.Leases
         //    .Include(l => l.Property)
         //    .Include(l => l.Tenant)

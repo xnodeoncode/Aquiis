@@ -39,6 +39,35 @@
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Properties
                     </NavLink>
                 </div>
+                 <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="propertymanagement/tenants">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tenants
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="propertymanagement/documents">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Documents
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Tenant" Context="tenantContext">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="portal/dashboard">
+                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="portal/payments">
+                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Payments
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="portal/maintenance">
+                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Maintenance
+                    </NavLink>
+                </div>
             </Authorized>
         </AuthorizeView>
         <AuthorizeView>

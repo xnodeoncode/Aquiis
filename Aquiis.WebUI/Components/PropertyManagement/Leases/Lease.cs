@@ -48,6 +48,10 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Leases {
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? LastModified { get; set; }
 
+        public string LastModifiedBy { get; set; } = string.Empty;
+
+        public bool IsDeleted { get; set; } = false;
+
         // Navigation properties
         [ForeignKey("PropertyId")]
         public virtual Property Property { get; set; } = null!;

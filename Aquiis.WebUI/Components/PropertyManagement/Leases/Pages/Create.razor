@@ -1,0 +1,25 @@
+@page "/propertymanagement/leases/create"
+
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+
+@code {
+    private LeaseModel leaseModel = new LeaseModel();
+
+   private async Task CreateLeaseAsync()
+   {
+       // Implementation for creating a lease
+       await Task.CompletedTask;
+   }
+
+    public class LeaseModel
+    {
+        // Define properties for the lease model
+        public int PropertyId { get; set; }
+        public int TenantId { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public decimal RentAmount { get; set; }
+        public string Terms { get; set; } = "12 months";
+    }
+}

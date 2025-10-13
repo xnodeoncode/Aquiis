@@ -5,12 +5,27 @@ using Aquiis.WebUI.Components;
 using Aquiis.WebUI.Components.Account;
 using Aquiis.WebUI.Data;
 using Aquiis.WebUI.Components.PropertyManagement;
+using Aquiis.WebUI.Components.Administration.Application;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+    //Added for session state
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+    
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -43,7 +58,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => {
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.Configure<ApplicationSettings>(builder.Configuration.GetSection("ApplicationSettings"));
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+
 
 // Configure cookie authentication
 builder.Services.ConfigureApplicationCookie(options =>
@@ -87,6 +105,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddScoped<PropertyManagementService>();
+builder.Services.AddScoped<ApplicationService>();
 
 var app = builder.Build();
 
@@ -145,6 +164,7 @@ else
     app.UseHsts();
 }
 
+app.UseSession();
 app.UseHttpsRedirection();
 
 
