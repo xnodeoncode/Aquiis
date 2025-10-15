@@ -13,7 +13,7 @@
 @inject RoleManager<IdentityRole> RoleManager
 @inject NavigationManager NavigationManager
 
-<AuthorizeView Roles="Administrator">
+<AuthorizeView Roles="SuperAdministrator, Administrator">
     <Authorized>
         <h3>View User Details</h3>
         <!-- User details UI goes here -->

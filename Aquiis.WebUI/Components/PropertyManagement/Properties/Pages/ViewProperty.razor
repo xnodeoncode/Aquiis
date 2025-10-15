@@ -3,10 +3,11 @@
 @using Aquiis.WebUI.Components.PropertyManagement.Properties
 @using Aquiis.WebUI.Components.PropertyManagement.Leases
 @using Aquiis.WebUI.Components.PropertyManagement
+@using Microsoft.AspNetCore.Authorization
 
 @inject PropertyManagementService PropertyManagementService
 @inject NavigationManager NavigationManager
-
+@attribute [Authorize(Roles = "PropertyManager")]
 @rendermode InteractiveServer
 @if (property == null)
 {

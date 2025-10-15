@@ -126,7 +126,7 @@ using (var scope = app.Services.CreateScope())
 
     // Seed roles
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Administrator", "PropertyManager", "Tenant", "User" };
+    var roles = ApplicationConstants.DefaultRoles;
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -137,18 +137,18 @@ using (var scope = app.Services.CreateScope())
 
     // Add Admin user
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var adminEmail = "admin@aquiis.local";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    var superAdminEmail = ApplicationConstants.SuperAdminEmail;
+    var adminUser = await userManager.FindByEmailAsync(superAdminEmail);
     if (adminUser == null)
     {
         adminUser = new ApplicationUser
         {
-            UserName = adminEmail,
-            Email = adminEmail,
+            UserName = superAdminEmail,
+            Email = superAdminEmail,
             EmailConfirmed = true
         };
-        await userManager.CreateAsync(adminUser, "Admin@123!");
-        await userManager.AddToRoleAsync(adminUser, "Administrator");
+        await userManager.CreateAsync(adminUser, ApplicationConstants.DefaultSuperAdminPassword);
+        await userManager.AddToRoleAsync(adminUser, ApplicationConstants.DefaultSuperAdminRole);
     }
 }
 

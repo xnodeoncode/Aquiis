@@ -19,7 +19,7 @@
     <Authorized>
         <AuthorizeView Roles="PropertyManager" Context="pmContext">
             <Authorized>
-                <h1>Property Management Dashboard</h1>
+                <h1><span class="bi bi-speedometer2" aria-hidden="true"></span> Property Management Dashboard</h1>
 
                 @if (isLoading)
                 {
@@ -173,7 +173,7 @@
         </AuthorizeView>
         <AuthorizeView Roles="Administrator" Context="adminContext">
             <Authorized>
-                <h1>Administrator Dashboard</h1>
+                <h1><span class="bi bi-speedometer2" aria-hidden="true"></span> Administrator Dashboard</h1>
 
                         @if (isLoading)
                         {
@@ -195,7 +195,7 @@
                                                     <p class="card-text">Total Accounts</p>
                                                 </div>
                                                 <div class="align-self-center">
-                                                    <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                                    <i class="bi bi-people-fill" style="font-size: 2rem;"></i>
                                                 </div>
                                             </div>
                                         </div>
@@ -225,7 +225,7 @@
                                                     <p class="card-text">Users Online</p>
                                                 </div>
                                                 <div class="align-self-center">
-                                                    <i class="bi bi-lock-fill" style="font-size: 2rem;"></i>
+                                                    <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
                                                 </div>
                                             </div>
                                         </div>
@@ -240,7 +240,7 @@
                                                     <p class="card-text">Locked Accounts</p>
                                                 </div>
                                                 <div class="align-self-center">
-                                                    <i class="bi bi-file-text" style="font-size: 2rem;"></i>
+                                                    <i class="bi bi-lock-fill" style="font-size: 2rem;"></i>
                                                 </div>
                                             </div>
                                         </div>

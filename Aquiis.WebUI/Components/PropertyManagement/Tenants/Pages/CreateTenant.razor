@@ -7,7 +7,7 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "PropertyManager")]
 <h3>Create Tenant</h3>
 
 <div class="row">

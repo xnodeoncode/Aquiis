@@ -6,7 +6,7 @@
 @inject NavigationManager NavigationManager
 @inject PropertyManagementService PropertyManagementService
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "PropertyManager")]
 @rendermode InteractiveServer
 
 @if (tenant == null)

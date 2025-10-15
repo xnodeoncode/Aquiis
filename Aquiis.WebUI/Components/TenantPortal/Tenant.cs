@@ -1,6 +1,6 @@
-namespace Aquiis.WebUI.Components.Portal
+namespace Aquiis.WebUI.Components.TenantPortal
 {
-    public class PortalUser
+    public class Tenant
     {
         public string Id { get; set; } = default!;
         public Guid UserId { get; set; }

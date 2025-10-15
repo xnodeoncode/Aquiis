@@ -1,0 +1,23 @@
+@page "/propertymanagement/documents"
+
+@rendermode InteractiveServer
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><span class="bi bi-file-earmark-text-fill" aria-hidden="true"></span> Documents</h1>
+    <button class="btn btn-primary" @onclick="CreateDocument">
+        <i class="bi bi-plus-lg"></i> Add Document
+    </button>
+</div>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialization logic here
+    }
+
+    private void CreateDocument()
+    {
+        // Logic to create a new document
+    }
+}

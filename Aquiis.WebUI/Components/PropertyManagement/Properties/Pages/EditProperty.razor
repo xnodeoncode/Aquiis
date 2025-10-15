@@ -7,9 +7,10 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
 
 @rendermode InteractiveServer
-
+@attribute [Authorize(Roles = "PropertyManager")]
 @inject PropertyManagementService PropertyManagementService
 @inject NavigationManager NavigationManager
 
