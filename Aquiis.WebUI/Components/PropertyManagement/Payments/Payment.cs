@@ -35,6 +35,12 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Payments {
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? LastModified { get; set; }
 
+        public string LastModifiedBy { get; set; } = string.Empty;
+
+        public string CreatedBy { get; set; } = string.Empty;
+
+        public bool IsDeleted { get; set; } = false;
+
         // Navigation properties
         [ForeignKey("InvoiceId")]
         public virtual Invoice Invoice { get; set; } = null!;

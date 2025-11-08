@@ -1,23 +1,190 @@
 @page "/propertymanagement/documents"
 
+@using Aquiis.WebUI.Components.PropertyManagement
+@using Aquiis.WebUI.Components.PropertyManagement.Documents
+@using Aquiis.WebUI.Components.PropertyManagement.Tenants
+@using Aquiis.WebUI.Components.PropertyManagement.Properties
+@using Aquiis.WebUI.Components.PropertyManagement.Leases
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IJSRuntime JSRuntime
+@inject PropertyManagementService PropertyManagementService
+@inject NavigationManager Navigation
+
+
+@attribute [Authorize(Roles="PropertyManager")]
+
 @rendermode InteractiveServer
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><span class="bi bi-file-earmark-text-fill" aria-hidden="true"></span> Documents</h1>
+    <h1><span class="bi bi-files" aria-hidden="true"></span> Documents</h1>
     <button class="btn btn-primary" @onclick="CreateDocument">
         <i class="bi bi-plus-lg"></i> Add Document
     </button>
+    <div>
+        @if (filterTenant != null)
+        {
+            <p class="text-muted mb-0">
+                Showing documents for tenant: <strong>@filterTenant.FullName</strong>
+                <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="ClearFilter">
+                    <i class="bi bi-x"></i> Clear Filter
+                </button>
+            </p>
+        }
+        else if (filterLease != null)
+        {
+            <p class="text-muted mb-0">
+                Showing documents for lease: <strong>@filterLease.Property?.Address - @filterLease.Tenant?.FullName</strong>
+                <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="ClearFilter">
+                    <i class="bi bi-x"></i> Clear Filter
+                </button>
+            </p>
+        }
+    </div>
+    <div class="btn-group">
+        <button class="btn btn-primary" @onclick="UploadDocument">
+            <i class="bi bi-upload"></i> Upload Document
+        </button>
+        @if (filterTenant != null)
+        {
+            <button class="btn btn-outline-success" @onclick="UploadDocumentForTenant">
+                <i class="bi bi-upload"></i> Upload for @filterTenant.FullName
+            </button>
+        }
+        else if (filterLease != null)
+        {
+            <button class="btn btn-outline-success" @onclick="UploadDocumentForLease">
+                <i class="bi bi-upload"></i> Upload for This Lease
+            </button>
+        }
+    </div>
 </div>
 
 @code {
 
+     private List<Document>? documents;
+    private List<Document> filteredDocuments = new();
+    private List<Document> pagedDocuments = new();
+    private string searchTerm = string.Empty;
+    private int? selectedTenantId;
+    private int? selectedPropertyId;
+    private int documentsThisMonth = 0;
+    private List<string> documentTypes = new();
+    private List<Tenant>? availableTenants;
+    private List<Property>? availableProperties;
+    private Tenant? filterTenant;
+    private Lease? filterLease;
+    
+    // Paging variables
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 1;
+    private int totalRecords = 0;
+    
+    // Sorting variables
+    private string sortColumn = "CreatedDate";
+    private bool sortAscending = false;
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? TenantId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? LeaseId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? PropertyId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
     protected override async Task OnInitializedAsync()
     {
-        // Initialization logic here
-    }
+        availableTenants = await PropertyManagementService.GetTenantsAsync();
+        availableProperties = await PropertyManagementService.GetPropertiesAsync();
 
+        if (TenantId.HasValue)
+        {
+            filterTenant = availableTenants?.FirstOrDefault(t => t.Id == TenantId.Value);
+        }
+
+        if (LeaseId.HasValue)
+        {
+            filterLease = await PropertyManagementService.GetLeaseByIdAsync(LeaseId.Value);
+        }
+
+        documents = await PropertyManagementService.GetDocumentsAsync();
+        ApplyFilters();
+    }
     private void CreateDocument()
     {
-        // Logic to create a new document
+        Navigation.NavigateTo("/propertymanagement/documents/create");
+    }
+
+    private void UploadDocument()
+    {
+        Navigation.NavigateTo("/propertymanagement/documents/upload");
+    }
+
+    private void UploadDocumentForTenant()
+    {
+        if (filterTenant != null)
+        {
+            Navigation.NavigateTo($"/propertymanagement/documents/upload?tenantId={filterTenant.Id}");
+        }
+    }
+
+    private void UploadDocumentForLease()
+    {
+        if (filterLease != null)
+        {
+            Navigation.NavigateTo($"/propertymanagement/documents/upload?leaseId={filterLease.Id}");
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        if (documents == null)
+        {
+            filteredDocuments = new List<Document>();
+            return;
+        }
+
+        filteredDocuments = documents;
+
+        if (filterTenant != null)
+        {
+            filteredDocuments = filteredDocuments
+                .Where(d => d.TenantId == filterTenant.Id)
+                .ToList();
+        }
+        else if (filterLease != null)
+        {
+            filteredDocuments = filteredDocuments
+                .Where(d => d.LeaseId == filterLease.Id)
+                .ToList();
+        }
+
+        totalRecords = filteredDocuments.Count;
+        totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+        currentPage = 1;
+        UpdatePagedDocuments();
+    }
+
+    private void UpdatePagedDocuments()
+    {
+        pagedDocuments = filteredDocuments
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+    }
+
+    private void ClearFilter()
+    {
+        filterTenant = null;
+        filterLease = null;
     }
 }

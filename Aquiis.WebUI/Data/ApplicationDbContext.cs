@@ -3,7 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Aquiis.WebUI.Components.PropertyManagement.Properties;
 using Aquiis.WebUI.Components.PropertyManagement.Leases;
 using Aquiis.WebUI.Components.PropertyManagement.Tenants;
+using Aquiis.WebUI.Components.PropertyManagement.Invoices;
+using Aquiis.WebUI.Components.PropertyManagement.Payments;
+using Aquiis.WebUI.Components.PropertyManagement.Documents;
 using Aquiis.WebUI.Components.Account;
+using Microsoft.AspNetCore.Identity;
 
 namespace Aquiis.WebUI.Data
 {
@@ -18,6 +22,137 @@ namespace Aquiis.WebUI.Data
         public DbSet<Property> Properties { get; set; }
         public DbSet<Lease> Leases { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Document> Documents { get; set; }
+
+         protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure Property entity
+            modelBuilder.Entity<Property>(entity =>
+            {
+                entity.HasIndex(e => e.Address);
+                entity.Property(e => e.MonthlyRent).HasPrecision(18, 2);
+                
+                // Configure relationship with User
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Tenant entity
+            modelBuilder.Entity<Tenant>(entity =>
+            {
+                entity.HasIndex(e => e.Email).IsUnique();
+                
+                // Configure relationship with User
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Lease entity
+            modelBuilder.Entity<Lease>(entity =>
+            {
+                entity.HasOne(l => l.Property)
+                    .WithMany(p => p.Leases)
+                    .HasForeignKey(l => l.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(l => l.Tenant)
+                    .WithMany(t => t.Leases)
+                    .HasForeignKey(l => l.TenantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.MonthlyRent).HasPrecision(18, 2);
+                entity.Property(e => e.SecurityDeposit).HasPrecision(18, 2);
+                
+                // Configure relationship with User
+                entity.HasOne<IdentityUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Invoice entity
+            modelBuilder.Entity<Invoice>(entity =>
+            {
+                entity.HasOne(i => i.Lease)
+                    .WithMany(l => l.Invoices)
+                    .HasForeignKey(i => i.LeaseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                entity.Property(e => e.PaidAmount).HasPrecision(18, 2);
+                
+                // Configure relationship with User
+                entity.HasOne<IdentityUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Payment entity
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.Invoice)
+                    .WithMany(i => i.Payments)
+                    .HasForeignKey(p => p.InvoiceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                
+                // Configure relationship with User
+                entity.HasOne<IdentityUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Document entity
+            modelBuilder.Entity<Document>(entity =>
+            {
+                entity.HasOne(d => d.Property)
+                    .WithMany(p => p.Documents)
+                    .HasForeignKey(d => d.PropertyId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(d => d.Tenant)
+                    .WithMany()
+                    .HasForeignKey(d => d.TenantId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(d => d.Lease)
+                    .WithMany(l => l.Documents)
+                    .HasForeignKey(d => d.LeaseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(d => d.Invoice)
+                    .WithMany()
+                    .HasForeignKey(d => d.InvoiceId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(d => d.Payment)
+                    .WithMany()
+                    .HasForeignKey(d => d.PaymentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                
+                // Configure FileData to use VARBINARY(MAX) for large files
+                entity.Property(e => e.FileData)
+                    .HasColumnType("VARBINARY(MAX)");
+                
+                // Configure relationship with User
+                entity.HasOne<IdentityUser>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
 
     }
 }

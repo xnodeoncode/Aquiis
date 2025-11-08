@@ -41,7 +41,7 @@
                                             <p class="card-text">Total Properties</p>
                                         </div>
                                         <div class="align-self-center">
-                                            <i class="bi bi-building" style="font-size: 2rem;"></i>
+                                            <i class="bi bi-house-fill" style="font-size: 2rem;"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -71,14 +71,14 @@
                                             <p class="card-text">Total Tenants</p>
                                         </div>
                                         <div class="align-self-center">
-                                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                            <i class="bi bi-people-fill" style="font-size: 2rem;"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card text-white bg-warning">
+                            <div class="card text-white bg-secondary">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between">
                                         <div>
@@ -346,8 +346,14 @@
         properties = allProperties.Where(p => !p.IsDeleted).ToList();
         totalProperties = properties.Count;
         availableProperties = properties.Count(p => p.IsAvailable);
-        //totalTenants = await DbContext.Tenants.CountAsync(t => t.UserId == userId);
-        //activeLeases = await DbContext.Leases.CountAsync(l => l.Status == "Active" && l.UserId == userId);
+
+        var allTenants = await PropertyManagementService.GetTenantsByUserIdAsync(userId);
+        tenants = allTenants.Where(t => !t.IsDeleted).ToList();
+        totalTenants = tenants.Count;
+
+        var allLeases = await PropertyManagementService.GetLeasesByUserIdAsync(userId);
+        leases = allLeases.Where(l => !l.IsDeleted).ToList();
+        activeLeases = leases.Count(l => l.Status == "Active");
 
         // Load available properties and pending leases
         availablePropertiesList = properties
@@ -355,12 +361,11 @@
             .OrderByDescending(p => p.CreatedDate)
             .Take(5)
             .ToList();
-        // pendingLeases = await DbContext.Leases
-        //    .Include(l => l.Property)
-        //    .Include(l => l.Tenant)
-        //    .Where(l => l.UserId == userId && l.Status == "Pending")
-        //    .OrderByDescending(l => l.CreatedDate)
-        //    .Take(5)
-        //    .ToListAsync();
+
+        pendingLeases = leases
+            .Where(l => l.UserId == userId && l.Status == "Pending")
+            .OrderByDescending(l => l.CreatedDate)
+            .Take(5)
+            .ToList();
     }
 }

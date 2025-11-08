@@ -208,17 +208,17 @@ else
 
     private void CreateLease()
     {
-        NavigationManager.NavigateTo($"/propertymanagement/leases/create/{PropertyId}");
+        NavigationManager.NavigateTo($"/propertymanagement/leases/create/?propertyid={PropertyId}");
     }
 
     private void ViewLeases()
     {
-        NavigationManager.NavigateTo($"/propertymanagement/leases/view/{PropertyId}");
+        NavigationManager.NavigateTo($"/propertymanagement/leases/?propertyid={PropertyId}");
     }
 
     private void ViewDocuments()
     {
-        NavigationManager.NavigateTo($"/propertymanagement/documents/{PropertyId}");
+        NavigationManager.NavigateTo($"/propertymanagement/documents/?propertyid={PropertyId}");
     }
 
     private void BackToList()

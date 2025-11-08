@@ -48,6 +48,12 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Invoices {
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? LastModified { get; set; }
 
+        public string LastModifiedBy { get; set; } = string.Empty;
+
+        public string CreatedBy { get; set; } = string.Empty;
+
+        public bool IsDeleted { get; set; } = false;
+
         // Navigation properties
         [ForeignKey("LeaseId")]
         public virtual Lease Lease { get; set; } = null!;
