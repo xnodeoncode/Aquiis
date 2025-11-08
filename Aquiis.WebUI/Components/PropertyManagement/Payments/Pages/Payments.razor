@@ -39,13 +39,13 @@ else if (!payments.Any())
 else
 {
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="text" class="form-control" placeholder="Search payments..." @bind="searchTerm" @onkeyup="FilterPayments" />
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="selectedMethod" @bind:after="FilterPayments">
                 <option value="">All Payment Methods</option>
                 <option value="Cash">Cash</option>
@@ -57,7 +57,15 @@ else
                 <option value="Other">Other</option>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="form-check form-switch pt-2">
+                <input class="form-check-input" type="checkbox" id="groupByInvoice" @bind="groupByInvoice" @bind:after="FilterPayments">
+                <label class="form-check-label" for="groupByInvoice">
+                    Group by Invoice
+                </label>
+            </div>
+        </div>
+        <div class="col-md-3">
             <button class="btn btn-outline-secondary" @onclick="ClearFilters">
                 <i class="bi bi-x-circle"></i> Clear Filters
             </button>
@@ -105,71 +113,140 @@ else
 
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>
-                                <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Payment.PaymentDate))">
-                                    Payment Date
-                                    @if (sortColumn == nameof(Payment.PaymentDate))
-                                    {
-                                        <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
-                                    }
-                                </button>
-                            </th>
-                            <th>Invoice #</th>
-                            <th>Property</th>
-                            <th>Tenant</th>
-                            <th>
-                                <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Payment.Amount))">
-                                    Amount
-                                    @if (sortColumn == nameof(Payment.Amount))
-                                    {
-                                        <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
-                                    }
-                                </button>
-                            </th>
-                            <th>Payment Method</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var payment in pagedPayments)
+            @if (groupByInvoice)
+            {
+                @foreach (var invoiceGroup in groupedPayments)
+                {
+                    var invoice = invoiceGroup.First().Invoice;
+                    var invoiceTotal = invoiceGroup.Sum(p => p.Amount);
+                    var isExpanded = expandedInvoices.Contains(invoiceGroup.Key);
+                    
+                    <div class="card mb-3">
+                        <div class="card-header" style="cursor: pointer;" @onclick="() => ToggleInvoiceGroup(invoiceGroup.Key)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right")"></i>
+                                    <strong>Invoice: @invoice?.InvoiceNumber</strong>
+                                    <span class="ms-3 text-muted">@invoice?.Lease?.Property?.Address</span>
+                                    <span class="ms-2 text-muted">• @invoice?.Lease?.Tenant?.FullName</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary me-2">@invoiceGroup.Count() payment(s)</span>
+                                    <strong class="text-success">@invoiceTotal.ToString("C")</strong>
+                                </div>
+                            </div>
+                        </div>
+                        @if (isExpanded)
                         {
-                            <tr @onclick="() => ViewPayment(payment.Id)" style="cursor: pointer;">
-                                <td>@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
-                                <td>
-                                    <a href="/propertymanagement/invoices/view/@payment.InvoiceId" @onclick:stopPropagation="true">
-                                        @payment.Invoice?.InvoiceNumber
-                                    </a>
-                                </td>
-                                <td>@payment.Invoice?.Lease?.Property?.Address</td>
-                                <td>@payment.Invoice?.Lease?.Tenant?.FullName</td>
-                                <td><strong class="text-success">@payment.Amount.ToString("C")</strong></td>
-                                <td>
-                                    <span class="badge bg-secondary">@payment.PaymentMethod</span>
-                                </td>
-                                <td @onclick:stopPropagation="true">
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewPayment(payment.Id)" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditPayment(payment.Id)" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePayment(payment)" title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <div class="card-body p-0">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Payment Date</th>
+                                            <th>Amount</th>
+                                            <th>Payment Method</th>
+                                            <th>Notes</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var payment in invoiceGroup)
+                                        {
+                                            <tr @onclick="() => ViewPayment(payment.Id)" style="cursor: pointer;">
+                                                <td>@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
+                                                <td><strong class="text-success">@payment.Amount.ToString("C")</strong></td>
+                                                <td><span class="badge bg-secondary">@payment.PaymentMethod</span></td>
+                                                <td>@(string.IsNullOrEmpty(payment.Notes) ? "-" : payment.Notes)</td>
+                                                <td @onclick:stopPropagation="true">
+                                                    <div class="btn-group" role="group">
+                                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewPayment(payment.Id)" title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditPayment(payment.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePayment(payment)" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Payment.PaymentDate))">
+                                        Payment Date
+                                        @if (sortColumn == nameof(Payment.PaymentDate))
+                                        {
+                                            <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th>Invoice #</th>
+                                <th>Property</th>
+                                <th>Tenant</th>
+                                <th>
+                                    <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Payment.Amount))">
+                                        Amount
+                                        @if (sortColumn == nameof(Payment.Amount))
+                                        {
+                                            <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th>Payment Method</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in pagedPayments)
+                            {
+                                <tr @onclick="() => ViewPayment(payment.Id)" style="cursor: pointer;">
+                                    <td>@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <a href="/propertymanagement/invoices/view/@payment.InvoiceId" @onclick:stopPropagation="true">
+                                            @payment.Invoice?.InvoiceNumber
+                                        </a>
+                                    </td>
+                                    <td>@payment.Invoice?.Lease?.Property?.Address</td>
+                                    <td>@payment.Invoice?.Lease?.Tenant?.FullName</td>
+                                    <td><strong class="text-success">@payment.Amount.ToString("C")</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">@payment.PaymentMethod</span>
+                                    </td>
+                                    <td @onclick:stopPropagation="true">
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewPayment(payment.Id)" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditPayment(payment.Id)" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePayment(payment)" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
 
-            @if (totalPages > 1)
+            @if (totalPages > 1 && !groupByInvoice)
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
@@ -224,10 +301,13 @@ else
     private List<Payment>? payments;
     private List<Payment> filteredPayments = new();
     private List<Payment> pagedPayments = new();
+    private IEnumerable<IGrouping<int, Payment>> groupedPayments = Enumerable.Empty<IGrouping<int, Payment>>();
+    private HashSet<int> expandedInvoices = new();
     private string searchTerm = string.Empty;
     private string selectedMethod = string.Empty;
     private string sortColumn = nameof(Payment.PaymentDate);
     private bool sortAscending = false;
+    private bool groupByInvoice = false;
     
     private int paymentsCount = 0;
     private int thisMonthCount = 0;
@@ -282,7 +362,30 @@ else
         }).ToList();
 
         SortPayments();
-        UpdatePagination();
+        
+        if (groupByInvoice)
+        {
+            groupedPayments = filteredPayments
+                .GroupBy(p => p.InvoiceId)
+                .OrderByDescending(g => g.Max(p => p.PaymentDate))
+                .ToList();
+        }
+        else
+        {
+            UpdatePagination();
+        }
+    }
+
+    private void ToggleInvoiceGroup(int invoiceId)
+    {
+        if (expandedInvoices.Contains(invoiceId))
+        {
+            expandedInvoices.Remove(invoiceId);
+        }
+        else
+        {
+            expandedInvoices.Add(invoiceId);
+        }
     }
 
     private void SortBy(string column)
@@ -348,6 +451,7 @@ else
     {
         searchTerm = string.Empty;
         selectedMethod = string.Empty;
+        groupByInvoice = false;
         FilterPayments();
     }
 
