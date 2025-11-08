@@ -20,9 +20,6 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><span class="bi bi-files" aria-hidden="true"></span> Documents</h1>
-    <button class="btn btn-primary" @onclick="CreateDocument">
-        <i class="bi bi-plus-lg"></i> Add Document
-    </button>
     <div>
         @if (filterTenant != null)
         {
@@ -64,7 +61,7 @@
 
 @code {
 
-     private List<Document>? documents;
+    private List<Document>? documents;
     private List<Document> filteredDocuments = new();
     private List<Document> pagedDocuments = new();
     private string searchTerm = string.Empty;

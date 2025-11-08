@@ -27,7 +27,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Payments {
         public decimal Amount { get; set; }
 
         [StringLength(50)]
-        public string PaymentMethod { get; set; } = string.Empty; // e.g., Credit Card, Bank Transfer
+        public string PaymentMethod { get; set; } = string.Empty; // e.g., Cash, Check, CreditCard, BankTransfer
 
         [StringLength(1000)]
         public string Notes { get; set; } = string.Empty;
@@ -44,5 +44,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Payments {
         // Navigation properties
         [ForeignKey("InvoiceId")]
         public virtual Invoice Invoice { get; set; } = null!;
+
     }
 }

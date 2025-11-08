@@ -24,6 +24,10 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Invoices {
 
         [Required]
         [DataType(DataType.Date)]
+        public DateTime InvoiceDate { get; set; }
+
+        [Required]
+        [DataType(DataType.Date)]
         public DateTime DueDate { get; set; }
 
         [Required]

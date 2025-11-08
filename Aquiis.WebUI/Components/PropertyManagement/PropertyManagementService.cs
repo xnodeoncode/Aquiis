@@ -323,23 +323,227 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         #endregion
 
         #region Invoices
-        // Invoice related methods can be added here
+        
+        public async Task<List<Invoice>> GetInvoicesAsync()
+        {
+            return await _dbContext.Invoices
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Tenant)
+                .Include(i => i.Payments)
+                .Where(i => !i.IsDeleted)
+                .OrderByDescending(i => i.DueDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Invoice>> GetInvoicesByUserIdAsync(string userId)
+        {
+            return await _dbContext.Invoices
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Tenant)
+                .Include(i => i.Payments)
+                .Where(i => i.UserId == userId && !i.IsDeleted)
+                .OrderByDescending(i => i.DueDate)
+                .ToListAsync();
+        }
+
+        public async Task<Invoice?> GetInvoiceByIdAsync(int invoiceId)
+        {
+            return await _dbContext.Invoices
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Tenant)
+                .Include(i => i.Payments)
+                .FirstOrDefaultAsync(i => i.Id == invoiceId && !i.IsDeleted);
+        }
+
         public async Task<List<Invoice>> GetInvoicesByLeaseIdAsync(int leaseId)
         {
             return await _dbContext.Invoices
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Tenant)
+                .Include(i => i.Payments)
                 .Where(i => i.LeaseId == leaseId && !i.IsDeleted)
-                .ToListAsync<Invoice>();
+                .OrderByDescending(i => i.DueDate)
+                .ToListAsync();
         }
+
+        public async Task AddInvoiceAsync(Invoice invoice)
+        {
+            await _dbContext.Invoices.AddAsync(invoice);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateInvoiceAsync(Invoice invoice)
+        {
+            invoice.LastModified = DateTime.UtcNow;
+            _dbContext.Invoices.Update(invoice);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteInvoiceAsync(Invoice invoice)
+        {
+            var cuserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (cuserId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            if (_applicationService.SoftDeleteEnabled)
+            {
+                invoice.IsDeleted = true;
+                invoice.LastModified = DateTime.UtcNow;
+                invoice.LastModifiedBy = cuserId;
+                _dbContext.Invoices.Update(invoice);
+            }
+            else
+            {
+                _dbContext.Invoices.Remove(invoice);
+            }
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<string> GenerateInvoiceNumberAsync()
+        {
+            var lastInvoice = await _dbContext.Invoices
+                .OrderByDescending(i => i.Id)
+                .FirstOrDefaultAsync();
+            
+            var nextNumber = lastInvoice != null ? lastInvoice.Id + 1 : 1;
+            return $"INV-{DateTime.Now:yyyyMM}-{nextNumber:D5}";
+        }
+
         #endregion
 
         #region Payments
-        // Payment related methods can be added here
+        
+        public async Task<List<Payment>> GetPaymentsAsync()
+        {
+            return await _dbContext.Payments
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Property)
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Tenant)
+                .Where(p => !p.IsDeleted)
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Payment>> GetPaymentsByUserIdAsync(string userId)
+        {
+            return await _dbContext.Payments
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Property)
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Tenant)
+                .Where(p => p.UserId == userId && !p.IsDeleted)
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync();
+        }
+
+        public async Task<Payment?> GetPaymentByIdAsync(int paymentId)
+        {
+            return await _dbContext.Payments
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Property)
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i!.Lease)
+                        .ThenInclude(l => l!.Tenant)
+                .FirstOrDefaultAsync(p => p.Id == paymentId && !p.IsDeleted);
+        }
+
         public async Task<List<Payment>> GetPaymentsByInvoiceIdAsync(int invoiceId)
         {
             return await _dbContext.Payments
+                .Include(p => p.Invoice)
                 .Where(p => p.InvoiceId == invoiceId && !p.IsDeleted)
-                .ToListAsync<Payment>();
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync();
         }
+
+        public async Task AddPaymentAsync(Payment payment)
+        {
+            await _dbContext.Payments.AddAsync(payment);
+            await _dbContext.SaveChangesAsync();
+            
+            // Update invoice paid amount
+            await UpdateInvoicePaidAmountAsync(payment.InvoiceId);
+        }
+
+        public async Task UpdatePaymentAsync(Payment payment)
+        {
+            payment.LastModified = DateTime.UtcNow;
+            _dbContext.Payments.Update(payment);
+            await _dbContext.SaveChangesAsync();
+            
+            // Update invoice paid amount
+            await UpdateInvoicePaidAmountAsync(payment.InvoiceId);
+        }
+
+        public async Task DeletePaymentAsync(Payment payment)
+        {
+            var cuserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (cuserId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var invoiceId = payment.InvoiceId;
+
+            if (_applicationService.SoftDeleteEnabled)
+            {
+                payment.IsDeleted = true;
+                payment.LastModified = DateTime.UtcNow;
+                payment.LastModifiedBy = cuserId;
+                _dbContext.Payments.Update(payment);
+            }
+            else
+            {
+                _dbContext.Payments.Remove(payment);
+            }
+            await _dbContext.SaveChangesAsync();
+            
+            // Update invoice paid amount
+            await UpdateInvoicePaidAmountAsync(invoiceId);
+        }
+
+        private async Task UpdateInvoicePaidAmountAsync(int invoiceId)
+        {
+            var invoice = await _dbContext.Invoices.FindAsync(invoiceId);
+            if (invoice != null)
+            {
+                var totalPaid = await _dbContext.Payments
+                    .Where(p => p.InvoiceId == invoiceId && !p.IsDeleted)
+                    .SumAsync(p => p.Amount);
+                
+                invoice.PaidAmount = totalPaid;
+                
+                // Update invoice status based on payment
+                if (totalPaid >= invoice.Amount)
+                {
+                    invoice.Status = "Paid";
+                    invoice.PaidDate = DateTime.UtcNow;
+                }
+                else if (totalPaid > 0)
+                {
+                    invoice.Status = "Partial";
+                }
+                
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
         #endregion
 
         #region Documents

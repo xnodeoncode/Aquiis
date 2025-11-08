@@ -2,9 +2,9 @@
 CREATE TABLE IF NOT EXISTS "Leases" (
     "Id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "UserId" TEXT NOT NULL,
-    "PropertyId" INTEGER NOT NULL,
-    "TenantId" INTEGER NOT NULL,
-    "StartDate" TEXT NOT NULL,
+    "PropertyId" INTEGER NOT NULL DEFAULT 0,
+    "TenantId" INTEGER NOT NULL DEFAULT 0,
+    "StartDate" TEXT NOT NULL DEFAULT (datetime('now')),
     "EndDate" TEXT NOT NULL,
     "MonthlyRent" REAL NOT NULL,
     "SecurityDeposit" REAL,
