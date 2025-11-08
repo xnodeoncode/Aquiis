@@ -39,13 +39,13 @@ else if (!invoices.Any())
 else
 {
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="text" class="form-control" placeholder="Search invoices..." @bind="searchTerm" @onkeyup="FilterInvoices" />
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="selectedStatus" @bind:after="FilterInvoices">
                 <option value="">All Statuses</option>
                 <option value="Pending">Pending</option>
@@ -54,7 +54,15 @@ else
                 <option value="Cancelled">Cancelled</option>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="form-check form-switch pt-2">
+                <input class="form-check-input" type="checkbox" id="groupByProperty" @bind="groupByProperty" @bind:after="FilterInvoices">
+                <label class="form-check-label" for="groupByProperty">
+                    Group by Property
+                </label>
+            </div>
+        </div>
+        <div class="col-md-3">
             <button class="btn btn-outline-secondary" @onclick="ClearFilters">
                 <i class="bi bi-x-circle"></i> Clear Filters
             </button>
@@ -102,10 +110,103 @@ else
 
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
+            @if (groupByProperty)
+            {
+                @foreach (var propertyGroup in groupedInvoices)
+                {
+                    var property = propertyGroup.First().Lease?.Property;
+                    var propertyInvoiceCount = propertyGroup.Count();
+                    var propertyTotal = propertyGroup.Sum(i => i.Amount);
+                    var propertyBalance = propertyGroup.Sum(i => i.BalanceDue);
+                    var isExpanded = expandedProperties.Contains(propertyGroup.Key);
+                    
+                    <div class="card mb-3">
+                        <div class="card-header" style="cursor: pointer;" @onclick="() => TogglePropertyGroup(propertyGroup.Key)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right")"></i>
+                                    <strong>@property?.Address</strong>
+                                    <span class="ms-3 text-muted">@property?.City, @property?.State @property?.ZipCode</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary me-2">@propertyInvoiceCount invoice(s)</span>
+                                    <span class="me-2">Total: <strong>@propertyTotal.ToString("C")</strong></span>
+                                    <span>Balance: <strong class="@(propertyBalance > 0 ? "text-danger" : "text-success")">@propertyBalance.ToString("C")</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        @if (isExpanded)
+                        {
+                            <div class="card-body p-0">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Invoice #</th>
+                                            <th>Tenant</th>
+                                            <th>Invoice Date</th>
+                                            <th>Due Date</th>
+                                            <th>Amount</th>
+                                            <th>Balance Due</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var invoice in propertyGroup)
+                                        {
+                                            <tr @onclick="() => ViewInvoice(invoice.Id)" style="cursor: pointer;">
+                                                <td>
+                                                    <strong>@invoice.InvoiceNumber</strong>
+                                                    <br />
+                                                    <small class="text-muted">@invoice.Description</small>
+                                                </td>
+                                                <td>@invoice.Lease?.Tenant?.FullName</td>
+                                                <td>@invoice.InvoiceDate.ToString("MMM dd, yyyy")</td>
+                                                <td>
+                                                    @invoice.DueDate.ToString("MMM dd, yyyy")
+                                                    @if (invoice.IsOverdue)
+                                                    {
+                                                        <br />
+                                                        <small class="text-danger">@invoice.DaysOverdue days overdue</small>
+                                                    }
+                                                </td>
+                                                <td>@invoice.Amount.ToString("C")</td>
+                                                <td>
+                                                    <strong class="@(invoice.BalanceDue > 0 ? "text-danger" : "text-success")">
+                                                        @invoice.BalanceDue.ToString("C")
+                                                    </strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetStatusBadgeClass(invoice.Status)">
+                                                        @invoice.Status
+                                                    </span>
+                                                </td>
+                                                <td @onclick:stopPropagation="true">
+                                                    <div class="btn-group" role="group">
+                                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewInvoice(invoice.Id)" title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditInvoice(invoice.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteInvoice(invoice)" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover"><thead><tr>
                             <th>
                                 <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Invoice.InvoiceNumber))">
                                     Invoice #
@@ -214,8 +315,9 @@ else
                     </tbody>
                 </table>
             </div>
+            }
 
-            @if (totalPages > 1)
+            @if (totalPages > 1 && !groupByProperty)
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
@@ -270,10 +372,13 @@ else
     private List<Invoice>? invoices;
     private List<Invoice> filteredInvoices = new();
     private List<Invoice> pagedInvoices = new();
+    private IEnumerable<IGrouping<int, Invoice>> groupedInvoices = Enumerable.Empty<IGrouping<int, Invoice>>();
+    private HashSet<int> expandedProperties = new();
     private string searchTerm = string.Empty;
     private string selectedStatus = string.Empty;
     private string sortColumn = nameof(Invoice.DueDate);
     private bool sortAscending = false;
+    private bool groupByProperty = true;
     
     private int pendingCount = 0;
     private int paidCount = 0;
@@ -328,7 +433,31 @@ else
         }).ToList();
 
         SortInvoices();
-        UpdatePagination();
+        
+        if (groupByProperty)
+        {
+            groupedInvoices = filteredInvoices
+                .Where(i => i.Lease?.PropertyId != null && i.Lease.PropertyId > 0)
+                .GroupBy(i => i.Lease!.PropertyId)
+                .OrderBy(g => g.First().Lease?.Property?.Address)
+                .ToList();
+        }
+        else
+        {
+            UpdatePagination();
+        }
+    }
+    
+    private void TogglePropertyGroup(int propertyId)
+    {
+        if (expandedProperties.Contains(propertyId))
+        {
+            expandedProperties.Remove(propertyId);
+        }
+        else
+        {
+            expandedProperties.Add(propertyId);
+        }
     }
 
     private void SortBy(string column)
@@ -402,6 +531,7 @@ else
     {
         searchTerm = string.Empty;
         selectedStatus = string.Empty;
+        groupByProperty = false;
         FilterInvoices();
     }
 

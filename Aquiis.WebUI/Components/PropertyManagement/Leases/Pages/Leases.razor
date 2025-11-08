@@ -96,13 +96,13 @@ else if (!leases.Any())
 else
 {
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="text" class="form-control" placeholder="Search leases..." @bind="searchTerm" @onkeyup="FilterLeases" />
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="selectedLeaseStatus" @bind:after="FilterLeases">
                 <option value="">All Lease Statuses</option>
                 <option value="Active">Active</option>
@@ -111,7 +111,7 @@ else
                 <option value="Pending">Pending</option>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="selectedTenantId" @bind:after="FilterLeases">
                 <option value="">All Tenants</option>
                 @if (availableTenants != null)
@@ -122,6 +122,14 @@ else
                     }
                 }
             </select>
+        </div>
+        <div class="col-md-3">
+            <div class="form-check form-switch pt-2">
+                <input class="form-check-input" type="checkbox" id="groupByProperty" @bind="groupByProperty" @bind:after="FilterLeases">
+                <label class="form-check-label" for="groupByProperty">
+                    Group by Property
+                </label>
+            </div>
         </div>
     </div>
 
@@ -162,10 +170,94 @@ else
 
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
+            @if (groupByProperty)
+            {
+                @foreach (var propertyGroup in groupedLeases)
+                {
+                    var property = propertyGroup.First().Property;
+                    var propertyLeaseCount = propertyGroup.Count();
+                    var activeLeaseCount = propertyGroup.Count(l => l.Status == "Active");
+                    var isExpanded = expandedProperties.Contains(propertyGroup.Key);
+                    
+                    <div class="card mb-3">
+                        <div class="card-header" style="cursor: pointer;" @onclick="() => TogglePropertyGroup(propertyGroup.Key)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right")"></i>
+                                    <strong>@property?.Address</strong>
+                                    <span class="ms-3 text-muted">@property?.City, @property?.State @property?.ZipCode</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success me-2">@activeLeaseCount active</span>
+                                    <span class="badge bg-secondary">@propertyLeaseCount total lease(s)</span>
+                                </div>
+                            </div>
+                        </div>
+                        @if (isExpanded)
+                        {
+                            <div class="card-body p-0">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tenant</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Monthly Rent</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var lease in propertyGroup)
+                                        {
+                                            <tr class="@(lease.IsActive ? "" : "table-warning")">
+                                                <td>
+                                                    <strong>@lease.Tenant?.FullName</strong>
+                                                    @if (lease.Tenant != null)
+                                                    {
+                                                        <br />
+                                                        <small class="text-muted">@lease.Tenant.Email</small>
+                                                    }
+                                                </td>
+                                                <td>@lease.StartDate.ToString("MMM dd, yyyy")</td>
+                                                <td>@lease.EndDate.ToString("MMM dd, yyyy")</td>
+                                                <td>@lease.MonthlyRent.ToString("C")</td>
+                                                <td>
+                                                    <span class="badge @GetStatusBadgeClass(lease.Status)">
+                                                        @lease.Status
+                                                    </span>
+                                                    @if (lease.IsActive && lease.DaysRemaining <= 30 && lease.DaysRemaining > 0)
+                                                    {
+                                                        <br />
+                                                        <small class="text-warning">@lease.DaysRemaining days remaining</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" @onclick="() => ViewLease(lease.Id)" title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary" @onclick="() => EditLease(lease.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" @onclick="() => DeleteLease(lease.Id)" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover"><thead><tr>
                             <th>
                                 <button class="btn btn-link text-decoration-none p-0 text-dark fw-bold" @onclick="@(() => SortBy("Property"))">
                                     Property 
@@ -340,7 +432,8 @@ else
                     </tbody>
                 </table>
             </div>
-            @if (totalPages > 1)
+            }
+            @if (totalPages > 1 && !groupByProperty)
             {
                 <div class="card-footer">
                     <nav aria-label="Leases pagination">
@@ -390,6 +483,8 @@ else
     private List<Lease>? leases;
     private List<Lease> filteredLeases = new();
     private List<Lease> pagedLeases = new();
+    private IEnumerable<IGrouping<int, Lease>> groupedLeases = Enumerable.Empty<IGrouping<int, Lease>>();
+    private HashSet<int> expandedProperties = new();
     private string searchTerm = string.Empty;
     private string selectedLeaseStatus = string.Empty;
     private int? selectedTenantId;
@@ -399,6 +494,7 @@ else
     private decimal totalMonthlyRent = 0;
     private Tenant? filterTenant;
     private Property? filterProperty;
+    private bool groupByProperty = true;
     
     // Paging variables
     private int currentPage = 1;
@@ -528,17 +624,40 @@ else
         // Apply sorting
         ApplySorting();
         
-        // Apply paging
-        totalRecords = filteredLeases.Count;
-        totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-        if (currentPage > totalPages) currentPage = Math.Max(1, totalPages);
-        
-        pagedLeases = filteredLeases
-            .Skip((currentPage - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        if (groupByProperty)
+        {
+            groupedLeases = filteredLeases
+                .Where(l => l.PropertyId > 0)
+                .GroupBy(l => l.PropertyId)
+                .OrderBy(g => g.First().Property?.Address)
+                .ToList();
+        }
+        else
+        {
+            // Apply paging
+            totalRecords = filteredLeases.Count;
+            totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (currentPage > totalPages) currentPage = Math.Max(1, totalPages);
+            
+            pagedLeases = filteredLeases
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
         
         CalculateMetrics();
+    }
+    
+    private void TogglePropertyGroup(int propertyId)
+    {
+        if (expandedProperties.Contains(propertyId))
+        {
+            expandedProperties.Remove(propertyId);
+        }
+        else
+        {
+            expandedProperties.Add(propertyId);
+        }
     }
     
     private void ApplySorting()
