@@ -313,7 +313,7 @@ else
 
     private void ViewDocuments()
     {
-        Navigation.NavigateTo($"/propertymanagement/documents?leaseId={Id}");
+        Navigation.NavigateTo($"/propertymanagement/leases/{Id}/documents");
     }
 
     public class LeaseModel

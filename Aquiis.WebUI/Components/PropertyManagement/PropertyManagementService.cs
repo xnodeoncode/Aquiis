@@ -547,23 +547,116 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         #endregion
 
         #region Documents
-        // Document related methods can be added here
         
         public async Task<List<Document>> GetDocumentsAsync()
         {
             return await _dbContext.Documents
+                .Include(d => d.Property)
+                .Include(d => d.Tenant)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Property)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Include(d => d.Invoice)
+                .Include(d => d.Payment)
                 .Where(d => !d.IsDeleted)
-                .ToListAsync<Document>();
+                .OrderByDescending(d => d.CreatedDate)
+                .ToListAsync();
         }
-        
+
+        public async Task<List<Document>> GetDocumentsByUserIdAsync(string userId)
+        {
+            return await _dbContext.Documents
+                .Include(d => d.Property)
+                .Include(d => d.Tenant)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Property)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Include(d => d.Invoice)
+                .Include(d => d.Payment)
+                .Where(d => d.UserId == userId && !d.IsDeleted)
+                .OrderByDescending(d => d.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<Document?> GetDocumentByIdAsync(int documentId)
+        {
+            return await _dbContext.Documents
+                .Include(d => d.Property)
+                .Include(d => d.Tenant)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Property)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Include(d => d.Invoice)
+                .Include(d => d.Payment)
+                .FirstOrDefaultAsync(d => d.Id == documentId && !d.IsDeleted);
+        }
+
+        public async Task<List<Document>> GetDocumentsByLeaseIdAsync(int leaseId)
+        {
+            return await _dbContext.Documents
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Property)
+                .Include(d => d.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Where(d => d.LeaseId == leaseId && !d.IsDeleted)
+                .OrderByDescending(d => d.CreatedDate)
+                .ToListAsync();
+        }
         
         public async Task<List<Document>> GetDocumentsByPropertyIdAsync(int propertyId)
         {
             return await _dbContext.Documents
+                .Include(d => d.Property)
+                .Include(d => d.Tenant)
+                .Include(d => d.Lease)
                 .Where(d => d.PropertyId == propertyId && !d.IsDeleted)
-                .ToListAsync<Document>();
+                .OrderByDescending(d => d.CreatedDate)
+                .ToListAsync();
         }
-        
+
+        public async Task<List<Document>> GetDocumentsByTenantIdAsync(int tenantId)
+        {
+            return await _dbContext.Documents
+                .Include(d => d.Property)
+                .Include(d => d.Tenant)
+                .Include(d => d.Lease)
+                .Where(d => d.TenantId == tenantId && !d.IsDeleted)
+                .OrderByDescending(d => d.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<Document> AddDocumentAsync(Document document)
+        {
+            document.CreatedDate = DateTime.UtcNow;
+            _dbContext.Documents.Add(document);
+            await _dbContext.SaveChangesAsync();
+            return document;
+        }
+
+        public async Task UpdateDocumentAsync(Document document)
+        {
+            document.LastModified = DateTime.UtcNow;
+            _dbContext.Documents.Update(document);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteDocumentAsync(Document document, bool hardDelete = false)
+        {
+            if (hardDelete)
+            {
+                _dbContext.Documents.Remove(document);
+            }
+            else
+            {
+                document.IsDeleted = true;
+                document.LastModified = DateTime.UtcNow;
+                _dbContext.Documents.Update(document);
+            }
+            await _dbContext.SaveChangesAsync();
+        }
 
         #endregion
    }
