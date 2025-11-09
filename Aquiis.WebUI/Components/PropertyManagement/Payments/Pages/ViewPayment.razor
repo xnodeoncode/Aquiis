@@ -1,8 +1,12 @@
 @page "/propertymanagement/payments/view/{PaymentId:int}"
 @using Aquiis.WebUI.Components.PropertyManagement
+@using Aquiis.WebUI.Components.PropertyManagement.Documents
+@using Aquiis.WebUI.Components.PropertyManagement.Payments
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
+@inject IJSRuntime JSRuntime
 
 @attribute [Authorize(Roles = "PropertyManager")]
 @rendermode InteractiveServer
@@ -227,6 +231,17 @@ else
                         <button class="btn btn-primary" @onclick="EditPayment">
                             <i class="bi bi-pencil"></i> Edit Payment
                         </button>
+                        <button class="btn btn-outline-success" @onclick="GeneratePaymentReceipt" disabled="@isGenerating">
+                            @if (isGenerating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-file-pdf"></i>
+                            }
+                            Generate Receipt
+                        </button>
                         <a href="/propertymanagement/invoices/view/@payment.InvoiceId" class="btn btn-outline-primary">
                             <i class="bi bi-receipt"></i> View Invoice
                         </a>
@@ -281,6 +296,10 @@ else
     public int PaymentId { get; set; }
 
     private Payment? payment;
+    private bool isGenerating = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -300,5 +319,68 @@ else
     private void GoBack()
     {
         Navigation.NavigateTo("/propertymanagement/payments");
+    }
+
+    private async Task GeneratePaymentReceipt()
+    {
+        isGenerating = true;
+        StateHasChanged();
+
+        try
+        {
+            // Get current user info
+            var authState = await AuthenticationStateTask;
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userName = authState.User.Identity?.Name ?? "System";
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Unable to determine current user.");
+                return;
+            }
+
+            // Generate the PDF receipt
+            byte[] pdfBytes = PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
+
+            // Create the document entity
+            var document = new Document
+            {
+                UserId = userId,
+                FileName = $"Receipt_{payment!.PaymentDate:yyyyMMdd}_{DateTime.Now:HHmmss}.pdf",
+                FileExtension = ".pdf",
+                FileData = pdfBytes,
+                FileSize = pdfBytes.Length,
+                FileType = "application/pdf",
+                DocumentType = "Payment Receipt",
+                Description = $"Payment receipt for {payment.Amount:C} on {payment.PaymentDate:MMM dd, yyyy}",
+                LeaseId = payment.Invoice?.LeaseId,
+                PropertyId = payment.Invoice?.Lease?.PropertyId,
+                TenantId = payment.Invoice?.Lease?.TenantId,
+                UploadedBy = userName,
+                CreatedDate = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            // Save to database
+            await PropertyManagementService.AddDocumentAsync(document);
+
+            await JSRuntime.InvokeVoidAsync("alert", "Payment receipt generated successfully!");
+
+            // Navigate to documents page if lease exists
+            if (payment.Invoice?.LeaseId != null)
+            {
+                Navigation.NavigateTo($"/propertymanagement/leases/{payment.Invoice.LeaseId}/documents");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error generating payment receipt: {ex.Message}");
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
     }
 }
