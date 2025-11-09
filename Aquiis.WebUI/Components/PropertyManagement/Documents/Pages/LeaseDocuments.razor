@@ -156,6 +156,9 @@ else
                                     <td>@doc.CreatedDate.ToString("MMM dd, yyyy h:mm tt")</td>
                                     <td>
                                         <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-info" @onclick="() => ViewDocument(doc)" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
                                             <button class="btn btn-sm btn-outline-primary" @onclick="() => DownloadDocument(doc)" title="Download">
                                                 <i class="bi bi-download"></i>
                                             </button>
@@ -278,6 +281,12 @@ else
         {
             isUploading = false;
         }
+    }
+
+    private async Task ViewDocument(Document doc)
+    {
+        var base64Data = Convert.ToBase64String(doc.FileData);
+        await JSRuntime.InvokeVoidAsync("viewFile", base64Data, doc.FileType);
     }
 
     private async Task DownloadDocument(Document doc)
