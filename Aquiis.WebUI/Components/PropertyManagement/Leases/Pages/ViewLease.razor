@@ -1,6 +1,7 @@
 @page "/propertymanagement/leases/view/{Id:int}"
 
 @using Aquiis.WebUI.Components.PropertyManagement.Properties
+@using Aquiis.WebUI.Components.PropertyManagement.Documents
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components
@@ -160,6 +161,18 @@ else
                         <button class="btn btn-outline-secondary" @onclick="ViewDocuments">
                             <i class="bi bi-folder"></i> View Documents
                         </button>
+                        <button class="btn btn-outline-warning" @onclick="GenerateLeaseDocument" disabled="@isGenerating">
+                            @if (isGenerating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Generating...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-file-pdf"></i>
+                                <span> Generate PDF</span>
+                            }
+                        </button>
                     </div>
                 </div>
             </div>
@@ -208,6 +221,7 @@ else
     private Lease? lease;
     private List<Invoice> recentInvoices = new();
     private bool isAuthorized = true;
+    private bool isGenerating = false;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
@@ -314,6 +328,66 @@ else
     private void ViewDocuments()
     {
         Navigation.NavigateTo($"/propertymanagement/leases/{Id}/documents");
+    }
+
+    private async Task GenerateLeaseDocument()
+    {
+        isGenerating = true;
+        StateHasChanged();
+
+        try
+        {
+            // Get current user info
+            var authState = await AuthenticationStateTask;
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userName = authState.User.Identity?.Name ?? "System";
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Unable to determine current user.");
+                return;
+            }
+
+            // Generate the PDF
+            byte[] pdfBytes = LeasePdfGenerator.GenerateLeasePdf(lease!);
+
+            // Create the document entity
+            var document = new Document
+            {
+                UserId = userId,
+                FileName = $"Lease_{lease!.Property?.Address?.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf",
+                FileExtension = ".pdf",
+                FileData = pdfBytes,
+                FileSize = pdfBytes.Length,
+                FileType = "application/pdf",
+                DocumentType = "Lease Agreement",
+                Description = "Auto-generated lease agreement",
+                LeaseId = lease.Id,
+                PropertyId = lease.PropertyId,
+                TenantId = lease.TenantId,
+                UploadedBy = userName,
+                CreatedDate = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            // Save to database
+            await PropertyManagementService.AddDocumentAsync(document);
+
+            await JSRuntime.InvokeVoidAsync("alert", "Lease document generated successfully!");
+
+            // Navigate to documents page
+            Navigation.NavigateTo($"/propertymanagement/leases/{Id}/documents");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error generating lease document: {ex.Message}");
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
     }
 
     public class LeaseModel
