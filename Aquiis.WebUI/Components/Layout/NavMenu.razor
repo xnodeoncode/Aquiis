@@ -139,18 +139,23 @@
         <AuthorizeView Roles="Tenant" Context="tenantContext">
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="portal/dashboard">
-                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                    <NavLink class="nav-link" href="tenantportal/dashboard">
+                        <div><span class="bi bi-speedometer2" aria-hidden="true"></span>Dashboard</div>
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="portal/payments">
-                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Payments
+                    <NavLink class="nav-link" href="tenantportal/payments">
+                        <div><span class="bi bi-cash-coin" aria-hidden="true"></span>Make Payment</div>
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="portal/maintenance">
-                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Maintenance
+                    <NavLink class="nav-link" href="tenantportal/maintenance">
+                        <div><span class="bi bi-tools" aria-hidden="true"></span>Maintenance Requests</div>
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="tenantportal/documents">
+                        <div><span class="bi bi-files" aria-hidden="true"></span>Documents</div>
                     </NavLink>
                 </div>
             </Authorized>

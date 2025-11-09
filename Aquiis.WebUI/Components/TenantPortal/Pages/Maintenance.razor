@@ -1,1 +1,22 @@
 @page "/tenantportal/maintenance"
+
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+@attribute [Authorize(Roles = "Tenant")]
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><span class="bi bi-tools" aria-hidden="true"></span> Maintenance</h1>
+    <button class="btn btn-primary" @onclick="RequestService">
+        <i class="bi bi-plus-lg"></i> Request Service
+    </button>
+</div>
+
+@code {
+    private void RequestService()
+    {
+        NavigationManager.NavigateTo("tenantportal/maintenance/new");
+    }
+}
