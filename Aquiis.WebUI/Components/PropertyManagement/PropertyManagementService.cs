@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Aquiis.WebUI.Components.Administration.Application;
+using Aquiis.WebUI.Services;
 using System.Security.Claims;
 using SQLitePCL;
 
@@ -21,25 +22,32 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationService _applicationService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UserContextService _userContext;
 
-        public PropertyManagementService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, ApplicationService service, IHttpContextAccessor httpContextAccessor)
+        public PropertyManagementService(
+            ApplicationDbContext dbContext, 
+            UserManager<ApplicationUser> userManager, 
+            ApplicationService service, 
+            IHttpContextAccessor httpContextAccessor,
+            UserContextService userContext)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _applicationService = service;
             _httpContextAccessor = httpContextAccessor;
+            _userContext = userContext;
         }
 
         #region Properties
         public async Task<List<Property>> GetPropertiesAsync()
         {
-            // In a real application, this would call a database or API
-            var properties = await _dbContext.Properties
-            .Include(p => p.Leases)
-            .Include(p => p.Documents)
-            .Where(p => !p.IsDeleted)
-            .ToListAsync();
-            return properties;
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Properties
+                .Include(p => p.Leases)
+                .Include(p => p.Documents)
+                .Where(p => !p.IsDeleted && p.OrganizationId == organizationId)
+                .ToListAsync();
         }
 
         public async Task<Property?> GetPropertyByIdAsync(int propertyId)
@@ -64,6 +72,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
         public async Task AddPropertyAsync(Property property)
         {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            property.OrganizationId = organizationId!;
             await _dbContext.Properties.AddAsync(property);
             await _dbContext.SaveChangesAsync();
         }
@@ -129,6 +139,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
         public async Task<List<Lease>> GetLeasesAsync()
         {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
             return await _dbContext.Leases
                 .Include(l => l.Property)
                 .Include(l => l.Tenant)
@@ -238,9 +250,11 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
    public async Task<List<Tenant>> GetTenantsAsync()
    {
+       var organizationId = await _userContext.GetOrganizationIdAsync();
+       
        return await _dbContext.Tenants
            .Include(t => t.Leases)
-           .Where(t => !t.IsDeleted)
+           .Where(t => !t.IsDeleted && t.OrganizationId == organizationId)
            .ToListAsync();
    }
    
@@ -274,7 +288,9 @@ namespace Aquiis.WebUI.Components.PropertyManagement
     }
 
    public async Task AddTenantAsync(Tenant tenant)
-   {
+    {
+        var organizationId = await _userContext.GetOrganizationIdAsync();
+        tenant.OrganizationId = organizationId!;
        await _dbContext.Tenants.AddAsync(tenant);
        await _dbContext.SaveChangesAsync();
    }
@@ -326,6 +342,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         
         public async Task<List<Invoice>> GetInvoicesAsync()
         {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
             return await _dbContext.Invoices
                 .Include(i => i.Lease)
                     .ThenInclude(l => l.Property)
@@ -425,6 +443,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         
         public async Task<List<Payment>> GetPaymentsAsync()
         {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
             return await _dbContext.Payments
                 .Include(p => p.Invoice)
                     .ThenInclude(i => i!.Lease)
@@ -550,6 +570,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement
         
         public async Task<List<Document>> GetDocumentsAsync()
         {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
             return await _dbContext.Documents
                 .Include(d => d.Property)
                 .Include(d => d.Tenant)
@@ -559,7 +581,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                     .ThenInclude(l => l!.Tenant)
                 .Include(d => d.Invoice)
                 .Include(d => d.Payment)
-                .Where(d => !d.IsDeleted)
+                .Where(d => !d.IsDeleted && d.OrganizationId == organizationId)
                 .OrderByDescending(d => d.CreatedDate)
                 .ToListAsync();
         }

@@ -1,0 +1,16 @@
+
+ALTER TABLE AspNetUsers
+ADD OrganizationId TEXT NULL;
+GO
+
+ALTER TABLE Properties
+ADD OrganizationId TEXT NULL;
+GO
+
+ALTER TABLE Tenants
+ADD OrganizationId TEXT NULL;
+GO
+
+ALTER TABLE Documents
+ADD OrganizationId TEXT NULL;
+GO

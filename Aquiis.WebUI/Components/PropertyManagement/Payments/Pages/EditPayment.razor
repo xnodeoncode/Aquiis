@@ -249,7 +249,7 @@ else
         payment.PaymentDate = paymentModel.PaymentDate;
         payment.Amount = paymentModel.Amount;
         payment.PaymentMethod = paymentModel.PaymentMethod;
-        payment.Notes = paymentModel.Notes;
+        payment.Notes = paymentModel.Notes!;
 
         await PropertyManagementService.UpdatePaymentAsync(payment);
         Navigation.NavigateTo("/propertymanagement/payments");

@@ -6,6 +6,7 @@ using Aquiis.WebUI.Components.Account;
 using Aquiis.WebUI.Data;
 using Aquiis.WebUI.Components.PropertyManagement;
 using Aquiis.WebUI.Components.Administration.Application;
+using Aquiis.WebUI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,6 +107,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<ApplicationService>();
+builder.Services.AddScoped<UserContextService>();
 
 var app = builder.Build();
 

@@ -19,6 +19,16 @@
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
+             <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName" id="Input.FirstName" class="form-control" placeholder="Enter your first name" />
+                <label for="Input.FirstName" class="form-label">First name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+             <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" id="Input.LastName" class="form-control" placeholder="Enter your last name" />
+                <label for="Input.LastName" class="form-label">Last name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
             <div class="form-floating mb-3">
                 <input type="text" value="@username" id="username" class="form-control" placeholder="Choose your username." disabled />
                 <label for="username" class="form-label">Username</label>
@@ -38,6 +48,9 @@
     private string? username;
     private string? phoneNumber;
 
+    private string? firstName;
+    private string? lastName;
+
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
@@ -51,6 +64,8 @@
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;
+        Input.FirstName = user.FirstName;
+        Input.LastName = user.LastName;
     }
 
     private async Task OnValidSubmitAsync()
@@ -63,13 +78,25 @@
                 RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
             }
         }
+        
+        user.FirstName = Input.FirstName!;
+        user.LastName = Input.LastName!;
+        firstName = Input.FirstName;
+        lastName = Input.LastName;
 
+        await UserManager.UpdateAsync(user);
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
 
     private sealed class InputModel
     {
+        [Display(Name = "First name")]
+        public string? FirstName { get; set; }
+
+        [Display(Name = "Last name")]
+        public string? LastName { get; set; }
+
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }

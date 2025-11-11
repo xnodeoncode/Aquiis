@@ -233,6 +233,8 @@
             selectedInvoice = null;
             paymentModel.Amount = 0;
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task HandleCreatePayment()
@@ -242,14 +244,14 @@
 
         if (!string.IsNullOrEmpty(userId))
         {
-            var payment = new Payment
+            Payment payment = new Payment
             {
                 UserId = userId,
                 InvoiceId = paymentModel.InvoiceId,
                 PaymentDate = paymentModel.PaymentDate,
                 Amount = paymentModel.Amount,
                 PaymentMethod = paymentModel.PaymentMethod,
-                Notes = paymentModel.Notes,
+                Notes = paymentModel.Notes!,
                 CreatedBy = userId,
                 CreatedDate = DateTime.UtcNow
             };

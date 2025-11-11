@@ -12,6 +12,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Documents {
     
         public int Id { get; set; }
 
+        public string OrganizationId { get; set; } = string.Empty;
+
         [Required]
         public string UserId { get; set; } = string.Empty;
 

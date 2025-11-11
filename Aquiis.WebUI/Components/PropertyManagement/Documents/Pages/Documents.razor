@@ -426,7 +426,7 @@ else
         {
             groupedDocuments = filteredDocuments
                 .Where(d => d.PropertyId.HasValue && d.PropertyId.Value > 0)
-                .GroupBy(d => d.PropertyId.Value)
+                .GroupBy(d => d.PropertyId!.Value)
                 .OrderBy(g => properties.FirstOrDefault(p => p.Id == g.Key)?.Address ?? "");
         }
         else

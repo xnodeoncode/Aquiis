@@ -171,7 +171,7 @@
                 }
             </Authorized>
         </AuthorizeView>
-        <AuthorizeView Roles="Administrator" Context="adminContext">
+        @* <AuthorizeView Roles="Administrator" Context="adminContext">
             <Authorized>
                 <h1><span class="bi bi-speedometer2" aria-hidden="true"></span> Administrator Dashboard</h1>
 
@@ -249,7 +249,7 @@
                             </div>
                         }   
             </Authorized>
-        </AuthorizeView>
+        </AuthorizeView> *@
     </Authorized>
     <NotAuthorized>
         <div class="text-center py-5">
@@ -306,12 +306,12 @@
     private int totalTenants = 0;
     private int activeLeases = 0;
 
-    private int lockedAccounts = 0;
+    @* private int lockedAccounts = 0;
 
     private int totalAccounts = 0;
     private int activeAccounts = 0;
 
-    private int usersOnline = 0;
+    private int usersOnline = 0; *@
     
     private List<Property> availablePropertiesList = new();
     private List<Lease> pendingLeases = new List<Lease>();

@@ -12,86 +12,18 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <AuthorizeView Roles="SuperAdministrator" Context="superAdminContext">
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/dashboard">
-                        <div>Administration</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/application/dashboard">
-                        <div><span class="bi bi-window-dock" aria-hidden="true"></span>Application</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/users/manage">
-                        <div><span class="bi bi-people-fill" aria-hidden="true"></span>User Management</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/propertymanagement/dashboard">
-                        <div>Property Management</div>
-                    </NavLink>
-                </div>
-                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/propertymanagement/properties/manage">
-                        <div><span class="bi bi-house-fill" aria-hidden="true"></span>Properties</div>
-                    </NavLink>
-                </div>
-                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/propertymanagement/tenants/manage">
-                        <div><span class="bi bi-people-fill" aria-hidden="true"></span>Tenants</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/propertymanagement/leases/manage">
-                        <div><span class="bi bi-file-earmark-text-fill" aria-hidden="true"></span>Leases</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/propertymanagement/documents/manage">
-                        <div><span class="bi bi-file-earmark-text-fill" aria-hidden="true"></span>Documents</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/tenantportal/dashboard">
-                        <div>Tenant Portal</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/tenantportal/dashboard">
-                        <div><span class="bi bi-speedometer" aria-hidden="true"></span>Dashboard</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/tenantportal/payments">
-                        <div><span class="bi bi-credit-card-fill" aria-hidden="true"></span>Payments</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/tenantportal/invoices">
-                        <div><span class="bi bi-receipt-cutoff" aria-hidden="true"></span>Invoices</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="administration/tenantportal/maintenance">
-                        <div><span class="bi bi-tools" aria-hidden="true"></span>Maintenance</div>
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
+        
         <AuthorizeView Roles="Administrator" Context="administratorContext">
             <Authorized>
                
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <div><span class="bi bi-house-door-fill" aria-hidden="true"></span>Dashboard</div>
+                    <NavLink class="nav-link" href="administration/dashboard" Match="NavLinkMatch.All">
+                        <div><span class="bi bi-window-dock" aria-hidden="true"></span>Application</div>
                     </NavLink>
                 </div>
                  <div class="nav-item px-3">
                     <NavLink class="nav-link" href="administration/users/manage">
-                        <div><span class="bi bi-people-fill" aria-hidden="true"></span>User Management</div>
+                        <div><span class="bi bi-people-fill" aria-hidden="true"></span>Users</div>
                     </NavLink>
                 </div>
             </Authorized>
@@ -131,30 +63,6 @@
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="propertymanagement/documents">
-                        <div><span class="bi bi-files" aria-hidden="true"></span>Documents</div>
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-        <AuthorizeView Roles="Tenant" Context="tenantContext">
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="tenantportal/dashboard">
-                        <div><span class="bi bi-speedometer2" aria-hidden="true"></span>Dashboard</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="tenantportal/payments">
-                        <div><span class="bi bi-cash-coin" aria-hidden="true"></span>Make Payment</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="tenantportal/maintenance">
-                        <div><span class="bi bi-tools" aria-hidden="true"></span>Maintenance Requests</div>
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="tenantportal/documents">
                         <div><span class="bi bi-files" aria-hidden="true"></span>Documents</div>
                     </NavLink>
                 </div>

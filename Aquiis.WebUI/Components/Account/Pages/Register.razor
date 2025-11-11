@@ -108,6 +108,31 @@
             {
                 // Log the error but don't prevent registration
                 // The user can be assigned a role later by an admin
+                Console.WriteLine($"Failed to assign User role to {user.Email}: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the error but don't prevent registration
+            Console.WriteLine($"Error assigning role to new user {user.Email}: {ex.Message}");
+        }
+
+        // Automatically assign the 'PropertyManager' role to new accounts
+        try
+        {
+            // Ensure the 'PropertyManager' role exists
+            if (!await RoleManager.RoleExistsAsync("PropertyManager"))
+            {
+                await RoleManager.CreateAsync(new IdentityRole("PropertyManager"));
+            }
+
+            // Assign the user to the 'PropertyManager' role
+            var roleResult = await UserManager.AddToRoleAsync(user, "PropertyManager");
+
+            if (!roleResult.Succeeded)
+            {
+                // Log the error but don't prevent registration
+                // The user can be assigned a role later by an admin
                 Console.WriteLine($"Failed to assign PropertyManager role to {user.Email}: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
             }
         }
@@ -117,6 +142,35 @@
             Console.WriteLine($"Error assigning role to new user {user.Email}: {ex.Message}");
         }
 
+        // Automatically assign the 'Administrator' role to new accounts
+        try
+        {
+            // Ensure the 'Administrator' role exists
+            if (!await RoleManager.RoleExistsAsync("Administrator"))
+            {
+                await RoleManager.CreateAsync(new IdentityRole("Administrator"));
+            }
+
+            // Assign the user to the 'Administrator' role
+            var roleResult = await UserManager.AddToRoleAsync(user, "Administrator");
+
+            if (!roleResult.Succeeded)
+            {
+                // Log the error but don't prevent registration
+                // The user can be assigned a role later by an admin
+                Console.WriteLine($"Failed to assign Administrator role to {user.Email}: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the error but don't prevent registration
+            Console.WriteLine($"Error assigning role to new user {user.Email}: {ex.Message}");
+        }
+
+        // assign the organization ID
+        user.OrganizationId = userId;
+        await UserManager.UpdateAsync(user);
+        
         if (UserManager.Options.SignIn.RequireConfirmedAccount)
         {
             RedirectManager.RedirectTo(
