@@ -120,7 +120,7 @@ else
                             </div>
                             <div class="col-md-4">
                                 <label class="text-muted small">Total Paid</label>
-                                <p class="fw-bold text-success">@payment.Invoice.PaidAmount.ToString("C")</p>
+                                <p class="fw-bold text-success">@payment.Invoice.AmountPaid.ToString("C")</p>
                             </div>
                             <div class="col-md-4">
                                 <label class="text-muted small">Balance Due</label>
@@ -268,17 +268,17 @@ else
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="text-muted small">Created</label>
-                        <p class="mb-0">@payment.CreatedDate.ToString("g")</p>
+                        <p class="mb-0">@payment.CreatedOn.ToString("g")</p>
                         @if (!string.IsNullOrEmpty(payment.CreatedBy))
                         {
                             <small class="text-muted">by @payment.CreatedBy</small>
                         }
                     </div>
-                    @if (payment.LastModified.HasValue)
+                    @if (payment.LastModifiedOn.HasValue)
                     {
                         <div>
                             <label class="text-muted small">Last Modified</label>
-                            <p class="mb-0">@payment.LastModified.Value.ToString("g")</p>
+                            <p class="mb-0">@payment.LastModifiedOn.Value.ToString("g")</p>
                             @if (!string.IsNullOrEmpty(payment.LastModifiedBy))
                             {
                                 <small class="text-muted">by @payment.LastModifiedBy</small>
@@ -357,8 +357,10 @@ else
                 PropertyId = payment.Invoice?.Lease?.PropertyId,
                 TenantId = payment.Invoice?.Lease?.TenantId,
                 UploadedBy = userName,
-                CreatedDate = DateTime.UtcNow,
-                LastModified = DateTime.UtcNow,
+                CreatedBy = userId,
+                CreatedOn = DateTime.UtcNow,
+                LastModifiedBy = userId,
+                LastModifiedOn = DateTime.UtcNow,
                 IsDeleted = false
             };
 

@@ -180,11 +180,11 @@ else
                 </div>
                 <div class="card-body">
                     <small class="text-muted">
-                        <strong>Created:</strong> @property.CreatedDate.ToString("MMMM dd, yyyy")
+                        <strong>Created:</strong> @property.CreatedOn.ToString("MMMM dd, yyyy")
                         <br />
-                        @if (property.LastModified.HasValue)
+                        @if (property.LastModifiedOn.HasValue)
                         {
-                            <strong>Last Modified:</strong> @property.LastModified.Value.ToString("MMMM dd, yyyy")
+                            <strong>Last Modified:</strong> @property.LastModifiedOn.Value.ToString("MMMM dd, yyyy")
                         }
                     </small>
                 </div>
@@ -263,7 +263,7 @@ else
                 errorMessage = "User not authenticated.";
                 return;
             }
-            property.LastModified = DateTime.UtcNow;
+            property.LastModifiedOn = DateTime.UtcNow;
             property.LastModifiedBy = userId;
             await PropertyManagementService.UpdatePropertyAsync(property);
             NavigationManager.NavigateTo("/propertymanagement/properties");
@@ -283,7 +283,7 @@ else
                 return;
             }
 
-            await PropertyManagementService.DeletePropertyAsync(property.Id, userId);
+            await PropertyManagementService.DeletePropertyAsync(property.Id);
             NavigationManager.NavigateTo("/propertymanagement/properties");
         }
     }
@@ -327,11 +327,11 @@ else
             property.SquareFeet = propertyModel.SquareFeet;
             property.Description = propertyModel.Description;
             property.IsAvailable = propertyModel.IsAvailable;
-            property.LastModified = DateTime.UtcNow;
+            property.LastModifiedOn = DateTime.UtcNow;
 
            
 
-            property.LastModified = DateTime.UtcNow;
+            property.LastModifiedOn = DateTime.UtcNow;
             property.LastModifiedBy = userId;
             await PropertyManagementService.UpdatePropertyAsync(property);
             } catch (Exception ex)

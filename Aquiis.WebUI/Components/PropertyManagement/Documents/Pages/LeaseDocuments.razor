@@ -153,7 +153,7 @@ else
                                     </td>
                                     <td>@doc.FileSizeFormatted</td>
                                     <td>@doc.UploadedBy</td>
-                                    <td>@doc.CreatedDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td>@doc.CreatedOn.ToString("MMM dd, yyyy h:mm tt")</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <button class="btn btn-sm btn-outline-info" @onclick="() => ViewDocument(doc)" title="View">
@@ -266,7 +266,8 @@ else
                 Description = uploadModel.Description ?? string.Empty,
                 LeaseId = LeaseId,
                 UploadedBy = userName,
-                CreatedDate = DateTime.UtcNow
+                CreatedBy = userId ?? string.Empty,
+                CreatedOn = DateTime.UtcNow
             };
 
             await PropertyManagementService.AddDocumentAsync(document);

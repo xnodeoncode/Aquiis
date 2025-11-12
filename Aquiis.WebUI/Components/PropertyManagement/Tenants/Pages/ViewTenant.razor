@@ -99,13 +99,13 @@ else
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Added to System:</strong>
-                            <p>@tenant.CreatedDate.ToString("MMMM dd, yyyy")</p>
+                            <p>@tenant.CreatedOn.ToString("MMMM dd, yyyy")</p>
                         </div>
-                        @if (tenant.LastModified.HasValue)
+                        @if (tenant.LastModifiedOn.HasValue)
                         {
                             <div class="col-md-6 mb-3">
                                 <strong>Last Modified:</strong>
-                                <p>@tenant.LastModified.Value.ToString("MMMM dd, yyyy")</p>
+                                <p>@tenant.LastModifiedOn.Value.ToString("MMMM dd, yyyy")</p>
                             </div>
                         }
                     </div>

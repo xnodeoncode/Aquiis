@@ -150,11 +150,11 @@ else
                 </div>
                 <div class="card-body">
                     <small class="text-muted">
-                        <strong>Added:</strong> @tenant.CreatedDate.ToString("MMMM dd, yyyy")
+                        <strong>Added:</strong> @tenant.CreatedOn.ToString("MMMM dd, yyyy")
                         <br />
-                        @if (tenant.LastModified.HasValue)
+                        @if (tenant.LastModifiedOn.HasValue)
                         {
-                            <strong>Last Modified:</strong> @tenant.LastModified.Value.ToString("MMMM dd, yyyy")
+                            <strong>Last Modified:</strong> @tenant.LastModifiedOn.Value.ToString("MMMM dd, yyyy")
                         }
                     </small>
                 </div>
@@ -240,7 +240,7 @@ else
             tenant.EmergencyContactName = tenantModel.EmergencyContactName;
             tenant.EmergencyContactPhone = tenantModel.EmergencyContactPhone;
             tenant.Notes = tenantModel.Notes;
-            tenant.LastModified = DateTime.UtcNow;
+            tenant.LastModifiedOn = DateTime.UtcNow;
             tenant.LastModifiedBy = userId;
 
             await PropertyManagementService.UpdateTenantAsync(tenant);

@@ -5,12 +5,12 @@ using Aquiis.WebUI.Components.PropertyManagement.Leases;
 using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Properties;
 using Aquiis.WebUI.Components.PropertyManagement.Tenants;
+using Aquiis.WebUI.Models;
 
 namespace Aquiis.WebUI.Components.PropertyManagement.Documents {
 
-    public class Document {
+    public class Document:BaseModel {
     
-        public int Id { get; set; }
 
         public string OrganizationId { get; set; } = string.Empty;
 
@@ -54,11 +54,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Documents {
         [Required]
         [StringLength(100)]
         public string UploadedBy { get; set; } = string.Empty; // User who uploaded the document
-
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? LastModified { get; set; }
-
-        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("PropertyId")]

@@ -96,13 +96,13 @@ else
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Created:</strong>
-                            <p>@property.CreatedDate.ToString("MMMM dd, yyyy")</p>
+                            <p>@property.CreatedOn.ToString("MMMM dd, yyyy")</p>
                         </div>
-                        @if (property.LastModified.HasValue)
+                        @if (property.LastModifiedOn.HasValue)
                         {
                             <div class="col-md-6 mb-3">
                                 <strong>Last Modified:</strong>
-                                <p>@property.LastModified.Value.ToString("MMMM dd, yyyy")</p>
+                                <p>@property.LastModifiedOn.Value.ToString("MMMM dd, yyyy")</p>
                             </div>
                         }
                     </div>

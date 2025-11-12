@@ -1,15 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Aquiis.WebUI.Components.PropertyManagement.Documents;
-using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Leases;
-using Aquiis.WebUI.Components.PropertyManagement.Payments;
-using Aquiis.WebUI.Components.PropertyManagement.Properties;
+using Aquiis.WebUI.Models;
 
 namespace Aquiis.WebUI.Components.PropertyManagement.Tenants {
-    
-    public class Tenant{
-         public int Id { get; set; }
+
+    public class Tenant : BaseModel
+    {
 
         public string OrganizationId { get; set; } = string.Empty;
 
@@ -45,13 +41,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Tenants {
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
-
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? LastModified { get; set; }
-
-        public string LastModifiedBy { get; set; } = string.Empty;
-
-        public bool IsDeleted { get; set; }
 
         // Navigation properties
         public virtual ICollection<Lease> Leases { get; set; } = new List<Lease>();

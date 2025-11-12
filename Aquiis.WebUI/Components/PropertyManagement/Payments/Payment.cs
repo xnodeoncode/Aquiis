@@ -5,12 +5,12 @@ using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Leases;
 using Aquiis.WebUI.Components.PropertyManagement.Properties;
 using Aquiis.WebUI.Components.PropertyManagement.Tenants;
+using Aquiis.WebUI.Models;
 
 namespace Aquiis.WebUI.Components.PropertyManagement.Payments {
 
-    public class Payment
+    public class Payment : BaseModel
     {
-        public int Id { get; set; }
 
         [Required]
         public string UserId { get; set; } = string.Empty;
@@ -31,15 +31,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Payments {
 
         [StringLength(1000)]
         public string Notes { get; set; } = string.Empty;
-
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? LastModified { get; set; }
-
-        public string LastModifiedBy { get; set; } = string.Empty;
-
-        public string CreatedBy { get; set; } = string.Empty;
-
-        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("InvoiceId")]

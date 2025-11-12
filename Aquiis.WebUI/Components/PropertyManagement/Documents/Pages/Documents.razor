@@ -159,7 +159,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var doc in propertyGroup.OrderByDescending(d => d.CreatedDate))
+                                        @foreach (var doc in propertyGroup.OrderByDescending(d => d.CreatedOn))
                                         {
                                             var lease = leases.FirstOrDefault(l => l.Id == doc.LeaseId);
                                             <tr>
@@ -181,7 +181,7 @@ else
                                                 </td>
                                                 <td>@doc.FileSizeFormatted</td>
                                                 <td>
-                                                    @doc.CreatedDate.ToString("MMM dd, yyyy")
+                                                    @doc.CreatedOn.ToString("MMM dd, yyyy")
                                                     <br /><small class="text-muted">@doc.UploadedBy</small>
                                                 </td>
                                                 <td>
@@ -237,9 +237,9 @@ else
                                 <th>Lease</th>
                                 <th>Size</th>
                                 <th>
-                                    <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Document.CreatedDate))">
+                                    <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Document.CreatedOn))">
                                         Uploaded
-                                        @if (sortColumn == nameof(Document.CreatedDate))
+                                        @if (sortColumn == nameof(Document.CreatedOn))
                                         {
                                             <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
                                         }
@@ -279,7 +279,7 @@ else
                                     </td>
                                     <td>@doc.FileSizeFormatted</td>
                                     <td>
-                                        @doc.CreatedDate.ToString("MMM dd, yyyy")
+                                        @doc.CreatedOn.ToString("MMM dd, yyyy")
                                         <br /><small class="text-muted">@doc.UploadedBy</small>
                                     </td>
                                     <td>
@@ -349,7 +349,7 @@ else
     private int totalPages = 1;
     
     // Sorting
-    private string sortColumn = nameof(Document.CreatedDate);
+    private string sortColumn = nameof(Document.CreatedOn);
     private bool sortAscending = false;
 
     private IEnumerable<IGrouping<int, Document>> groupedDocuments = Enumerable.Empty<IGrouping<int, Document>>();
@@ -376,11 +376,11 @@ else
             }
 
             // Get all documents from last 30 days for the user
-            var allUserDocs = await PropertyManagementService.GetDocumentsByUserIdAsync(userId);
+            var allUserDocs = await PropertyManagementService.GetDocumentsAsync();
             var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
             allDocuments = allUserDocs
-                .Where(d => d.CreatedDate >= thirtyDaysAgo && !d.IsDeleted)
-                .OrderByDescending(d => d.CreatedDate)
+                .Where(d => d.CreatedOn >= thirtyDaysAgo && !d.IsDeleted)
+                .OrderByDescending(d => d.CreatedOn)
                 .ToList();
 
             // Load all leases and properties
@@ -450,10 +450,10 @@ else
             nameof(Document.DocumentType) => sortAscending
                 ? filteredDocuments.OrderBy(d => d.DocumentType).ToList()
                 : filteredDocuments.OrderByDescending(d => d.DocumentType).ToList(),
-            nameof(Document.CreatedDate) => sortAscending
-                ? filteredDocuments.OrderBy(d => d.CreatedDate).ToList()
-                : filteredDocuments.OrderByDescending(d => d.CreatedDate).ToList(),
-            _ => filteredDocuments.OrderByDescending(d => d.CreatedDate).ToList()
+            nameof(Document.CreatedOn) => sortAscending
+                ? filteredDocuments.OrderBy(d => d.CreatedOn).ToList()
+                : filteredDocuments.OrderByDescending(d => d.CreatedOn).ToList(),
+            _ => filteredDocuments.OrderByDescending(d => d.CreatedOn).ToList()
         };
     }
 

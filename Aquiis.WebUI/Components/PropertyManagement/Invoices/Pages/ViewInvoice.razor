@@ -70,7 +70,7 @@ else
                             </div>
                             <div class="mb-3">
                                 <label class="text-muted small">Created Date</label>
-                                <div>@invoice.CreatedDate.ToString("MMMM dd, yyyy")</div>
+                                <div>@invoice.CreatedOn.ToString("MMMM dd, yyyy")</div>
                             </div>
                         </div>
                     </div>
@@ -87,7 +87,7 @@ else
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="text-muted small">Paid Amount</label>
-                                <div class="fw-bold fs-4 text-success">@invoice.PaidAmount.ToString("C")</div>
+                                <div class="fw-bold fs-4 text-success">@invoice.AmountPaid.ToString("C")</div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -100,11 +100,11 @@ else
                         </div>
                     </div>
 
-                    @if (invoice.PaidDate.HasValue)
+                    @if (invoice.PaidOn.HasValue)
                     {
                         <div class="mb-3">
                             <label class="text-muted small">Paid Date</label>
-                            <div>@invoice.PaidDate.Value.ToString("MMMM dd, yyyy")</div>
+                            <div>@invoice.PaidOn.Value.ToString("MMMM dd, yyyy")</div>
                         </div>
                     }
 
@@ -241,11 +241,11 @@ else
                         <small class="text-muted">Created By:</small>
                         <div>@(!string.IsNullOrEmpty(invoice.CreatedBy) ? invoice.CreatedBy : "System")</div>
                     </div>
-                    @if (invoice.LastModified.HasValue)
+                    @if (invoice.LastModifiedOn.HasValue)
                     {
                         <div class="mb-2">
                             <small class="text-muted">Last Modified:</small>
-                            <div>@invoice.LastModified.Value.ToString("MMM dd, yyyy h:mm tt")</div>
+                            <div>@invoice.LastModifiedOn.Value.ToString("MMM dd, yyyy h:mm tt")</div>
                         </div>
                         <div class="mb-2">
                             <small class="text-muted">Modified By:</small>
@@ -349,8 +349,10 @@ else
                 PropertyId = invoice.Lease?.PropertyId,
                 TenantId = invoice.Lease?.TenantId,
                 UploadedBy = userName,
-                CreatedDate = DateTime.UtcNow,
-                LastModified = DateTime.UtcNow,
+                CreatedBy = userId,
+                CreatedOn = DateTime.UtcNow,
+                LastModifiedBy = userId,
+                LastModifiedOn = DateTime.UtcNow,
                 IsDeleted = false
             };
 

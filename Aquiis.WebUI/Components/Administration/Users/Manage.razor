@@ -365,7 +365,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         // One line instead of 10+!
-        organizationId = await UserContext!.GetOrganizationIdAsync();
+        organizationId = await UserContext!.GetOrganizationIdAsync() ?? string.Empty;
         await LoadData();
         isLoading = false;
     }

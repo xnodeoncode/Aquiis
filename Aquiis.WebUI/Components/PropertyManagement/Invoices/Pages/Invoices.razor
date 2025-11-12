@@ -408,7 +408,7 @@ else
 
         if (!string.IsNullOrEmpty(userId))
         {
-            invoices = await PropertyManagementService.GetInvoicesByUserIdAsync(userId);
+            invoices = await PropertyManagementService.GetInvoicesAsync();
             FilterInvoices();
             UpdateStatistics();
         }

@@ -135,9 +135,9 @@ else
                                 </button>
                             </th>
                             <th>
-                                <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Tenant.CreatedDate))">
+                                <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Tenant.CreatedOn))">
                                     Created
-                                    @if (sortColumn == nameof(Tenant.CreatedDate))
+                                    @if (sortColumn == nameof(Tenant.CreatedOn))
                                     {
                                         <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
                                     }
@@ -173,7 +173,7 @@ else
                                         <span class="text-muted">Not provided</span>
                                     }
                                 </td>
-                                <td>@tenant.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                <td>@tenant.CreatedOn.ToString("MMM dd, yyyy")</td>
                                 <td>
                                     @{
                                         var activeLease = tenant.Leases?.FirstOrDefault(l => l.Status == "Active");
@@ -299,7 +299,7 @@ else
             return;
         }
 
-        tenants = await PropertyManagementService.GetTenantsByUserIdAsync(userId);
+        tenants = await PropertyManagementService.GetTenantsAsync();
     }
 
     private void CreateTenant()
@@ -405,9 +405,9 @@ else
             nameof(Tenant.DateOfBirth) => sortAscending 
                 ? filteredTenants.OrderBy(t => t.DateOfBirth ?? DateTime.MinValue).ToList()
                 : filteredTenants.OrderByDescending(t => t.DateOfBirth ?? DateTime.MinValue).ToList(),
-            nameof(Tenant.CreatedDate) => sortAscending 
-                ? filteredTenants.OrderBy(t => t.CreatedDate).ToList()
-                : filteredTenants.OrderByDescending(t => t.CreatedDate).ToList(),
+            nameof(Tenant.CreatedOn) => sortAscending 
+                ? filteredTenants.OrderBy(t => t.CreatedOn).ToList()
+                : filteredTenants.OrderByDescending(t => t.CreatedOn).ToList(),
             _ => filteredTenants
         };
         
@@ -426,7 +426,7 @@ else
             
             var now = DateTime.Now;
             newThisMonthCount = filteredTenants.Count(t => 
-                t.CreatedDate.Month == now.Month && t.CreatedDate.Year == now.Year);
+                t.CreatedOn.Month == now.Month && t.CreatedOn.Year == now.Year);
         }
     }
 

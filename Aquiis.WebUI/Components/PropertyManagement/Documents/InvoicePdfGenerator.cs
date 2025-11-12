@@ -207,13 +207,13 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Documents
                 column.Item().Row(row =>
                 {
                     row.ConstantItem(150).Text("Paid Amount:").FontSize(12);
-                    row.ConstantItem(100).AlignRight().Text(invoice.PaidAmount.ToString("C")).FontSize(12).FontColor(Colors.Green.Darken2);
+                    row.ConstantItem(100).AlignRight().Text(invoice.AmountPaid.ToString("C")).FontSize(12).FontColor(Colors.Green.Darken2);
                 });
 
                 column.Item().BorderTop(2).BorderColor(Colors.Grey.Darken2).PaddingTop(5).Row(row =>
                 {
                     row.ConstantItem(150).Text("Balance Due:").FontSize(14).Bold();
-                    row.ConstantItem(100).AlignRight().Text((invoice.Amount - invoice.PaidAmount).ToString("C"))
+                    row.ConstantItem(100).AlignRight().Text((invoice.Amount - invoice.AmountPaid).ToString("C"))
                         .FontSize(14).Bold().FontColor(invoice.Status == "Paid" ? Colors.Green.Darken2 : Colors.Red.Darken2);
                 });
             });

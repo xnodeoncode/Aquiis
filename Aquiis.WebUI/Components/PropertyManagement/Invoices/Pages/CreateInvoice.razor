@@ -117,14 +117,14 @@
                                 <label class="form-label">Paid Amount</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <InputNumber @bind-Value="invoiceModel.PaidAmount" class="form-control" step="0.01" />
+                                    <InputNumber @bind-Value="invoiceModel.AmountPaid" class="form-control" step="0.01" />
                                 </div>
-                                <ValidationMessage For="() => invoiceModel.PaidAmount" class="text-danger" />
+                                <ValidationMessage For="() => invoiceModel.AmountPaid" class="text-danger" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Paid Date</label>
-                                <InputDate @bind-Value="invoiceModel.PaidDate" class="form-control" />
-                                <ValidationMessage For="() => invoiceModel.PaidDate" class="text-danger" />
+                                <label class="form-label">Paid On</label>
+                                <InputDate @bind-Value="invoiceModel.PaidOn" class="form-control" />
+                                <ValidationMessage For="() => invoiceModel.PaidOn" class="text-danger" />
                             </div>
                         </div>
                     }
@@ -204,7 +204,7 @@
 
         if (!string.IsNullOrEmpty(userId))
         {
-            var allLeases = await PropertyManagementService.GetLeasesByUserIdAsync(userId);
+            var allLeases = await PropertyManagementService.GetLeasesAsync();
             leases = allLeases.Where(l => l.Status == "Active").ToList();
         }
     }
@@ -252,10 +252,10 @@
                 Amount = invoiceModel.Amount,
                 Description = invoiceModel.Description,
                 Status = invoiceModel.Status,
-                PaidAmount = invoiceModel.Status == "Paid" ? invoiceModel.PaidAmount : 0,
-                PaidDate = invoiceModel.Status == "Paid" ? invoiceModel.PaidDate : null,
+                AmountPaid = invoiceModel.Status == "Paid" ? invoiceModel.AmountPaid : 0,
+                PaidOn = invoiceModel.Status == "Paid" ? invoiceModel.PaidOn : null,
                 Notes = invoiceModel.Notes ?? string.Empty,
-                CreatedDate = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 CreatedBy = userId
             };
 
@@ -306,10 +306,10 @@
         [StringLength(50)]
         public string Status { get; set; } = "Pending";
 
-        [Range(0, double.MaxValue, ErrorMessage = "Paid amount cannot be negative")]
-        public decimal PaidAmount { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Amount paid cannot be negative")]
+        public decimal AmountPaid { get; set; }
 
-        public DateTime? PaidDate { get; set; }
+        public DateTime? PaidOn { get; set; }
 
         [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
         public string? Notes { get; set; }

@@ -337,7 +337,7 @@ else
 
         if (!string.IsNullOrEmpty(userId))
         {
-            payments = await PropertyManagementService.GetPaymentsByUserIdAsync(userId);
+            payments = await PropertyManagementService.GetPaymentsAsync();
             FilterPayments();
             UpdateStatistics();
         }

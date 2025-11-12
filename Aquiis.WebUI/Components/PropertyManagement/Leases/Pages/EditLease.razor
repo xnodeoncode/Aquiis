@@ -166,11 +166,11 @@ else
                 </div>
                 <div class="card-body">
                     <small class="text-muted">
-                        <strong>Created:</strong> @lease.CreatedDate.ToString("MMMM dd, yyyy")
+                        <strong>Created:</strong> @lease.CreatedOn.ToString("MMMM dd, yyyy")
                         <br />
-                        @if (lease.LastModified.HasValue)
+                        @if (lease.LastModifiedOn.HasValue)
                         {
-                            <strong>Last Modified:</strong> @lease.LastModified.Value.ToString("MMMM dd, yyyy")
+                            <strong>Last Modified:</strong> @lease.LastModifiedOn.Value.ToString("MMMM dd, yyyy")
                         }
                     </small>
                 </div>
@@ -266,7 +266,7 @@ else
             lease.Status = leaseModel.Status;
             lease.Terms = leaseModel.Terms;
             lease.Notes = leaseModel.Notes;
-            lease.LastModified = DateTime.UtcNow;
+            lease.LastModifiedOn = DateTime.UtcNow;
 
             // Update property availability based on lease status change
             if (lease.Property != null && oldStatus != leaseModel.Status)

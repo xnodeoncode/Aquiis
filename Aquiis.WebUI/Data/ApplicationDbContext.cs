@@ -88,7 +88,7 @@ namespace Aquiis.WebUI.Data
 
                 entity.HasIndex(e => e.InvoiceNumber).IsUnique();
                 entity.Property(e => e.Amount).HasPrecision(18, 2);
-                entity.Property(e => e.PaidAmount).HasPrecision(18, 2);
+                entity.Property(e => e.AmountPaid).HasPrecision(18, 2);
                 
                 // Configure relationship with User
                 entity.HasOne<IdentityUser>()

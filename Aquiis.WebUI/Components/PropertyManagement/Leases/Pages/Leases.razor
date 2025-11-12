@@ -579,7 +579,7 @@ else
 
         var     allLeases = await PropertyManagementService.GetLeasesAsync();
         leases = allLeases
-            .Where(l => l.UserId == userId && 
+            .Where(l => 
                    (!TenantId.HasValue || l.TenantId == TenantId.Value) &&
                    (!PropertyId.HasValue || l.PropertyId == PropertyId.Value))
             .OrderByDescending(l => l.StartDate)

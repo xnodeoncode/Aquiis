@@ -14,7 +14,7 @@
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
 @inject IJSRuntime JSRuntime
-@attribute [Authorize(Roles = "PropertyManager")]
+@attribute [Authorize(Roles = "Administrator, PropertyManager")]
 
 @rendermode InteractiveServer
 
@@ -116,13 +116,13 @@ else
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Created:</strong>
-                            <p>@lease.CreatedDate.ToString("MMMM dd, yyyy")</p>
+                            <p>@lease.CreatedOn.ToString("MMMM dd, yyyy")</p>
                         </div>
-                        @if (lease.LastModified.HasValue)
+                        @if (lease.LastModifiedOn.HasValue)
                         {
                             <div class="col-md-6 mb-3">
                                 <strong>Last Modified:</strong>
-                                <p>@lease.LastModified.Value.ToString("MMMM dd, yyyy")</p>
+                                <p>@lease.LastModifiedOn.Value.ToString("MMMM dd, yyyy")</p>
                             </div>
                         }
                     </div>
@@ -261,7 +261,7 @@ else
 
         lease = await PropertyManagementService.GetLeaseByIdAsync(Id);
 
-        if (lease == null || lease.UserId != userId)
+        if (lease == null)
         {
             isAuthorized = false;
             return;
@@ -366,8 +366,10 @@ else
                 PropertyId = lease.PropertyId,
                 TenantId = lease.TenantId,
                 UploadedBy = userName,
-                CreatedDate = DateTime.UtcNow,
-                LastModified = DateTime.UtcNow,
+                CreatedBy = userId,
+                CreatedOn = DateTime.UtcNow,
+                LastModifiedBy = userId,
+                LastModifiedOn = DateTime.UtcNow,
                 IsDeleted = false
             };
 

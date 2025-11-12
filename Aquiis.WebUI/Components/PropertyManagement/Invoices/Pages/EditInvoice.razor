@@ -125,15 +125,15 @@ else
                                 <label class="form-label">Paid Amount</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <InputNumber @bind-Value="invoiceModel.PaidAmount" class="form-control" step="0.01" />
+                                    <InputNumber @bind-Value="invoiceModel.AmountPaid" class="form-control" step="0.01" />
                                 </div>
-                                <ValidationMessage For="() => invoiceModel.PaidAmount" class="text-danger" />
-                                <small class="text-muted">Balance Due: @((invoiceModel.Amount - invoiceModel.PaidAmount).ToString("C"))</small>
+                                <ValidationMessage For="() => invoiceModel.AmountPaid" class="text-danger" />
+                                <small class="text-muted">Balance Due: @((invoiceModel.Amount - invoiceModel.AmountPaid).ToString("C"))</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Paid Date</label>
-                                <InputDate @bind-Value="invoiceModel.PaidDate" class="form-control" />
-                                <ValidationMessage For="() => invoiceModel.PaidDate" class="text-danger" />
+                                <InputDate @bind-Value="invoiceModel.PaidOn" class="form-control" />
+                                <ValidationMessage For="() => invoiceModel.PaidOn" class="text-danger" />
                             </div>
                         </div>
 
@@ -199,7 +199,7 @@ else
                     </div>
                     <div class="mb-2">
                         <small class="text-muted">Paid Amount</small>
-                        <div class="text-success">@invoice.PaidAmount.ToString("C")</div>
+                        <div class="text-success">@invoice.AmountPaid.ToString("C")</div>
                     </div>
                     <div class="mb-2">
                         <small class="text-muted">Balance Due</small>
@@ -257,8 +257,8 @@ else
                 Amount = invoice.Amount,
                 Description = invoice.Description,
                 Status = invoice.Status,
-                PaidAmount = invoice.PaidAmount,
-                PaidDate = invoice.PaidDate,
+                AmountPaid = invoice.AmountPaid,
+                PaidOn = invoice.PaidOn,
                 Notes = invoice.Notes
             };
         }
@@ -271,7 +271,7 @@ else
 
         if (!string.IsNullOrEmpty(userId))
         {
-            leases = await PropertyManagementService.GetLeasesByUserIdAsync(userId);
+            leases = await PropertyManagementService.GetLeasesAsync();
         }
     }
 
@@ -303,8 +303,8 @@ else
             invoice.Amount = invoiceModel.Amount;
             invoice.Description = invoiceModel.Description;
             invoice.Status = invoiceModel.Status;
-            invoice.PaidAmount = invoiceModel.PaidAmount;
-            invoice.PaidDate = invoiceModel.PaidDate;
+            invoice.AmountPaid = invoiceModel.AmountPaid;
+            invoice.PaidOn = invoiceModel.PaidOn;
             invoice.Notes = invoiceModel.Notes ?? string.Empty;
             invoice.LastModifiedBy = userId;
 
@@ -385,9 +385,9 @@ else
         public string Status { get; set; } = "Pending";
 
         [Range(0, double.MaxValue, ErrorMessage = "Paid amount cannot be negative")]
-        public decimal PaidAmount { get; set; }
+        public decimal AmountPaid { get; set; }
 
-        public DateTime? PaidDate { get; set; }
+        public DateTime? PaidOn { get; set; }
 
         [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
         public string? Notes { get; set; }

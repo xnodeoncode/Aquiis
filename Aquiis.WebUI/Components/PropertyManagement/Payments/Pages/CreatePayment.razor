@@ -130,7 +130,7 @@
                     <div class="mb-2">
                         <div class="d-flex justify-content-between">
                             <span class="text-muted">Already Paid:</span>
-                            <span class="text-success">@selectedInvoice.PaidAmount.ToString("C")</span>
+                            <span class="text-success">@selectedInvoice.AmountPaid.ToString("C")</span>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -207,7 +207,7 @@
         if (!string.IsNullOrEmpty(userId))
         {
             // Get all invoices and filter to those with outstanding balance
-            var allInvoices = await PropertyManagementService.GetInvoicesByUserIdAsync(userId);
+            List<Invoice>? allInvoices = await PropertyManagementService.GetInvoicesAsync();
             invoices = allInvoices
                 .Where(i => i.BalanceDue > 0 && i.Status != "Cancelled")
                 .OrderByDescending(i => i.DueDate)
@@ -253,7 +253,7 @@
                 PaymentMethod = paymentModel.PaymentMethod,
                 Notes = paymentModel.Notes!,
                 CreatedBy = userId,
-                CreatedDate = DateTime.UtcNow
+                CreatedOn = DateTime.UtcNow
             };
             await PropertyManagementService.AddPaymentAsync(payment);
             Navigation.NavigateTo("/propertymanagement/payments");

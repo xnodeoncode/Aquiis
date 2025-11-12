@@ -176,13 +176,13 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Documents
                     col.Item().Row(row =>
                     {
                         row.ConstantItem(150).Text("Total Paid:").Bold();
-                        row.RelativeItem().Text(payment.Invoice.PaidAmount.ToString("C"));
+                        row.RelativeItem().Text(payment.Invoice.AmountPaid.ToString("C"));
                     });
 
                     col.Item().Row(row =>
                     {
                         row.ConstantItem(150).Text("Balance Remaining:").Bold();
-                        row.RelativeItem().Text((payment.Invoice.Amount - payment.Invoice.PaidAmount).ToString("C"))
+                        row.RelativeItem().Text((payment.Invoice.Amount - payment.Invoice.AmountPaid).ToString("C"))
                             .FontColor(payment.Invoice.Status == "Paid" ? Colors.Green.Darken2 : Colors.Orange.Darken1);
                     });
 

@@ -1,17 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Aquiis.WebUI.Components.PropertyManagement.Documents;
-using Aquiis.WebUI.Components.PropertyManagement.Invoices;
-using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Properties;
+using Aquiis.WebUI.Components.PropertyManagement.Documents;
 using Aquiis.WebUI.Components.PropertyManagement.Tenants;
+using Aquiis.WebUI.Components.PropertyManagement.Invoices;
+using Aquiis.WebUI.Models;
 
 namespace Aquiis.WebUI.Components.PropertyManagement.Leases {
     
-    public class Lease
+    public class Lease : BaseModel
     {
-        public int Id { get; set; }
-
         [Required]
         public string UserId { get; set; } = string.Empty;
 
@@ -44,13 +42,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Leases {
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
-
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? LastModified { get; set; }
-
-        public string LastModifiedBy { get; set; } = string.Empty;
-
-        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("PropertyId")]

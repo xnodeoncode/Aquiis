@@ -149,7 +149,7 @@
                                                                 @lease.Property.Address
                                                             </a>
                                                         </h6>
-                                                        <small>@lease.CreatedDate.ToString("MMM dd, yyyy")</small>
+                                                        <small>@lease.CreatedOn.ToString("MMM dd, yyyy")</small>
                                                     </div>
                                                     <p class="mb-1">@lease.Tenant.FullName</p>
                                                     <div class="d-flex justify-content-between">
@@ -342,29 +342,29 @@
             return;
 
         // Load summary counts
-        var allProperties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId);
+        var allProperties = await PropertyManagementService.GetPropertiesAsync();
         properties = allProperties.Where(p => !p.IsDeleted).ToList();
         totalProperties = properties.Count;
         availableProperties = properties.Count(p => p.IsAvailable);
-
-        var allTenants = await PropertyManagementService.GetTenantsByUserIdAsync(userId);
+    
+        var allTenants = await PropertyManagementService.GetTenantsAsync();
         tenants = allTenants.Where(t => !t.IsDeleted).ToList();
         totalTenants = tenants.Count;
 
-        var allLeases = await PropertyManagementService.GetLeasesByUserIdAsync(userId);
+        var allLeases = await PropertyManagementService.GetLeasesAsync();
         leases = allLeases.Where(l => !l.IsDeleted).ToList();
         activeLeases = leases.Count(l => l.Status == "Active");
 
         // Load available properties and pending leases
         availablePropertiesList = properties
             .Where(p => p.UserId == userId && p.IsAvailable)
-            .OrderByDescending(p => p.CreatedDate)
+            .OrderByDescending(p => p.CreatedOn)
             .Take(5)
             .ToList();
 
         pendingLeases = leases
             .Where(l => l.UserId == userId && l.Status == "Pending")
-            .OrderByDescending(l => l.CreatedDate)
+            .OrderByDescending(l => l.CreatedOn)
             .Take(5)
             .ToList();
     }

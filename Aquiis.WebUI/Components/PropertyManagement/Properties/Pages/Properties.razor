@@ -192,7 +192,7 @@ else
             return;
         }
 
-        var allProperties = await PropertyManagementService.GetPropertiesByUserIdAsync(userId ?? string.Empty);
+        var allProperties = await PropertyManagementService.GetPropertiesAsync();
         properties = allProperties.Where(p=>p.IsDeleted==false).ToList();
     }
 
@@ -250,7 +250,7 @@ else
         if (string.IsNullOrEmpty(userId))
             return;
 
-        await PropertyManagementService.DeletePropertyAsync(propertyId, userId);
+        await PropertyManagementService.DeletePropertyAsync(propertyId);
 
         // Add confirmation dialog in a real application
         await LoadProperties();
