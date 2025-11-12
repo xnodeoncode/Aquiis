@@ -132,9 +132,13 @@ else
                                 <i class="bi bi-file-text"></i> View Leases
                             </button>
                         }
+                        <button class="btn btn-outline-warning" @onclick="CreateInspection">
+                            <i class="bi bi-clipboard-check"></i> Create Inspection
+                        </button>
                         <button class="btn btn-outline-secondary" @onclick="ViewDocuments">
                             <i class="bi bi-folder"></i> View Documents
                         </button>
+                        
                     </div>
                 </div>
             </div>
@@ -219,6 +223,11 @@ else
     private void ViewDocuments()
     {
         NavigationManager.NavigateTo($"/propertymanagement/documents/?propertyid={PropertyId}");
+    }
+
+    private void CreateInspection()
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/inspections/create/{PropertyId}");
     }
 
     private void BackToList()

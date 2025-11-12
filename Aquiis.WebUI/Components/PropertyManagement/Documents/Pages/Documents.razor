@@ -198,6 +198,9 @@ else
                                                                 <i class="bi bi-file-text"></i>
                                                             </button>
                                                         }
+                                                        <button class="btn btn-outline-danger" @onclick="() => DeleteDocument(doc)" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -296,6 +299,9 @@ else
                                                     <i class="bi bi-file-text"></i>
                                                 </button>
                                             }
+                                            <button class="btn btn-outline-danger" @onclick="() => DeleteDocument(doc)" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -523,6 +529,24 @@ else
     private void GoToLease(int leaseId)
     {
         Navigation.NavigateTo($"/propertymanagement/leases/view/{leaseId}");
+    }
+
+    private async Task DeleteDocument(Document doc)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{doc.FileName}'? This action cannot be undone.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                await PropertyManagementService.DeleteDocumentAsync(doc);
+                await LoadDocuments();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting document: {ex.Message}");
+            }
+        }
     }
 
     private string GetFileIcon(string extension)

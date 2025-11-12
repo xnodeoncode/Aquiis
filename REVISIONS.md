@@ -1,5 +1,268 @@
 # Aquiis - Revision History
 
+## November 12, 2025
+
+### Property Inspection System
+
+**Complete Inspection Feature Implementation**
+
+- ✅ Created comprehensive property inspection system with 26 checklist items
+- ✅ Implemented create, view, and PDF generation capabilities
+- ✅ Added inspection management to property view pages
+- ✅ Integrated with document management system
+
+**Inspection Components Created:**
+
+1. **Inspection Model (Inspection.cs):**
+
+   - Inherits from BaseModel (audit trail support)
+   - 26 detailed checklist items organized in 5 categories
+   - Each item has status (Good/Issue) and optional notes
+   - Properties: InspectionDate, InspectionType, InspectedBy, OverallCondition
+   - Navigation properties to Property and Lease entities
+   - Supports Routine, Move-In, Move-Out, and Maintenance inspection types
+
+2. **Create Inspection Page (CreateInspection.razor):**
+
+   - Comprehensive form with 300+ lines of organized UI
+   - Property information display at top
+   - Inspection details section (date, type, inspector)
+   - Five categorized checklist sections with reusable components
+   - Overall assessment section with condition and notes
+   - "Mark All as Good" quick-action buttons for each section
+   - Form validation with required field checking
+   - Auto-populated OrganizationId, UserId, and CreatedBy fields
+   - Success/error message display
+   - Cancel navigation back to property view
+   - Interactive server-side rendering
+
+3. **View Inspection Page (ViewInspection.razor):**
+
+   - Professional inspection report display
+   - Property and inspection details header
+   - All five checklist sections in organized layout
+   - Color-coded status badges (Good=green, Issue=red)
+   - Overall assessment with action items highlighted
+   - Inspection summary sidebar with statistics
+   - Generate PDF button with loading state
+   - Edit inspection navigation (future enhancement)
+   - Back to property navigation
+
+4. **Reusable Components:**
+
+   - **InspectionChecklistItem.razor** - Individual checklist item with toggle and notes
+   - **InspectionSectionView.razor** - Section display for view page with table layout
+
+5. **PDF Generator (InspectionPdfGenerator.cs):**
+   - Professional multi-page PDF reports
+   - Property information header with full address
+   - Inspection metadata (date, type, inspector, condition)
+   - All checklist items displayed in organized tables by section
+   - Color-coded condition indicators in PDF
+   - Overall assessment section with general notes
+   - Action items prominently displayed in warning box
+   - Summary statistics footer (items checked, issues found, pass rate)
+   - Page numbers on all pages
+   - Professional formatting with proper spacing and borders
+
+**Inspection Checklist Categories (26 Items):**
+
+1. **Exterior (7 items):**
+
+   - Roof
+   - Gutters & Downspouts
+   - Siding/Paint
+   - Windows
+   - Doors
+   - Foundation
+   - Landscaping & Drainage
+
+2. **Interior (5 items):**
+
+   - Walls
+   - Ceilings
+   - Floors
+   - Doors
+   - Windows
+
+3. **Kitchen (4 items):**
+
+   - Appliances
+   - Cabinets & Drawers
+   - Countertops
+   - Sink & Plumbing
+
+4. **Bathroom (4 items):**
+
+   - Toilet
+   - Sink & Vanity
+   - Tub/Shower
+   - Ventilation/Exhaust Fan
+
+5. **Systems & Safety (6 items):**
+   - HVAC System
+   - Electrical System
+   - Plumbing System
+   - Smoke Detectors
+   - Carbon Monoxide Detectors
+
+**Database Implementation:**
+
+- ✅ Created `30_CreateTable-Inspections.sql` migration script
+- ✅ Added `Inspections` table with all 26 checklist columns
+- ✅ Foreign key relationships to Properties and Leases
+- ✅ Indexes on PropertyId and InspectionDate for performance
+- ✅ Updated `32_UpdateTable-Inspections.sql` for schema modifications
+- ✅ Configured entity relationships in ApplicationDbContext
+
+**PropertyManagementService Integration:**
+
+- ✅ `GetInspectionsAsync()` - Get all inspections (organization-scoped)
+- ✅ `GetInspectionsByPropertyIdAsync(propertyId)` - Get property inspections
+- ✅ `GetInspectionByIdAsync(inspectionId)` - Get single inspection with navigation properties
+- ✅ `AddInspectionAsync(inspection)` - Create new inspection with audit fields
+- ✅ `UpdateInspectionAsync(inspection)` - Update existing inspection
+- ✅ `DeleteInspectionAsync(inspection)` - Soft delete inspection
+
+**User Interface Enhancements:**
+
+1. **ViewProperty.razor Updates:**
+
+   - Added "Create Inspection" button to Quick Actions section
+   - Navigation to `/propertymanagement/inspections/create/{PropertyId}`
+   - Positioned alongside Edit Property, Create Lease, View Leases, and View Documents
+
+2. **Form Features:**
+
+   - Toggle switches for Good/Issue status (green/red)
+   - Text areas for notes on each item
+   - Section-level "Mark All as Good" quick-action buttons
+   - Responsive layout with sidebar for inspection details
+   - Real-time form validation
+   - Loading states during save operations
+   - Success messages before navigation
+
+3. **View Page Features:**
+   - Sticky sidebar with inspection summary
+   - Statistics: Overall condition, items checked, issues found, pass rate
+   - Color-coded badges throughout
+   - Professional table layout for checklist items
+   - Prominent display of action items if any
+   - Generate PDF functionality with document storage
+
+**Document Integration:**
+
+- ✅ Generated inspection PDFs automatically saved to Documents table
+- ✅ Proper file extension (`.pdf`) and MIME type (`application/pdf`)
+- ✅ FileType property set for browser viewing compatibility
+- ✅ Associated with PropertyId, LeaseId, and OrganizationId
+- ✅ Document type: "Inspection Report"
+- ✅ Description includes inspection type and date
+- ✅ Inspection documents now open properly in browser viewer
+
+**Bug Fixes and Improvements:**
+
+1. **Form Validation Issue:**
+
+   - Fixed required field validation errors (OrganizationId, UserId, CreatedBy)
+   - Set required fields in OnInitializedAsync before form renders
+   - Added UserContextService integration for user context
+   - Proper error handling and user-friendly messages
+
+2. **Document Viewing Issue:**
+
+   - Fixed inspection PDFs not opening in browser
+   - Added missing FileType property to document creation
+   - Corrected FileExtension format from "pdf" to ".pdf"
+   - Now consistent with other document types
+
+3. **Build Errors Resolved:**
+   - Added missing @using directives for form components
+   - Fixed QuestPDF API usage in footer (DefaultTextStyle pattern)
+   - Resolved duplicate closing braces in code sections
+   - Fixed UserContext service injection naming
+
+**Workflow:**
+
+1. Property manager views property details
+2. Clicks "Create Inspection" from Quick Actions
+3. Fills out inspection form with checklist and details
+4. Uses "Mark All as Good" buttons for efficient data entry
+5. Reviews and submits inspection
+6. System saves inspection with full audit trail
+7. Redirects to view inspection page
+8. User can generate PDF report
+9. PDF saved to documents and opens in browser
+10. Inspection accessible from property view and documents list
+
+**Technical Implementation:**
+
+- Blazor Server with Interactive rendering
+- Form validation using DataAnnotationsValidator
+- Two-way binding for all checklist items
+- Async/await patterns throughout
+- Comprehensive error handling
+- UserContextService for multi-tenant support
+- BaseModel inheritance for audit trails
+- QuestPDF for professional PDF generation
+- SQLite database storage
+
+**Files Created:**
+
+```
+Aquiis.WebUI/
+├── Components/PropertyManagement/Inspections/
+│   ├── Inspection.cs (Model)
+│   ├── InspectionChecklistItem.razor (Reusable component)
+│   ├── InspectionSectionView.razor (Reusable component)
+│   └── Pages/
+│       ├── CreateInspection.razor (347 lines)
+│       └── ViewInspection.razor (365 lines)
+├── Components/PropertyManagement/Documents/
+│   └── InspectionPdfGenerator.cs (PDF generation)
+└── Data/Scripts/
+    ├── 30_CreateTable-Inspections.sql
+    └── 32_UpdateTable-Inspections.sql
+```
+
+**Files Modified:**
+
+```
+Aquiis.WebUI/
+├── Components/PropertyManagement/
+│   ├── PropertyManagementService.cs (Added 6 inspection methods)
+│   ├── Properties/Pages/ViewProperty.razor (Added Create Inspection button)
+│   └── Documents/Pages/Documents.razor (Added delete functionality)
+├── Data/
+│   └── ApplicationDbContext.cs (Added Inspections DbSet and configuration)
+```
+
+### Document Management Enhancements
+
+**Delete Document Functionality**
+
+- ✅ Added delete action button to document lists (grouped and flat views)
+- ✅ Confirmation dialog before deletion ("Are you sure you want to delete...")
+- ✅ Soft delete using PropertyManagementService.DeleteDocumentAsync
+- ✅ Auto-refresh of document list after deletion
+- ✅ Error handling with user-friendly alerts
+- ✅ Consistent with other management pages (tenants, invoices, etc.)
+
+**Document Actions (Complete Set):**
+
+1. **View** (Eye icon) - Opens document in browser tab
+2. **Download** (Download icon) - Saves document to local system
+3. **View Lease** (File-text icon) - Navigate to associated lease (if applicable)
+4. **Delete** (Trash icon) - Remove document with confirmation (NEW)
+
+**Implementation Details:**
+
+- Uses JavaScript confirm dialog for deletion confirmation
+- Calls PropertyManagementService.DeleteDocumentAsync with Document object
+- Reloads document list to reflect changes
+- Displays error alert if deletion fails
+- Available in both grouped-by-property and flat list views
+
 ## November 10, 2025
 
 ### User Management System

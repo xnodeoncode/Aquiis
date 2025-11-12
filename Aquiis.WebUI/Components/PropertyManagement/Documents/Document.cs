@@ -31,6 +31,9 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Documents {
         [StringLength(255)]
         public string FilePath { get; set; } = string.Empty;
 
+        [StringLength(500)]
+        public string ContentType { get; set; } = string.Empty;
+
         [Required]
         [StringLength(100)]
         public string FileType { get; set; } = string.Empty; // PDF, Image, etc.

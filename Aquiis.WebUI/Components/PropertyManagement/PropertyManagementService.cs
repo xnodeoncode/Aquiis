@@ -4,6 +4,7 @@ using Aquiis.WebUI.Components.PropertyManagement.Tenants;
 using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Documents;
+using Aquiis.WebUI.Components.PropertyManagement.Inspections;
 using Aquiis.WebUI.Components.Account;
 using Aquiis.WebUI.Data;
 using Microsoft.AspNetCore.Identity;
@@ -335,7 +336,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
             tenant.LastModifiedOn = DateTime.UtcNow;
             tenant.LastModifiedBy = _userId;
-            
+
             _dbContext.Tenants.Update(tenant);
             await _dbContext.SaveChangesAsync();
         }
@@ -991,6 +992,101 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 _dbContext.Documents.Update(document);
             }
             await _dbContext.SaveChangesAsync();
+        }
+
+        #endregion
+
+        #region Inspections
+        
+        public async Task<List<Inspection>> GetInspectionsAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Inspections
+                .Include(i => i.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Where(i => !i.IsDeleted && i.OrganizationId == organizationId)
+                .OrderByDescending(i => i.InspectionDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Inspection>> GetInspectionsByPropertyIdAsync(int propertyId)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Inspections
+                .Include(i => i.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .Where(i => i.PropertyId == propertyId && !i.IsDeleted && i.OrganizationId == organizationId)
+                .OrderByDescending(i => i.InspectionDate)
+                .ToListAsync();
+        }
+
+        public async Task<Inspection?> GetInspectionByIdAsync(int inspectionId)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Inspections
+                .Include(i => i.Property)
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l!.Tenant)
+                .FirstOrDefaultAsync(i => i.Id == inspectionId && !i.IsDeleted && i.OrganizationId == organizationId);
+        }
+
+        public async Task AddInspectionAsync(Inspection inspection)
+        {
+
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            inspection.CreatedBy = _userId!;
+            inspection.CreatedOn = DateTime.UtcNow;
+            await _dbContext.Inspections.AddAsync(inspection);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateInspectionAsync(Inspection inspection)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+            inspection.LastModifiedBy = _userId!;
+            inspection.LastModifiedOn = DateTime.UtcNow;
+            _dbContext.Inspections.Update(inspection);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteInspectionAsync(int inspectionId)
+        {
+            var userId = await _userContext.GetUserIdAsync();
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var inspection = await _dbContext.Inspections.FindAsync(inspectionId);
+            if (inspection != null && !inspection.IsDeleted)
+            {
+                if (_applicationService.SoftDeleteEnabled)
+                {
+                    inspection.IsDeleted = true;
+                    inspection.LastModifiedOn = DateTime.UtcNow;
+                    inspection.LastModifiedBy = userId;
+                    _dbContext.Inspections.Update(inspection);
+                }
+                else
+                {
+                    _dbContext.Inspections.Remove(inspection);
+                }
+                await _dbContext.SaveChangesAsync();
+            }
         }
 
         #endregion

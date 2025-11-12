@@ -6,6 +6,7 @@ using Aquiis.WebUI.Components.PropertyManagement.Tenants;
 using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Documents;
+using Aquiis.WebUI.Components.PropertyManagement.Inspections;
 using Aquiis.WebUI.Components.Account;
 using Microsoft.AspNetCore.Identity;
 
@@ -25,6 +26,7 @@ namespace Aquiis.WebUI.Data
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Document> Documents { get; set; }
+        public DbSet<Inspection> Inspections { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -145,12 +147,28 @@ namespace Aquiis.WebUI.Data
                 // Configure FileData to use VARBINARY(MAX) for large files
                 entity.Property(e => e.FileData)
                     .HasColumnType("VARBINARY(MAX)");
-                
                 // Configure relationship with User
                 entity.HasOne<IdentityUser>()
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Inspection entity
+            modelBuilder.Entity<Inspection>(entity =>
+            {
+                entity.HasOne(i => i.Property)
+                    .WithMany()
+                    .HasForeignKey(i => i.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(i => i.Lease)
+                    .WithMany()
+                    .HasForeignKey(i => i.LeaseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                
+                entity.HasIndex(e => e.PropertyId);
+                entity.HasIndex(e => e.InspectionDate);
             });
         }
 
