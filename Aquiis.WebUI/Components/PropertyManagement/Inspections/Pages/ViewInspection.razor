@@ -305,7 +305,7 @@ else
             isGenerating = true;
             errorMessage = null;
 
-            var pdfGenerator = new InspectionPdfGenerator();
+            var pdfGenerator = new Aquiis.WebUI.Components.PropertyManagement.Documents.InspectionPdfGenerator();
             var pdfBytes = pdfGenerator.GenerateInspectionPdf(inspection!);
 
             var userId = await UserContext.GetUserIdAsync();

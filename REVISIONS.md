@@ -2,6 +2,149 @@
 
 ## November 12, 2025
 
+### Background Scheduled Task Service
+
+**Automated Task Execution System**
+
+- ✅ Created background service for executing tasks on timed intervals
+- ✅ Implemented daily and hourly task scheduling
+- ✅ Added payment analytics and reporting methods
+- ✅ Created daily report dashboard for property managers
+
+**Components Created:**
+
+1. **ScheduledTaskService.cs** - Background Hosted Service
+
+   - Inherits from `BackgroundService` for automatic startup
+   - Dual timer system for different execution frequencies
+   - **Daily Timer:**
+     - Executes at midnight every day
+     - Calculates total payments received for the day
+     - Logs daily payment totals with formatted output
+     - Extensible for additional daily tasks (reports, reminders, archiving)
+   - **Hourly Timer:**
+     - Executes every hour on the hour
+     - Checks for leases expiring in next 30 days
+     - Logs expiring lease counts
+     - Extensible for hourly checks (maintenance requests, status updates, notifications)
+   - Proper service scoping to create new scope for each execution
+   - Comprehensive logging at Information and Error levels
+   - Clean disposal of timers on service stop
+
+2. **ApplicationService.cs** - Enhanced Analytics Methods
+
+   - `GetDailyPaymentTotalAsync(date)` - Returns total payments for specific date
+   - `GetTodayPaymentTotalAsync()` - Convenience method for today's total
+   - `GetPaymentTotalForRangeAsync(startDate, endDate)` - Sum payments in date range
+   - `GetPaymentStatisticsAsync(startDate, endDate)` - Detailed payment breakdown:
+     - Total amount and payment count
+     - Average payment amount
+     - Payment totals grouped by payment method (Cash, Check, CreditCard, BankTransfer)
+   - `GetLeasesExpiringCountAsync(daysAhead)` - Count leases expiring within X days
+   - All methods properly filter by organization and soft-delete status
+   - Returns `PaymentStatistics` class with comprehensive data
+
+3. **PaymentStatistics Class** - Data Transfer Object
+
+   - StartDate and EndDate for reporting period
+   - TotalAmount (decimal)
+   - PaymentCount (int)
+   - AveragePayment (decimal)
+   - PaymentsByMethod (Dictionary<string, decimal>) - Breakdown by payment method
+
+4. **DailyReport.razor** - Payment Analytics Dashboard
+   - Route: `/administration/dailyreport`
+   - **Summary Cards:**
+     - Today's Total (green) - Current day payments
+     - This Week (blue) - Last 7 days total
+     - This Month (primary) - Current month total
+     - Expiring Leases (warning) - Count of leases expiring in 30 days
+   - **Payment Statistics Section:**
+     - Date range display
+     - Total payment count
+     - Average payment amount
+     - Payment method breakdown list
+   - Refresh button to reload all data
+   - Loading spinner during data fetch
+   - Responsive card layout
+   - Authorization: Administrator and PropertyManager roles
+
+**Technical Implementation:**
+
+- Registered `ScheduledTaskService` as hosted service in Program.cs
+- Service starts automatically with application
+- Uses `Timer` class for precise scheduling
+- Daily timer calculates time until next midnight for first execution
+- Hourly timer starts immediately and repeats every hour
+- Each timer execution creates new service scope to avoid lifetime issues
+- Proper async/await patterns throughout
+- Error handling with try-catch and logging
+- Clean shutdown with timer disposal
+
+**Use Cases Enabled:**
+
+1. **Daily Operations (Midnight Tasks):**
+
+   - Calculate and log daily payment totals
+   - Generate daily financial reports
+   - Send payment reminder emails
+   - Check for overdue invoices
+   - Archive old records
+   - Send summary emails to property managers
+
+2. **Hourly Operations:**
+
+   - Monitor lease expirations
+   - Check maintenance request status
+   - Update lease statuses based on dates
+   - Send time-sensitive notifications
+   - Perform health checks
+
+3. **On-Demand Analytics:**
+   - Daily report dashboard for managers
+   - Real-time payment statistics
+   - Payment method analysis
+   - Lease expiration monitoring
+   - Custom date range reporting
+
+**Logging Output Examples:**
+
+```
+[Information] Scheduled Task Service is starting.
+[Information] Scheduled Task Service started. Daily tasks will run at midnight, hourly tasks every hour.
+[Information] Executing daily tasks at 11/12/2025 12:00:00 AM
+[Information] Daily Payment Total for 2025-11-12: $2,450.00
+[Information] Executing hourly tasks at 11/12/2025 3:00:00 PM
+[Information] 3 lease(s) expiring in the next 30 days
+```
+
+**Files Created:**
+
+```
+Aquiis.WebUI/
+└── Components/Administration/Application/
+    ├── ScheduledTaskService.cs (Background service)
+    ├── ApplicationService.cs (Enhanced with 5 new methods)
+    └── Pages/
+        └── DailyReport.razor (Analytics dashboard)
+```
+
+**Files Modified:**
+
+```
+Aquiis.WebUI/
+└── Program.cs (Registered ScheduledTaskService as hosted service)
+```
+
+**Future Enhancements:**
+
+- Email notifications for daily summaries
+- Configurable task schedules via appsettings.json
+- Additional scheduled tasks for maintenance tracking
+- Export daily reports to PDF
+- Dashboard widgets for real-time metrics
+- Task execution history and audit logs
+
 ### Property Inspection System
 
 **Complete Inspection Feature Implementation**

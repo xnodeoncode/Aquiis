@@ -109,6 +109,9 @@ builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<UserContextService>();
 
+// Register background service for scheduled tasks
+builder.Services.AddHostedService<ScheduledTaskService>();
+
 var app = builder.Build();
 
 // Ensure database is created and migrations are applied
