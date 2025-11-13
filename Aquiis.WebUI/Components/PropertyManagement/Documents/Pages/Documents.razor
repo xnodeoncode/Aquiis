@@ -363,6 +363,10 @@ else
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? PropertyId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadDocuments();
@@ -422,6 +426,13 @@ else
         {
             filteredDocuments = filteredDocuments
                 .Where(d => d.DocumentType == selectedDocumentType)
+                .ToList();
+        }
+
+        if(PropertyId.HasValue)
+        {
+            filteredDocuments = filteredDocuments
+                .Where(d => d.PropertyId == PropertyId.Value)
                 .ToList();
         }
 
@@ -496,6 +507,7 @@ else
         searchTerm = string.Empty;
         selectedDocumentType = string.Empty;
         groupByProperty = false;
+        PropertyId = null;
         ApplyFilters();
     }
 

@@ -70,6 +70,31 @@ namespace Aquiis.WebUI.Components.Administration.Application
                     today.ToString("yyyy-MM-dd"), 
                     dailyTotal);
 
+                // Check for overdue routine inspections
+                var overdueInspections = await propertyManagementService.GetPropertiesWithOverdueInspectionsAsync();
+                if (overdueInspections.Any())
+                {
+                    _logger.LogWarning("{Count} propert(ies) have overdue routine inspections", 
+                        overdueInspections.Count);
+                    
+                    foreach (var property in overdueInspections.Take(5)) // Log first 5
+                    {
+                        var daysOverdue = (DateTime.Today - property.NextRoutineInspectionDueDate!.Value).Days;
+                        _logger.LogWarning("Property {Address} - Inspection overdue by {Days} days (Due: {DueDate})",
+                            property.Address,
+                            daysOverdue,
+                            property.NextRoutineInspectionDueDate.Value.ToString("yyyy-MM-dd"));
+                    }
+                }
+
+                // Check for inspections due soon (within 30 days)
+                var dueSoonInspections = await propertyManagementService.GetPropertiesWithInspectionsDueSoonAsync(30);
+                if (dueSoonInspections.Any())
+                {
+                    _logger.LogInformation("{Count} propert(ies) have routine inspections due within 30 days", 
+                        dueSoonInspections.Count);
+                }
+
                 // You can add more daily tasks here:
                 // - Generate daily reports
                 // - Send payment reminders

@@ -42,7 +42,7 @@ namespace Aquiis.WebUI.Data
                 entity.HasOne<ApplicationUser>()
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Configure Tenant entity
@@ -54,7 +54,7 @@ namespace Aquiis.WebUI.Data
                 entity.HasOne<ApplicationUser>()
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Configure Lease entity

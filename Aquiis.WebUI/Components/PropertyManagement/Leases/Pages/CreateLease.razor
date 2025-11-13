@@ -6,6 +6,7 @@
 @using Aquiis.WebUI.Components.PropertyManagement.Invoices
 @using Aquiis.WebUI.Components.PropertyManagement.Payments
 @using Aquiis.WebUI.Components.PropertyManagement.Documents
+@using Aquiis.WebUI.Components.Administration.Application
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
@@ -104,10 +105,10 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Status</label>
                             <InputSelect @bind-Value="leaseModel.Status" class="form-select">
-                                <option value="Active">Active</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Expired">Expired</option>
-                                <option value="Terminated">Terminated</option>
+                                @foreach (var status in ApplicationConstants.LeaseStatuses.AllLeaseStatuses)
+                                {
+                                    <option value="@status">@status</option>
+                                }
                             </InputSelect>
                             <ValidationMessage For="() => leaseModel.Status" class="text-danger" />
                         </div>
@@ -192,7 +193,7 @@
     private bool isSubmitting = false;
     private string errorMessage = string.Empty;
 
-    [CascadingParameter]
+        [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
@@ -234,7 +235,7 @@
         // Set default values
         leaseModel.StartDate = DateTime.Today;
         leaseModel.EndDate = DateTime.Today.AddYears(1);
-        leaseModel.Status = "Active";
+        leaseModel.Status = ApplicationConstants.LeaseStatuses.Active;
     }
 
     private void OnPropertyChanged()
@@ -306,7 +307,7 @@
             await PropertyManagementService.AddLeaseAsync(lease);
 
             // Mark property as unavailable if lease is active
-            if (leaseModel.Status == "Active")
+            if (leaseModel.Status == ApplicationConstants.LeaseStatuses.Active)
             {
                 property.IsAvailable = false;
             }
@@ -366,7 +367,7 @@
 
         [Required(ErrorMessage = "Status is required")]
         [StringLength(50)]
-        public string Status { get; set; } = "Active";
+        public string Status { get; set; } = ApplicationConstants.LeaseStatuses.Active;
 
         [StringLength(1000, ErrorMessage = "Terms cannot exceed 1000 characters")]
         public string Terms { get; set; } = string.Empty;

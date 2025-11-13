@@ -145,6 +145,70 @@ else
                 </div>
             </div>
 
+            <!-- Routine Inspection Status Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Routine Inspection</h5>
+                </div>
+                <div class="card-body">
+                    @if (property.LastRoutineInspectionDate.HasValue)
+                    {
+                        <div class="mb-3">
+                            <strong>Last Inspection:</strong>
+                            <p class="mb-0">@property.LastRoutineInspectionDate.Value.ToString("MMM dd, yyyy")</p>
+                        </div>
+                    }
+                    
+                    @if (property.NextRoutineInspectionDueDate.HasValue)
+                    {
+                        <div class="mb-3">
+                            <strong>Next Inspection Due:</strong>
+                            <p class="mb-0">@property.NextRoutineInspectionDueDate.Value.ToString("MMM dd, yyyy")</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Status:</strong>
+                            <p class="mb-0">
+                                <span class="badge @GetInspectionStatusBadge(property.InspectionStatus)">
+                                    @property.InspectionStatus
+                                </span>
+                            </p>
+                        </div>
+
+                        @if (property.IsInspectionOverdue)
+                        {
+                            <div class="alert alert-danger py-2 mb-2">
+                                <small>
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <strong>Overdue by @property.DaysOverdue days</strong>
+                                </small>
+                            </div>
+                        }
+                        else if (property.DaysUntilInspectionDue <= 30)
+                        {
+                            <div class="alert alert-warning py-2 mb-2">
+                                <small>
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                    <strong>Due in @property.DaysUntilInspectionDue days</strong>
+                                </small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info py-2 mb-2">
+                            <small><i class="bi bi-info-circle"></i> No inspection scheduled</small>
+                        </div>
+                    }
+
+                    <div class="d-grid">
+                        <button class="btn btn-sm btn-outline-warning" @onclick="CreateInspection">
+                            <i class="bi bi-clipboard-check"></i> Complete Inspection
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             @if (activeLeases.Any())
             {
                 <div class="card mt-3">
@@ -329,6 +393,18 @@ else
             "Payment Receipt" => "bg-success",
             "Inspection Report" => "bg-info",
             "Addendum" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetInspectionStatusBadge(string status)
+    {
+        return status switch
+        {
+            "Overdue" => "bg-danger",
+            "Due Soon" => "bg-warning",
+            "Scheduled" => "bg-success",
+            "Not Scheduled" => "bg-secondary",
             _ => "bg-secondary"
         };
     }

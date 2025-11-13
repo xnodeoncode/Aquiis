@@ -78,35 +78,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             .FirstOrDefaultAsync(p => p.Id == propertyId && p.OrganizationId == organizationId && !p.IsDeleted);
         }
 
-        // public async Task<Property?> GetPropertyByIdNoLeaseAsync(int propertyId)
-        // {
-        //     if (_userId == null)
-        //     {
-        //         // Handle the case when the user is not authenticated
-        //         throw new UnauthorizedAccessException("User is not authenticated.");
-        //     }
-            
-        //     var organizationId = await _userContext.GetOrganizationIdAsync();
-             
-        //      return await _dbContext.Properties
-        //     .FirstOrDefaultAsync(p => p.Id == propertyId && p.OrganizationId == organizationId && !p.IsDeleted);
-        // }
-
-        // public async Task<List<Property>> GetAvailablePropertiesAsync()
-        // {
-        //     if (_userId == null)
-        //     {
-        //         // Handle the case when the user is not authenticated
-        //         throw new UnauthorizedAccessException("User is not authenticated.");
-        //     }
-            
-        //     var organizationId = await _userContext.GetOrganizationIdAsync();
-
-        //     return await _dbContext.Properties
-        //     .Include(p => p.Documents)
-        //     .Where(p => p.IsAvailable && p.OrganizationId == organizationId && !p.IsDeleted).ToListAsync();
-        // }
-
         public async Task<List<Property>> GetPropertiesByOrganizationIdAsync(string organizationId)
         {
             var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -140,6 +111,9 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
             property.OrganizationId = organizationId!;
 
+            // Set initial routine inspection due date to 30 days from creation
+            property.NextRoutineInspectionDueDate = DateTime.Today.AddDays(30);
+
             await _dbContext.Properties.AddAsync(property);
             await _dbContext.SaveChangesAsync();
         }
@@ -164,8 +138,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             _dbContext.Properties.Update(property);
             await _dbContext.SaveChangesAsync();
         }
-
-        
 
         public async Task DeletePropertyAsync(int propertyId)
         {
@@ -221,6 +193,21 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 property.LastModifiedBy = _userId;
                 _dbContext.Properties.Update(property);
                 await _dbContext.SaveChangesAsync();
+
+                var leases = await GetLeasesByPropertyIdAsync(propertyId);
+                foreach (var lease in leases)
+                {
+                    lease.Status = ApplicationConstants.LeaseStatuses.Terminated;
+                    lease.LastModifiedOn = DateTime.UtcNow;
+                    lease.LastModifiedBy = _userId;
+                    _dbContext.Leases.Update(lease);
+                }
+
+                var documents = await GetDocumentsByPropertyIdAsync(propertyId);
+                foreach (var document in documents)
+                {
+                    await DeleteDocumentAsync(document);
+                }
             }
         }
         #endregion
@@ -416,6 +403,29 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 .Include(l => l.Property)
                 .Include(l => l.Tenant)
                 .FirstOrDefaultAsync(l => l.Id == leaseId && !l.IsDeleted && !l.Tenant.IsDeleted && !l.Property.IsDeleted && l.Property.OrganizationId == organizationId);
+        }
+
+        public async Task<List<Lease>> GetLeasesByPropertyIdAsync(int propertyId)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                // Handle the case when the user is not authenticated
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+            
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            var leases = await _dbContext.Leases
+            .Include(l => l.Property)
+            .Include(l => l.Tenant)
+            .Where(l => l.PropertyId == propertyId && !l.IsDeleted && l.Property.OrganizationId == organizationId)
+            .ToListAsync();
+            
+            return leases
+                .Where(l => l.IsActive)
+                .ToList();
         }
 
         public async Task<List<Lease>> GetActiveLeasesByPropertyIdAsync(int propertyId)
@@ -1049,6 +1059,14 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             inspection.CreatedOn = DateTime.UtcNow;
             await _dbContext.Inspections.AddAsync(inspection);
             await _dbContext.SaveChangesAsync();
+
+            // Update property inspection tracking if this is a routine inspection
+            if (inspection.InspectionType == "Routine")
+            {
+                await UpdatePropertyInspectionTrackingAsync(
+                    inspection.PropertyId, 
+                    inspection.InspectionDate);
+            }
         }
 
         public async Task UpdateInspectionAsync(Inspection inspection)
@@ -1086,6 +1104,106 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 {
                     _dbContext.Inspections.Remove(inspection);
                 }
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
+        #endregion
+
+        #region Inspection Tracking
+
+        /// <summary>
+        /// Updates property inspection tracking after a routine inspection is completed
+        /// </summary>
+        public async Task UpdatePropertyInspectionTrackingAsync(int propertyId, DateTime inspectionDate, int intervalMonths = 12)
+        {
+            var property = await _dbContext.Properties.FindAsync(propertyId);
+            if (property == null || property.IsDeleted)
+            {
+                throw new InvalidOperationException("Property not found.");
+            }
+
+            property.LastRoutineInspectionDate = inspectionDate;
+            property.NextRoutineInspectionDueDate = inspectionDate.AddMonths(intervalMonths);
+            property.RoutineInspectionIntervalMonths = intervalMonths;
+            property.LastModifiedOn = DateTime.UtcNow;
+            
+            var userId = await _userContext.GetUserIdAsync();
+            property.LastModifiedBy = userId ?? "System";
+
+            _dbContext.Properties.Update(property);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Gets properties with overdue routine inspections
+        /// </summary>
+        public async Task<List<Property>> GetPropertiesWithOverdueInspectionsAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Properties
+                .Where(p => p.OrganizationId == organizationId && 
+                           !p.IsDeleted &&
+                           p.NextRoutineInspectionDueDate.HasValue &&
+                           p.NextRoutineInspectionDueDate.Value < DateTime.Today)
+                .OrderBy(p => p.NextRoutineInspectionDueDate)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets properties with inspections due within specified days
+        /// </summary>
+        public async Task<List<Property>> GetPropertiesWithInspectionsDueSoonAsync(int daysAhead = 30)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            var dueDate = DateTime.Today.AddDays(daysAhead);
+            
+            return await _dbContext.Properties
+                .Where(p => p.OrganizationId == organizationId && 
+                           !p.IsDeleted &&
+                           p.NextRoutineInspectionDueDate.HasValue &&
+                           p.NextRoutineInspectionDueDate.Value >= DateTime.Today &&
+                           p.NextRoutineInspectionDueDate.Value <= dueDate)
+                .OrderBy(p => p.NextRoutineInspectionDueDate)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets count of properties with overdue inspections
+        /// </summary>
+        public async Task<int> GetOverdueInspectionCountAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            return await _dbContext.Properties
+                .CountAsync(p => p.OrganizationId == organizationId && 
+                                !p.IsDeleted &&
+                                p.NextRoutineInspectionDueDate.HasValue &&
+                                p.NextRoutineInspectionDueDate.Value < DateTime.Today);
+        }
+
+        /// <summary>
+        /// Initializes inspection tracking for a property (sets first inspection due date)
+        /// </summary>
+        public async Task InitializePropertyInspectionTrackingAsync(int propertyId, int intervalMonths = 12)
+        {
+            var property = await _dbContext.Properties.FindAsync(propertyId);
+            if (property == null || property.IsDeleted)
+            {
+                throw new InvalidOperationException("Property not found.");
+            }
+
+            if (!property.NextRoutineInspectionDueDate.HasValue)
+            {
+                property.NextRoutineInspectionDueDate = DateTime.Today.AddMonths(intervalMonths);
+                property.RoutineInspectionIntervalMonths = intervalMonths;
+                property.LastModifiedOn = DateTime.UtcNow;
+                
+                var userId = await _userContext.GetUserIdAsync();
+                property.LastModifiedBy = userId ?? "System";
+
+                _dbContext.Properties.Update(property);
                 await _dbContext.SaveChangesAsync();
             }
         }

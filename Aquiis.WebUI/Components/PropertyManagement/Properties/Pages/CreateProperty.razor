@@ -1,4 +1,5 @@
 @page "/propertymanagement/properties/create"
+@using Aquiis.WebUI.Components.Administration.Application
 @using Aquiis.WebUI.Components.PropertyManagement.Properties
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
@@ -44,12 +45,18 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">State</label>
-                            <InputText @bind-Value="propertyModel.State" class="form-control" placeholder="State" />
+                            <InputSelect @bind-Value="propertyModel.State" class="form-select">
+                                <option value="">Select State</option>
+                                @foreach (var state in States.StatesArray())
+                                {
+                                    <option value="@state.Abbreviation">@state.Name</option>
+                                }
+                            </InputSelect>
                             <ValidationMessage For="() => propertyModel.State" class="text-danger" />
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Zip Code</label>
-                            <InputText @bind-Value="propertyModel.ZipCode" class="form-control" placeholder="Zip Code" />
+                            <label class="form-label" for="@propertyModel.ZipCode">Postal Code</label>
+                            <InputText @bind-Value="propertyModel.ZipCode" class="form-control" placeholder="#####-####" />
                             <ValidationMessage For="() => propertyModel.ZipCode" class="text-danger" />
                         </div>
                     </div>
@@ -162,6 +169,7 @@
             SquareFeet = propertyModel.SquareFeet,
             Description = propertyModel.Description,
             IsAvailable = propertyModel.IsAvailable,
+            CreatedBy = userId,
             CreatedOn = DateTime.UtcNow,
             LastModifiedOn = DateTime.UtcNow
         };
@@ -191,7 +199,12 @@
         [StringLength(50, ErrorMessage = "State cannot exceed 50 characters")]
         public string State { get; set; } = string.Empty;
 
-        [StringLength(20, ErrorMessage = "Zip Code cannot exceed 20 characters")]
+        [StringLength(10, ErrorMessage = "Zip Code cannot exceed 10 characters")]
+        [DataType(DataType.PostalCode)]
+        [RegularExpression(@"^\d{5}(-\d{4})?$", ErrorMessage = "Invalid Zip Code format.")]
+        [MaxLength(10, ErrorMessage = "Zip Code cannot exceed 10 characters.")]
+        [Display(Name = "Postal Code", Description = "Postal Code of the property",
+            Prompt = "e.g., 12345 or 12345-6789", ShortName = "ZIP")]
         public string ZipCode { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Property type is required")]
