@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Aquiis.WebUI.Components.Administration.Application;
 using Aquiis.WebUI.Services;
 using System.Security.Claims;
+using Microsoft.Extensions.Options;
 
 namespace Aquiis.WebUI.Components.PropertyManagement
 {
@@ -19,20 +20,20 @@ namespace Aquiis.WebUI.Components.PropertyManagement
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ApplicationService _applicationService;
+        private readonly ApplicationSettings _applicationSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserContextService _userContext;
 
         public PropertyManagementService(
             ApplicationDbContext dbContext, 
             UserManager<ApplicationUser> userManager, 
-            ApplicationService service, 
+            IOptions<ApplicationSettings> settings, 
             IHttpContextAccessor httpContextAccessor,
             UserContextService userContext)
         {
             _dbContext = dbContext;
             _userManager = userManager;
-            _applicationService = service;
+            _applicationSettings = settings.Value;
             _httpContextAccessor = httpContextAccessor;
             _userContext = userContext;
 
@@ -179,7 +180,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             var organizationId = await _userContext.GetOrganizationIdAsync();
 
             
-            if (_applicationService.SoftDeleteEnabled)
+            if (_applicationSettings.SoftDeleteEnabled)
             {
                 await SoftDeletePropertyAsync(propertyId);
                 return;
@@ -350,7 +351,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 // Handle the case when the user is not authenticated
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
-            if (_applicationService.SoftDeleteEnabled)
+            if (_applicationSettings.SoftDeleteEnabled)
             {
                 await SoftDeleteTenantAsync(tenant, userId);
                 return;
@@ -547,7 +548,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 throw new UnauthorizedAccessException("User does not have access to this lease.");
             }
 
-            if (_applicationService.SoftDeleteEnabled)
+            if (_applicationSettings.SoftDeleteEnabled)
             {
                 await SoftDeleteLeaseAsync(leaseId, userId);
                 return;
@@ -691,7 +692,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            if (_applicationService.SoftDeleteEnabled)
+            if (_applicationSettings.SoftDeleteEnabled)
             {
                 invoice.IsDeleted = true;
                 invoice.LastModifiedOn = DateTime.UtcNow;
@@ -799,7 +800,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
 
             var invoiceId = payment.InvoiceId;
 
-            if (_applicationService.SoftDeleteEnabled)
+            if (_applicationSettings.SoftDeleteEnabled)
             {
                 payment.IsDeleted = true;
                 payment.LastModifiedOn = DateTime.UtcNow;
@@ -1074,7 +1075,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             var inspection = await _dbContext.Inspections.FindAsync(inspectionId);
             if (inspection != null && !inspection.IsDeleted)
             {
-                if (_applicationService.SoftDeleteEnabled)
+                if (_applicationSettings.SoftDeleteEnabled)
                 {
                     inspection.IsDeleted = true;
                     inspection.LastModifiedOn = DateTime.UtcNow;

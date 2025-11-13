@@ -179,8 +179,21 @@ else
                     <hr />
                     <div class="d-grid gap-2">
                         <button class="btn btn-success btn-sm" @onclick="GeneratePdf" disabled="@isGenerating">
+                            @if (isGenerating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
                             <i class="bi bi-file-pdf"></i> Generate PDF
                         </button>
+                        @if (generatedDocument != null)
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="ViewDocument">
+                                <i class="bi bi-eye"></i> View PDF
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" @onclick="DownloadDocument">
+                                <i class="bi bi-download"></i> Download PDF
+                            </button>
+                        }
                         <button class="btn btn-outline-primary btn-sm" @onclick="EditInspection">
                             <i class="bi bi-pencil"></i> Edit Inspection
                         </button>
@@ -199,6 +212,7 @@ else
     private string? successMessage;
     private string? errorMessage;
     private bool isGenerating = false;
+    private Document? generatedDocument = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -333,6 +347,7 @@ else
 
             await PropertyManagementService.AddDocumentAsync(document);
 
+            generatedDocument = document;
             successMessage = "Inspection PDF generated and saved successfully!";
         }
         catch (Exception ex)
@@ -342,6 +357,27 @@ else
         finally
         {
             isGenerating = false;
+        }
+    }
+
+    private async Task ViewDocument()
+    {
+        if (generatedDocument != null)
+        {
+            var base64Data = Convert.ToBase64String(generatedDocument.FileData);
+            await JSRuntime.InvokeVoidAsync("viewFile", base64Data, generatedDocument.FileType);
+        }
+    }
+
+    private async Task DownloadDocument()
+    {
+        if (generatedDocument != null)
+        {
+            var fileName = generatedDocument.FileName;
+            var fileData = generatedDocument.FileData;
+            var mimeType = generatedDocument.FileType;
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileData), mimeType);
         }
     }
 

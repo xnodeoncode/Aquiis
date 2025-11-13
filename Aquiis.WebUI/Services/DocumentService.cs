@@ -40,7 +40,7 @@ namespace Aquiis.WebUI.Services
         public async Task<byte[]> GenerateLeaseDocumentAsync(Lease lease)
         {
             // Implementation for generating lease document
-            return LeasePdfGenerator.GenerateLeasePdf(lease);
+            return await LeasePdfGenerator.GenerateLeasePdf(lease);
         }
     }
 }

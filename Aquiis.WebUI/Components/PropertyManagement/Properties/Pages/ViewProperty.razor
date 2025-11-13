@@ -2,11 +2,13 @@
 
 @using Aquiis.WebUI.Components.PropertyManagement.Properties
 @using Aquiis.WebUI.Components.PropertyManagement.Leases
+@using Aquiis.WebUI.Components.PropertyManagement.Documents
 @using Aquiis.WebUI.Components.PropertyManagement
 @using Microsoft.AspNetCore.Authorization
 
 @inject PropertyManagementService PropertyManagementService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 @attribute [Authorize(Roles = "PropertyManager")]
 @rendermode InteractiveServer
 @if (property == null)
@@ -165,6 +167,54 @@ else
                     </div>
                 </div>
             }
+
+            @if (propertyDocuments.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Documents</h5>
+                        <span class="badge bg-secondary">@propertyDocuments.Count</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            @foreach (var doc in propertyDocuments.OrderByDescending(d => d.CreatedOn))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="bi @GetFileIcon(doc.FileExtension) me-2"></i>
+                                                <strong>@doc.FileName</strong>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(doc.Description))
+                                            {
+                                                <small class="text-muted d-block">@doc.Description</small>
+                                            }
+                                            <small class="text-muted">
+                                                <span class="badge @GetDocumentTypeBadge(doc.DocumentType)">@doc.DocumentType</span>
+                                                @doc.FileSizeFormatted | @doc.CreatedOn.ToString("MMM dd, yyyy")
+                                            </small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" @onclick="() => ViewDocument(doc)" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" @onclick="() => DownloadDocument(doc)" title="Download">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-secondary w-100" @onclick="ViewDocuments">
+                                <i class="bi bi-folder"></i> View All Documents
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 }
@@ -172,7 +222,8 @@ else
     [Parameter]
     public int PropertyId { get; set; }
 
-    List<Lease> activeLeases = new();  
+    List<Lease> activeLeases = new();
+    List<Document> propertyDocuments = new();
 
     private bool isAuthorized = true; 
 
@@ -203,6 +254,13 @@ else
             return;
         }
         activeLeases = await PropertyManagementService.GetActiveLeasesByPropertyIdAsync(PropertyId);
+        
+        // Load documents for this property
+        var allDocuments = await PropertyManagementService.GetDocumentsAsync();
+        propertyDocuments = allDocuments
+            .Where(d => d.PropertyId == PropertyId && !d.IsDeleted)
+            .OrderByDescending(d => d.CreatedOn)
+            .ToList();
     }
 
     private void EditProperty()
@@ -233,5 +291,45 @@ else
     private void BackToList()
     {
         NavigationManager.NavigateTo("/propertymanagement/properties");
+    }
+
+    private async Task ViewDocument(Document doc)
+    {
+        var base64Data = Convert.ToBase64String(doc.FileData);
+        await JSRuntime.InvokeVoidAsync("viewFile", base64Data, doc.FileType);
+    }
+
+    private async Task DownloadDocument(Document doc)
+    {
+        var fileName = doc.FileName;
+        var fileData = doc.FileData;
+        var mimeType = doc.FileType;
+
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileData), mimeType);
+    }
+
+    private string GetFileIcon(string extension)
+    {
+        return extension.ToLower() switch
+        {
+            ".pdf" => "bi-file-pdf text-danger",
+            ".doc" or ".docx" => "bi-file-word text-primary",
+            ".jpg" or ".jpeg" or ".png" => "bi-file-image text-success",
+            ".txt" => "bi-file-text",
+            _ => "bi-file-earmark"
+        };
+    }
+
+    private string GetDocumentTypeBadge(string documentType)
+    {
+        return documentType switch
+        {
+            "Lease Agreement" => "bg-primary",
+            "Invoice" => "bg-warning",
+            "Payment Receipt" => "bg-success",
+            "Inspection Report" => "bg-info",
+            "Addendum" => "bg-secondary",
+            _ => "bg-secondary"
+        };
     }
 }

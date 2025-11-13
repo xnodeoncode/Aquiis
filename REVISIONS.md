@@ -1,5 +1,118 @@
 # Aquiis - Revision History
 
+## November 13, 2025
+
+### Inspection PDF Document Management
+
+**Enhanced PDF Generation and Viewing**
+
+- ✅ Added View and Download buttons to inspection view page after PDF generation
+- ✅ Improved user experience with immediate access to generated PDFs
+- ✅ Integrated document viewing/downloading without leaving inspection page
+
+**Features Added:**
+
+1. **ViewInspection.razor Enhancements:**
+
+   - **View PDF Button** - Opens generated PDF in browser tab using blob URL
+   - **Download PDF Button** - Downloads PDF file to local system
+   - **Loading Spinner** - Shows spinner on Generate PDF button during generation
+   - **State Management** - Stores generated document for immediate access
+   - Buttons appear only after successful PDF generation
+   - Uses existing JavaScript functions (`viewFile` and `downloadFile`)
+
+2. **Implementation Details:**
+   - Added `generatedDocument` state variable to store Document object
+   - `ViewDocument()` method - Converts binary data to base64 and opens in new tab
+   - `DownloadDocument()` method - Triggers file download with correct filename and MIME type
+   - Enhanced Generate PDF button with loading state indicator
+   - Consistent with document management system patterns
+
+**User Workflow:**
+
+1. View inspection report
+2. Click "Generate PDF" button (shows spinner while generating)
+3. PDF saved to Documents table
+4. View and Download buttons appear immediately
+5. Click "View PDF" to open in browser or "Download PDF" to save locally
+6. No need to navigate to Documents page for immediate access
+
+### Property Document List Integration
+
+**Property View Page Document Management**
+
+- ✅ Added comprehensive document list to property view page
+- ✅ Integrated View and Download functionality for property documents
+- ✅ Enhanced property sidebar with document overview
+
+**Features Added:**
+
+1. **Documents Card in Property Sidebar:**
+
+   - Displays all documents associated with the property
+   - Shows document count badge in header
+   - Ordered by most recent upload date
+   - Clean list-group layout with file details
+
+2. **Document Information Display:**
+
+   - **File Icon** - Color-coded icons based on extension (PDF=red, Word=blue, Image=green, Text=gray)
+   - **File Name** - Prominent display with icon
+   - **Description** - Shows document description if available
+   - **Document Type Badge** - Color-coded badges:
+     - Lease Agreement (Primary/Blue)
+     - Invoice (Warning/Yellow)
+     - Payment Receipt (Success/Green)
+     - Inspection Report (Info/Light Blue)
+     - Addendum (Secondary/Gray)
+   - **File Size** - Formatted file size display
+   - **Upload Date** - Date document was created/uploaded
+
+3. **Action Buttons:**
+
+   - **View Button** (Eye icon) - Opens document in new browser tab
+   - **Download Button** (Download icon) - Downloads document to local system
+   - Both buttons use JSRuntime with existing JavaScript functions
+   - Consistent with Documents page functionality
+
+4. **Additional Features:**
+   - "View All Documents" button at bottom of list
+   - Links to full documents page for comprehensive management
+   - Auto-loads documents when property page loads
+   - Filters documents by PropertyId and excludes soft-deleted items
+   - Integrates seamlessly with existing property view layout
+
+**Technical Implementation:**
+
+- Added `Documents` namespace using directive
+- Injected `IJSRuntime` for browser interaction
+- Added `propertyDocuments` list to component state
+- `ViewDocument(doc)` - Opens document in browser using blob URL
+- `DownloadDocument(doc)` - Triggers file download
+- `GetFileIcon(extension)` - Returns Bootstrap icon class based on file type
+- `GetDocumentTypeBadge(documentType)` - Returns badge color class
+- Loads documents in `LoadProperty()` method alongside leases
+
+**Files Modified:**
+
+```
+Aquiis.WebUI/
+└── Components/PropertyManagement/
+    ├── Inspections/Pages/
+    │   └── ViewInspection.razor (Added PDF view/download buttons)
+    └── Properties/Pages/
+        └── ViewProperty.razor (Added documents list with view/download)
+```
+
+**User Benefits:**
+
+- Quick access to property-related documents without navigation
+- Immediate viewing and downloading of inspection PDFs
+- Visual document type identification with color-coded badges
+- Streamlined workflow for property managers
+- Consistent document interaction across application
+- Reduced clicks to access important documents
+
 ## November 12, 2025
 
 ### Background Scheduled Task Service

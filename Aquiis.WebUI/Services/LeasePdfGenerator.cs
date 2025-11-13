@@ -7,7 +7,7 @@ namespace Aquiis.WebUI.Services
 {
     public class LeasePdfGenerator
     {
-        public static byte[] GenerateLeasePdf(Lease lease)
+        public static async Task<byte[]> GenerateLeasePdf(Lease lease)
         {
             // Configure QuestPDF license
             QuestPDF.Settings.License = LicenseType.Community;
@@ -31,8 +31,8 @@ namespace Aquiis.WebUI.Services
                     });
                 });
             });
-
-            return document.GeneratePdf();
+    
+            return await Task.FromResult<byte[]>(document.GeneratePdf());
         }
 
         private static void ComposeHeader(IContainer container)
