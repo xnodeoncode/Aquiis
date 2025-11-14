@@ -251,6 +251,10 @@ else
     
     private bool isLoading = true;
 
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? PropertyId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -262,6 +266,11 @@ else
         try
         {
             allRequests = await PropertyManagementService.GetMaintenanceRequestsAsync();
+            
+            if (PropertyId.HasValue)
+            {
+                allRequests = allRequests.Where(r => r.PropertyId == PropertyId.Value).ToList();
+            }
             
             // Summary cards
             urgentRequests = allRequests.Where(r => r.Priority == "Urgent" && r.Status != "Completed" && r.Status != "Cancelled").ToList();

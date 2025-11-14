@@ -21,6 +21,10 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Tenants {
         public string LastName { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(100)]
+        public string IdentificationNumber { get; set; } = string.Empty;
+
+        [Required]
         [EmailAddress]
         [StringLength(255)]
         public string Email { get; set; } = string.Empty;
@@ -31,6 +35,8 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Tenants {
 
         [DataType(DataType.Date)]
         public DateTime? DateOfBirth { get; set; }
+
+        public bool IsActive { get; set; } = true;
 
         [StringLength(200)]
         public string EmergencyContactName { get; set; } = string.Empty;

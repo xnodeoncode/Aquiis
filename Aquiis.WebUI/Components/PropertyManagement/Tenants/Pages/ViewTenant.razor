@@ -68,6 +68,17 @@ else
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Identification Number:</strong>
+                            <p>@(!string.IsNullOrEmpty(tenant.IdentificationNumber) ? tenant.IdentificationNumber : "Not provided")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Status:</strong>
+                            <p>@(tenant.IsActive ? "Active" : "Inactive")</p>
+                        </div>
+                    </div>
+
                     @if (!string.IsNullOrEmpty(tenant.EmergencyContactName) || !string.IsNullOrEmpty(tenant.EmergencyContactPhone))
                     {
                         <hr />

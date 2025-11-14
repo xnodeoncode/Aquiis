@@ -1,5 +1,7 @@
 @page "/administration/dashboard"
 
+@inject NavigationManager NavigationManager
+
 @rendermode InteractiveServer
 
 <PageTitle>Application Management Dashboard</PageTitle>
@@ -84,7 +86,12 @@
         </div>
     }
 
-    @code {
+    <div>
+    <button class="btn btn-primary">Manage Settings</button>
+    <button class="btn btn-secondary" @onclick="ViewDailyReport">View System Status</button>
+</div>
+
+@code {
     private bool isLoading = false;
     //private int totalProperties = 0;
     //private int availableProperties = 0;
@@ -119,5 +126,11 @@
         if (string.IsNullOrEmpty(userId))
             return;
 
+    }
+
+    private void ViewDailyReport()
+    {
+        // Logic to view the daily system status report
+        NavigationManager.NavigateTo("/administration/application/dailyreport");
     }
 }

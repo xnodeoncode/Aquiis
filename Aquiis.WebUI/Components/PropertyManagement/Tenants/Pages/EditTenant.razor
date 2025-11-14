@@ -85,6 +85,11 @@ else
                                 <InputDate @bind-Value="tenantModel.DateOfBirth" class="form-control" />
                                 <ValidationMessage For="() => tenantModel.DateOfBirth" class="text-danger" />
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Identification Number</label>
+                                <InputText @bind-Value="tenantModel.IdentificationNumber" class="form-control" placeholder="Identification number" />
+                                <ValidationMessage For="() => tenantModel.IdentificationNumber" class="text-danger" />
+                            </div>
                         </div>
 
                         <div class="row">
@@ -99,7 +104,12 @@ else
                                 <ValidationMessage For="() => tenantModel.EmergencyContactPhone" class="text-danger" />
                             </div>
                         </div>
-
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status: </label>
+                                <InputCheckbox @bind-Value="tenantModel.IsActive" class="form-check-input" /> Active
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Notes</label>
@@ -208,6 +218,8 @@ else
             Email = tenant.Email,
             PhoneNumber = tenant.PhoneNumber,
             DateOfBirth = tenant.DateOfBirth,
+            IdentificationNumber = tenant.IdentificationNumber,
+            IsActive = tenant.IsActive,
             EmergencyContactName = tenant.EmergencyContactName,
             EmergencyContactPhone = tenant.EmergencyContactPhone,
             Notes = tenant.Notes
@@ -237,6 +249,8 @@ else
             tenant.Email = tenantModel.Email;
             tenant.PhoneNumber = tenantModel.PhoneNumber;
             tenant.DateOfBirth = tenantModel.DateOfBirth;
+            tenant.IdentificationNumber = tenantModel.IdentificationNumber;
+            tenant.IsActive = tenantModel.IsActive;
             tenant.EmergencyContactName = tenantModel.EmergencyContactName;
             tenant.EmergencyContactPhone = tenantModel.EmergencyContactPhone;
             tenant.Notes = tenantModel.Notes;
@@ -307,6 +321,12 @@ else
         public string PhoneNumber { get; set; } = string.Empty;
 
         public DateTime? DateOfBirth { get; set; }
+
+        [Required(ErrorMessage = "Identification number is required")]
+        [StringLength(100, ErrorMessage = "Identification number cannot exceed 100 characters")]
+        public string IdentificationNumber { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; }
 
         [StringLength(200, ErrorMessage = "Emergency contact name cannot exceed 200 characters")]
         public string EmergencyContactName { get; set; } = string.Empty;

@@ -34,13 +34,13 @@ else if (!tenants.Any())
 else
 {
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="text" class="form-control" placeholder="Search tenants..." @bind="searchTerm" @onkeyup="FilterTenants" />
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="selectedLeaseStatus" @bind:after="FilterTenants">
                 <option value="">All Lease Statuses</option>
                 <option value="Active">Active Lease</option>
@@ -50,7 +50,13 @@ else
                 <option value="No Lease">No Lease</option>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <select class="form-select" @bind="selectedTenantStatus" @bind:after="FilterTenants">
+                <option value="1">Active Tenants</option>
+                <option value="0">Inactive Tenants</option>
+            </select>
+        </div>
+        <div class="col-md-3">
             <button class="btn btn-outline-secondary" @onclick="ClearFilters">
                 <i class="bi bi-x-circle"></i> Clear Filters
             </button>
@@ -135,6 +141,15 @@ else
                                 </button>
                             </th>
                             <th>
+                                <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Tenant.IsActive))">
+                                    Status
+                                    @if (sortColumn == nameof(Tenant.IsActive))
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-caret-up" : "bi-caret-down")"></i>
+                                    }
+                                </button>
+                            </th>
+                            <th>
                                 <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold" @onclick="() => SortBy(nameof(Tenant.CreatedOn))">
                                     Created
                                     @if (sortColumn == nameof(Tenant.CreatedOn))
@@ -171,6 +186,16 @@ else
                                     else
                                     {
                                         <span class="text-muted">Not provided</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (tenant.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
                                     }
                                 </td>
                                 <td>@tenant.CreatedOn.ToString("MMM dd, yyyy")</td>
@@ -266,6 +291,9 @@ else
     private List<Tenant> pagedTenants = new();
     private string searchTerm = string.Empty;
     private string selectedLeaseStatus = string.Empty;
+
+    private int selectedTenantStatus = 1;
+
     private string sortColumn = nameof(Tenant.FirstName);
     private bool sortAscending = true;
     private int activeTenantsCount = 0;
@@ -353,7 +381,8 @@ else
              t.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
              t.PhoneNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
              t.Notes.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(selectedLeaseStatus) || GetTenantLeaseStatus(t) == selectedLeaseStatus)
+            (string.IsNullOrEmpty(selectedLeaseStatus) || GetTenantLeaseStatus(t) == selectedLeaseStatus) &&
+            (selectedTenantStatus == 1 ? t.IsActive : !t.IsActive)
         ).ToList();
         
         SortTenants();
@@ -405,6 +434,9 @@ else
             nameof(Tenant.DateOfBirth) => sortAscending 
                 ? filteredTenants.OrderBy(t => t.DateOfBirth ?? DateTime.MinValue).ToList()
                 : filteredTenants.OrderByDescending(t => t.DateOfBirth ?? DateTime.MinValue).ToList(),
+            nameof(Tenant.IsActive) => sortAscending 
+                ? filteredTenants.OrderBy(t => t.IsActive).ToList()
+                : filteredTenants.OrderByDescending(t => t.IsActive).ToList(),
             nameof(Tenant.CreatedOn) => sortAscending 
                 ? filteredTenants.OrderBy(t => t.CreatedOn).ToList()
                 : filteredTenants.OrderByDescending(t => t.CreatedOn).ToList(),

@@ -59,6 +59,11 @@
                             <InputDate @bind-Value="tenantModel.DateOfBirth" class="form-control" />
                             <ValidationMessage For="() => tenantModel.DateOfBirth" class="text-danger" />
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Identification Number</label>
+                            <InputText @bind-Value="tenantModel.IdentificationNumber" class="form-control" />
+                            <ValidationMessage For="() => tenantModel.IdentificationNumber" class="text-danger" />
+                        </div>
                     </div>
 
                     <div class="row">
@@ -132,6 +137,8 @@
                 EmergencyContactName = tenantModel.EmergencyContactName,
                 EmergencyContactPhone = tenantModel.EmergencyContactPhone,
                 Notes = tenantModel.Notes,
+                IdentificationNumber = tenantModel.IdentificationNumber,
+                IsActive = true,
                 CreatedOn = DateTime.UtcNow,
                 LastModifiedOn = DateTime.UtcNow,
                 LastModifiedBy = userId
@@ -176,6 +183,10 @@
         public string PhoneNumber { get; set; } = string.Empty;
 
         public DateTime? DateOfBirth { get; set; }
+
+        [Required(ErrorMessage = "Identification number is required")]
+        [StringLength(100, ErrorMessage = "Identification number cannot exceed 100 characters")]
+        public string IdentificationNumber { get; set; } = string.Empty;
 
         [StringLength(200, ErrorMessage = "Emergency contact name cannot exceed 200 characters")]
         public string EmergencyContactName { get; set; } = string.Empty;

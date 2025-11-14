@@ -201,14 +201,25 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                     lease.Status = ApplicationConstants.LeaseStatuses.Terminated;
                     lease.LastModifiedOn = DateTime.UtcNow;
                     lease.LastModifiedBy = _userId;
-                    _dbContext.Leases.Update(lease);
+                    await UpdateLeaseAsync(lease);
+
+                    var tenants = await GetTenantsByLeaseIdAsync(lease.Id);
+                    foreach (var tenant in tenants)
+                    {
+                        var tenantLeases = await GetLeasesByTenantIdAsync(tenant.Id);
+                        tenantLeases = tenantLeases.Where(l => l.PropertyId != propertyId && !l.IsDeleted).ToList();
+
+                        if(tenantLeases.Count == 0) // Only this lease
+                        {
+                            tenant.IsActive = false;
+                            tenant.LastModifiedBy = _userId;
+                            tenant.LastModifiedOn = DateTime.UtcNow;
+                            await UpdateTenantAsync(tenant);
+                        }
+                    }
+
                 }
 
-                var documents = await GetDocumentsByPropertyIdAsync(propertyId);
-                foreach (var document in documents)
-                {
-                    await DeleteDocumentAsync(document);
-                }
             }
         }
         #endregion
@@ -233,6 +244,29 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 .ToListAsync();
         }
         
+        public async Task<List<Tenant>> GetTenantsByLeaseIdAsync(int leaseId)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                // Handle the case when the user is not authenticated
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            var leases = await _dbContext.Leases
+                .Include(l => l.Tenant)
+                .Where(l => l.Id == leaseId && l.Tenant.OrganizationId == organizationId && !l.IsDeleted && !l.Tenant.IsDeleted)
+                .ToListAsync();
+
+            var tenantIds = leases.Select(l => l.TenantId).Distinct().ToList();
+            
+            return await _dbContext.Tenants
+                .Where(t => tenantIds.Contains(t.Id) && t.OrganizationId == organizationId && !t.IsDeleted)
+                .ToListAsync();
+        }
         public async Task<List<Tenant>> GetTenantsByPropertyIdAsync(int propertyId)
         {
             var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -876,22 +910,6 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 .ToListAsync();
         }
 
-        // public async Task<List<Document>> GetDocumentsByUserIdAsync(string userId)
-        // {
-        //     return await _dbContext.Documents
-        //         .Include(d => d.Property)
-        //         .Include(d => d.Tenant)
-        //         .Include(d => d.Lease)
-        //             .ThenInclude(l => l!.Property)
-        //         .Include(d => d.Lease)
-        //             .ThenInclude(l => l!.Tenant)
-        //         .Include(d => d.Invoice)
-        //         .Include(d => d.Payment)
-        //         .Where(d => d.UserId == userId && !d.IsDeleted)
-        //         .OrderByDescending(d => d.CreatedOn)
-        //         .ToListAsync();
-        // }
-
         public async Task<Document?> GetDocumentByIdAsync(int documentId)
         {
             var organizationId = await _userContext.GetOrganizationIdAsync();
@@ -983,7 +1001,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task DeleteDocumentAsync(Document document, bool hardDelete = false)
+        public async Task DeleteDocumentAsync(Document document)
         {
 
             var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -992,7 +1010,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
             
-            if (hardDelete)
+            if (!_applicationSettings.SoftDeleteEnabled)
             {
                 _dbContext.Documents.Remove(document);
             }
