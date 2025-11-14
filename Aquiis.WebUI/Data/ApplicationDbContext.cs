@@ -7,6 +7,7 @@ using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Documents;
 using Aquiis.WebUI.Components.PropertyManagement.Inspections;
+using Aquiis.WebUI.Components.PropertyManagement.MaintenanceRequests;
 using Aquiis.WebUI.Components.Account;
 using Microsoft.AspNetCore.Identity;
 
@@ -27,6 +28,7 @@ namespace Aquiis.WebUI.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<Inspection> Inspections { get; set; }
+        public DbSet<MaintenanceRequest> MaintenanceRequests { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -169,6 +171,28 @@ namespace Aquiis.WebUI.Data
                 
                 entity.HasIndex(e => e.PropertyId);
                 entity.HasIndex(e => e.InspectionDate);
+            });
+
+            // Configure MaintenanceRequest entity
+            modelBuilder.Entity<MaintenanceRequest>(entity =>
+            {
+                entity.HasOne(m => m.Property)
+                    .WithMany()
+                    .HasForeignKey(m => m.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Lease)
+                    .WithMany()
+                    .HasForeignKey(m => m.LeaseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(e => e.EstimatedCost).HasPrecision(18, 2);
+                entity.Property(e => e.ActualCost).HasPrecision(18, 2);
+                
+                entity.HasIndex(e => e.PropertyId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.Priority);
+                entity.HasIndex(e => e.RequestedOn);
             });
         }
 

@@ -5,6 +5,7 @@ using Aquiis.WebUI.Components.PropertyManagement.Invoices;
 using Aquiis.WebUI.Components.PropertyManagement.Payments;
 using Aquiis.WebUI.Components.PropertyManagement.Documents;
 using Aquiis.WebUI.Components.PropertyManagement.Inspections;
+using Aquiis.WebUI.Components.PropertyManagement.MaintenanceRequests;
 using Aquiis.WebUI.Components.Account;
 using Aquiis.WebUI.Data;
 using Microsoft.AspNetCore.Identity;
@@ -1204,6 +1205,219 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 property.LastModifiedBy = userId ?? "System";
 
                 _dbContext.Properties.Update(property);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
+        #endregion
+
+        #region Maintenance Requests
+
+        public async Task<List<MaintenanceRequest>> GetMaintenanceRequestsAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.OrganizationId == organizationId && !m.IsDeleted)
+                .OrderByDescending(m => m.RequestedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<MaintenanceRequest>> GetMaintenanceRequestsByPropertyAsync(int propertyId)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.PropertyId == propertyId && m.OrganizationId == organizationId && !m.IsDeleted)
+                .OrderByDescending(m => m.RequestedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<MaintenanceRequest>> GetMaintenanceRequestsByLeaseAsync(int leaseId)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.LeaseId == leaseId && m.OrganizationId == organizationId && !m.IsDeleted)
+                .OrderByDescending(m => m.RequestedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<MaintenanceRequest>> GetMaintenanceRequestsByStatusAsync(string status)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.Status == status && m.OrganizationId == organizationId && !m.IsDeleted)
+                .OrderByDescending(m => m.RequestedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<MaintenanceRequest>> GetMaintenanceRequestsByPriorityAsync(string priority)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.Priority == priority && m.OrganizationId == organizationId && !m.IsDeleted)
+                .OrderByDescending(m => m.RequestedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<MaintenanceRequest>> GetOverdueMaintenanceRequestsAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            var today = DateTime.Today;
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .Where(m => m.OrganizationId == organizationId && 
+                           !m.IsDeleted &&
+                           m.Status != "Completed" &&
+                           m.Status != "Cancelled" &&
+                           m.ScheduledOn.HasValue &&
+                           m.ScheduledOn.Value.Date < today)
+                .OrderBy(m => m.ScheduledOn)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetOpenMaintenanceRequestCountAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Where(m => m.OrganizationId == organizationId && 
+                           !m.IsDeleted &&
+                           m.Status != "Completed" &&
+                           m.Status != "Cancelled")
+                .CountAsync();
+        }
+
+        public async Task<int> GetUrgentMaintenanceRequestCountAsync()
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Where(m => m.OrganizationId == organizationId && 
+                           !m.IsDeleted &&
+                           m.Priority == "Urgent" &&
+                           m.Status != "Completed" &&
+                           m.Status != "Cancelled")
+                .CountAsync();
+        }
+
+        public async Task<MaintenanceRequest?> GetMaintenanceRequestByIdAsync(int id)
+        {
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.MaintenanceRequests
+                .Include(m => m.Property)
+                .Include(m => m.Lease)
+                .FirstOrDefaultAsync(m => m.Id == id && m.OrganizationId == organizationId && !m.IsDeleted);
+        }
+
+        public async Task AddMaintenanceRequestAsync(MaintenanceRequest maintenanceRequest)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            maintenanceRequest.OrganizationId = organizationId!;
+            maintenanceRequest.CreatedBy = _userId;
+            maintenanceRequest.CreatedOn = DateTime.UtcNow;
+
+            await _dbContext.MaintenanceRequests.AddAsync(maintenanceRequest);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateMaintenanceRequestAsync(MaintenanceRequest maintenanceRequest)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            if (maintenanceRequest.OrganizationId != organizationId)
+            {
+                throw new UnauthorizedAccessException("User is not authorized to update this maintenance request.");
+            }
+
+            maintenanceRequest.LastModifiedBy = _userId;
+            maintenanceRequest.LastModifiedOn = DateTime.UtcNow;
+
+            _dbContext.MaintenanceRequests.Update(maintenanceRequest);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteMaintenanceRequestAsync(int id)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            var maintenanceRequest = await _dbContext.MaintenanceRequests
+                .FirstOrDefaultAsync(m => m.Id == id && m.OrganizationId == organizationId);
+
+            if (maintenanceRequest != null)
+            {
+                maintenanceRequest.IsDeleted = true;
+                maintenanceRequest.LastModifiedOn = DateTime.Now;
+                maintenanceRequest.LastModifiedBy = _userId;
+
+                _dbContext.MaintenanceRequests.Update(maintenanceRequest);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateMaintenanceRequestStatusAsync(int id, string status)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            var maintenanceRequest = await _dbContext.MaintenanceRequests
+                .FirstOrDefaultAsync(m => m.Id == id && m.OrganizationId == organizationId && !m.IsDeleted);
+
+            if (maintenanceRequest != null)
+            {
+                maintenanceRequest.Status = status;
+                maintenanceRequest.LastModifiedOn = DateTime.Now;
+                maintenanceRequest.LastModifiedBy = _userId;
+
+                if (status == "Completed")
+                {
+                    maintenanceRequest.CompletedOn = DateTime.Today;
+                }
+
+                _dbContext.MaintenanceRequests.Update(maintenanceRequest);
                 await _dbContext.SaveChangesAsync();
             }
         }
