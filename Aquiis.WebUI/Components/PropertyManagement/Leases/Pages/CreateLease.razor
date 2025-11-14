@@ -231,6 +231,9 @@
 
         // Load user's tenants
         userTenants = await PropertyManagementService.GetTenantsAsync();
+        userTenants = userTenants
+            .Where(t => t.IsActive)
+            .ToList();
 
         // Set default values
         leaseModel.StartDate = DateTime.Today;

@@ -4,6 +4,7 @@
 @using Aquiis.WebUI.Components.PropertyManagement.Leases
 @using Aquiis.WebUI.Components.PropertyManagement.Documents
 @using Aquiis.WebUI.Components.PropertyManagement.MaintenanceRequests
+@using Aquiis.WebUI.Components.PropertyManagement.Inspections
 @using Aquiis.WebUI.Components.PropertyManagement
 @using Microsoft.AspNetCore.Authorization
 
@@ -223,6 +224,15 @@ else
                         <div class="mb-3">
                             <strong>Last Inspection:</strong>
                             <p class="mb-0">@property.LastRoutineInspectionDate.Value.ToString("MMM dd, yyyy")</p>
+                            @if (propertyInspections.Any())
+                            {
+                                var lastInspection = propertyInspections.First();
+                                <small>
+                                    <a href="/propertymanagement/inspections/view/@lastInspection.Id" class="text-decoration-none">
+                                        <i class="bi bi-eye"></i> View Last Inspection
+                                    </a>
+                                </small>
+                            }
                         </div>
                     }
                     
@@ -358,6 +368,7 @@ else
     List<Lease> activeLeases = new();
     List<Document> propertyDocuments = new();
     List<MaintenanceRequest> maintenanceRequests = new();
+    List<Inspection> propertyInspections = new();
 
     private bool isAuthorized = true; 
 
@@ -398,6 +409,9 @@ else
         
         // Load maintenance requests for this property
         maintenanceRequests = await PropertyManagementService.GetMaintenanceRequestsByPropertyAsync(PropertyId);
+        
+        // Load inspections for this property
+        propertyInspections = await PropertyManagementService.GetInspectionsByPropertyIdAsync(PropertyId);
     }
 
     private void EditProperty()

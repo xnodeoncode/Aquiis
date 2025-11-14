@@ -308,6 +308,23 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                 .FirstOrDefaultAsync(t => t.Id == tenantId && t.OrganizationId == organizationId && !t.IsDeleted);
         }
 
+        public async Task<Tenant?> GetTenantByIdentificationNumberAsync(string identificationNumber)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                // Handle the case when the user is not authenticated
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+
+            return await _dbContext.Tenants
+                .Include(t => t.Leases)
+                .FirstOrDefaultAsync(t => t.IdentificationNumber == identificationNumber && t.OrganizationId == organizationId && !t.IsDeleted);
+        }
+
         public async Task<List<Tenant>> GetTenantsByOrganizationIdAsync(string organizationId)
         {
             var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -905,7 +922,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement
                     .ThenInclude(l => l!.Tenant)
                 .Include(d => d.Invoice)
                 .Include(d => d.Payment)
-                .Where(d => !d.IsDeleted && d.OrganizationId == organizationId)
+                .Where(d => !d.IsDeleted && d.OrganizationId == organizationId && d.Property != null && !d.Property.IsDeleted)
                 .OrderByDescending(d => d.CreatedOn)
                 .ToListAsync();
         }

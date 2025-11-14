@@ -276,7 +276,7 @@
             
             // Redirect after a brief delay
             await Task.Delay(2000);
-            Navigation.NavigateTo("/Administration/Users");
+            Navigation.NavigateTo("/administration/users/manage");
         }
         catch (Exception ex)
         {
@@ -290,7 +290,7 @@
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/Administration/Users");
+        Navigation.NavigateTo("/administration/users/manage");
     }
 
     public class UserModel

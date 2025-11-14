@@ -51,6 +51,7 @@ namespace Aquiis.WebUI.Data
             modelBuilder.Entity<Tenant>(entity =>
             {
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.IdentificationNumber).IsUnique();
                 
                 // Configure relationship with User
                 entity.HasOne<ApplicationUser>()

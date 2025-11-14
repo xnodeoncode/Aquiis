@@ -23,7 +23,7 @@
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
                         <div class="alert alert-danger" role="alert">
-                            @errorMessage
+                            @((MarkupString)errorMessage)
                         </div>
                     }
 
@@ -124,6 +124,18 @@
             {
                 errorMessage = "User not authenticated.";
                 return;
+            }
+
+            // Check for duplicate identification number
+            if (!string.IsNullOrWhiteSpace(tenantModel.IdentificationNumber))
+            {
+                var existingTenant = await PropertyManagementService.GetTenantByIdentificationNumberAsync(tenantModel.IdentificationNumber);
+                if (existingTenant != null)
+                {
+                    errorMessage = $"A tenant with identification number <strong>{tenantModel.IdentificationNumber}</strong> already exists. " +
+                                 $"<a href=\"/propertymanagement/tenants/view/{existingTenant.Id}\" class=\"alert-link\">View existing tenant: {existingTenant.FullName}</a>";
+                    return;
+                }
             }
 
             var tenant = new Tenant

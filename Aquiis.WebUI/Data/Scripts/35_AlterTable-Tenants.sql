@@ -14,6 +14,7 @@ UPDATE Tenants
 SET IdentificationNumber = ''
 WHERE IdentificationNumber IS NULL;
 
+
 -- Migration: Create Inspections table
 -- Date: November 15, 2025
 -- Description: Creates table for tracking property inspections

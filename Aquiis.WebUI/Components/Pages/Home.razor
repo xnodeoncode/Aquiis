@@ -8,6 +8,8 @@
 @using Aquiis.WebUI.Components.PropertyManagement
 @using Aquiis.WebUI.Components.Account
 @using Aquiis.WebUI.Components.PropertyManagement.Tenants
+@using Aquiis.WebUI.Components.PropertyManagement.MaintenanceRequests
+@using Aquiis.WebUI.Components.PropertyManagement.Invoices
 
 @inject NavigationManager NavigationManager
 @inject PropertyManagementService PropertyManagementService
@@ -94,7 +96,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
@@ -163,6 +165,105 @@
                                     else
                                     {
                                         <p class="text-muted">No pending leases found.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Open Maintenance Requests</h5>
+                                    <a href="/propertymanagement/maintenance" class="btn btn-sm btn-outline-primary">View All</a>
+                                </div>
+                                <div class="card-body">
+                                    @if (openMaintenanceRequests.Any())
+                                    {
+                                        <div class="list-group list-group-flush">
+                                            @foreach (var request in openMaintenanceRequests)
+                                            {
+                                                <div class="list-group-item">
+                                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 class="mb-1">
+                                                                <a href="/propertymanagement/maintenance/view/@request.Id" class="text-decoration-none">
+                                                                    @request.Title
+                                                                </a>
+                                                            </h6>
+                                                            <small class="text-muted">
+                                                                @request.Property?.Address - @request.RequestType
+                                                            </small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span class="badge @request.PriorityBadgeClass mb-1">@request.Priority</span>
+                                                            @if (request.IsOverdue)
+                                                            {
+                                                                <br>
+                                                                <small class="text-danger">Overdue</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mt-2">
+                                                        <small class="text-muted">@request.RequestedOn.ToString("MMM dd, yyyy")</small>
+                                                        <span class="badge @request.StatusBadgeClass">@request.Status</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No open maintenance requests.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Recent Invoices</h5>
+                                    <a href="/propertymanagement/invoices" class="btn btn-sm btn-outline-primary">View All</a>
+                                </div>
+                                <div class="card-body">
+                                    @if (recentInvoices.Any())
+                                    {
+                                        <div class="list-group list-group-flush">
+                                            @foreach (var invoice in recentInvoices)
+                                            {
+                                                <div class="list-group-item">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">
+                                                            <a href="/propertymanagement/invoices/view/@invoice.Id" class="text-decoration-none">
+                                                                @invoice.InvoiceNumber
+                                                            </a>
+                                                        </h6>
+                                                        <small>@invoice.InvoiceDate.ToString("MMM dd, yyyy")</small>
+                                                    </div>
+                                                    <p class="mb-1">@invoice.Lease?.Tenant?.FullName</p>
+                                                    <div class="d-flex justify-content-between">
+                                                        <div>
+                                                            <small class="text-muted">Due: @invoice.DueDate.ToString("MMM dd, yyyy")</small>
+                                                            @if (invoice.IsOverdue)
+                                                            {
+                                                                <br>
+                                                                <small class="text-danger">@invoice.DaysOverdue days overdue</small>
+                                                            }
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span class="badge @GetInvoiceStatusBadgeClass(invoice.Status)">@invoice.Status</span>
+                                                            <br>
+                                                            <small class="text-muted">@invoice.Amount.ToString("C")</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No recent invoices found.</p>
                                     }
                                 </div>
                             </div>
@@ -315,6 +416,8 @@
     
     private List<Property> availablePropertiesList = new();
     private List<Lease> pendingLeases = new List<Lease>();
+    private List<MaintenanceRequest> openMaintenanceRequests = new List<MaintenanceRequest>();
+    private List<Invoice> recentInvoices = new List<Invoice>();
 
     private List<Property> properties = new List<Property>();
     private List<Lease> leases = new List<Lease>();
@@ -367,5 +470,34 @@
             .OrderByDescending(l => l.CreatedOn)
             .Take(5)
             .ToList();
+
+        // Load open maintenance requests
+        var allMaintenanceRequests = await PropertyManagementService.GetMaintenanceRequestsAsync();
+        openMaintenanceRequests = allMaintenanceRequests
+            .Where(m => m.Status != "Completed" && m.Status != "Cancelled")
+            .OrderByDescending(m => m.Priority == "Urgent" ? 1 : m.Priority == "High" ? 2 : 3)
+            .ThenByDescending(m => m.RequestedOn)
+            .Take(5)
+            .ToList();
+
+        // Load recent invoices
+        var allInvoices = await PropertyManagementService.GetInvoicesAsync();
+        recentInvoices = allInvoices
+            .Where(i => i.Status != "Paid" && i.Status != "Cancelled")
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(5)
+            .ToList();
+    }
+
+    private string GetInvoiceStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Paid" => "bg-success",
+            "Pending" => "bg-warning",
+            "Overdue" => "bg-danger",
+            "Cancelled" => "bg-secondary",
+            _ => "bg-info"
+        };
     }
 }
