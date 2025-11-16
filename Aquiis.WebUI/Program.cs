@@ -108,6 +108,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<UserContextService>();
+builder.Services.AddSingleton<ToastService>();
 
 // Register background service for scheduled tasks
 builder.Services.AddHostedService<ScheduledTaskService>();

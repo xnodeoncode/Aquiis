@@ -46,6 +46,19 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Invoices {
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
 
+        // Late Fee Properties
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? LateFeeAmount { get; set; }
+
+        public bool? LateFeeApplied { get; set; }
+
+        public DateTime? LateFeeAppliedDate { get; set; }
+
+        // Reminder Properties
+        public bool? ReminderSent { get; set; }
+
+        public DateTime? ReminderSentDate { get; set; }
+
         // Navigation properties
         [ForeignKey("LeaseId")]
         public virtual Lease Lease { get; set; } = null!;

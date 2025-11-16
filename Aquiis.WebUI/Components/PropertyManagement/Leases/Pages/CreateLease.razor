@@ -304,7 +304,8 @@
                 Status = leaseModel.Status,
                 Terms = leaseModel.Terms,
                 Notes = leaseModel.Notes,
-                CreatedOn = DateTime.UtcNow
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = userId
             };
 
             await PropertyManagementService.AddLeaseAsync(lease);

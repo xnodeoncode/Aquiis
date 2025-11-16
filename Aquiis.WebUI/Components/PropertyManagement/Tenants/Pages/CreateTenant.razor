@@ -1,10 +1,12 @@
 @page "/propertymanagement/tenants/create"
 
 @using Aquiis.WebUI.Components.PropertyManagement.Tenants
+@using Aquiis.WebUI.Services
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @inject PropertyManagementService PropertyManagementService
 @inject NavigationManager NavigationManager
+@inject ToastService ToastService
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = "PropertyManager")]
@@ -123,6 +125,7 @@
             if (string.IsNullOrEmpty(userId))
             {
                 errorMessage = "User not authenticated.";
+                ToastService.ShowError("User not authenticated. Please log in again.");
                 return;
             }
 
@@ -134,6 +137,7 @@
                 {
                     errorMessage = $"A tenant with identification number <strong>{tenantModel.IdentificationNumber}</strong> already exists. " +
                                  $"<a href=\"/propertymanagement/tenants/view/{existingTenant.Id}\" class=\"alert-link\">View existing tenant: {existingTenant.FullName}</a>";
+                    ToastService.ShowWarning($"Duplicate identification number found for {existingTenant.FullName}");
                     return;
                 }
             }
@@ -158,11 +162,13 @@
 
             await PropertyManagementService.AddTenantAsync(tenant);
 
+            ToastService.ShowSuccess($"Tenant {tenant.FullName} created successfully!");
             NavigationManager.NavigateTo("/propertymanagement/tenants");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error creating tenant: {ex.Message}";
+            ToastService.ShowError($"Failed to create tenant: {ex.Message}");
         }
         finally
         {
