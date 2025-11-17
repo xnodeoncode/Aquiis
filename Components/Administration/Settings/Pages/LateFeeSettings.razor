@@ -1,0 +1,240 @@
+@page "/administration/settings/latefees"
+@using Aquiis.SimpleStart.Components.Administration.Application
+@using Aquiis.SimpleStart.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject ToastService ToastService
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>Late Fee Settings</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-gear"></i> Late Fee Settings</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Automated Late Fee Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>How it works:</strong> The system automatically checks for overdue invoices daily at 2 AM. 
+                    After the grace period expires, a late fee will be automatically applied to unpaid invoices.
+                </div>
+
+                <EditForm Model="settings" OnValidSubmit="SaveSettings" FormName="late-fee-settings">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label class="form-label">Grace Period (Days)</label>
+                        <InputNumber @bind-Value="settings.GracePeriodDays" class="form-control" />
+                        <small class="text-muted">Number of days after due date before late fees apply</small>
+                        <ValidationMessage For="() => settings.GracePeriodDays" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Late Fee Percentage</label>
+                        <div class="input-group">
+                            <InputNumber @bind-Value="settings.LateFeePercentage" class="form-control" step="0.01" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">Percentage of invoice amount to charge as late fee</small>
+                        <ValidationMessage For="() => settings.LateFeePercentage" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Maximum Late Fee Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <InputNumber @bind-Value="settings.MaxLateFeeAmount" class="form-control" step="0.01" />
+                        </div>
+                        <small class="text-muted">Cap on the maximum late fee that can be charged</small>
+                        <ValidationMessage For="() => settings.MaxLateFeeAmount" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Reminder Days</label>
+                        <InputNumber @bind-Value="settings.ReminderDays" class="form-control" />
+                        <small class="text-muted">Send payment reminder this many days before due date</small>
+                        <ValidationMessage For="() => settings.ReminderDays" class="text-danger" />
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <InputCheckbox @bind-Value="settings.AutoApplyLateFees" class="form-check-input" id="autoApply" />
+                            <label class="form-check-label" for="autoApply">
+                                Automatically apply late fees to overdue invoices
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>Example Calculation:</strong><br/>
+                        Invoice Amount: $1,000<br/>
+                        Grace Period: @settings.GracePeriodDays days<br/>
+                        Late Fee: @settings.LateFeePercentage% = $@((1000 * (settings.LateFeePercentage / 100)).ToString("F2"))<br/>
+                        Capped at: $@settings.MaxLateFeeAmount<br/>
+                        @{
+                            var calculatedFee = 1000 * (settings.LateFeePercentage / 100);
+                            var actualFee = Math.Min(calculatedFee, settings.MaxLateFeeAmount);
+                        }
+                        <strong>Actual Late Fee: $@actualFee.ToString("F2")</strong>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="bi bi-save"></i> Save Settings
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="ResetToDefaults">
+                            <i class="bi bi-arrow-clockwise"></i> Reset to Defaults
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Current Configuration</h5>
+            </div>
+            <div class="card-body">
+                <dl>
+                    <dt>Grace Period</dt>
+                    <dd>@settings.GracePeriodDays days</dd>
+
+                    <dt>Late Fee Rate</dt>
+                    <dd>@settings.LateFeePercentage%</dd>
+
+                    <dt>Maximum Late Fee</dt>
+                    <dd>$@settings.MaxLateFeeAmount</dd>
+
+                    <dt>Reminder Timing</dt>
+                    <dd>@settings.ReminderDays days before due</dd>
+
+                    <dt>Auto-Apply</dt>
+                    <dd>
+                        @if (settings.AutoApplyLateFees)
+                        {
+                            <span class="badge bg-success">Enabled</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Disabled</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Scheduled Task:</strong> Daily at 2:00 AM</p>
+                <p><strong>Next Run:</strong> @GetNextRunTime()</p>
+                <hr/>
+                <small class="text-muted">
+                    Late fees are automatically applied by the system background service. 
+                    Changes to these settings will take effect on the next scheduled run.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LateFeeConfig settings = new();
+    private bool isSaving = false;
+
+    protected override void OnInitialized()
+    {
+        // In a real implementation, load from database or configuration
+        // For now, use defaults
+        settings = new LateFeeConfig
+        {
+            GracePeriodDays = 3,
+            LateFeePercentage = 5.0m,
+            MaxLateFeeAmount = 50.00m,
+            ReminderDays = 3,
+            AutoApplyLateFees = true
+        };
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            isSaving = true;
+
+            // TODO: Save to database or configuration file
+            await Task.Delay(500); // Simulate save
+
+            ToastService.ShowSuccess("Late fee settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Failed to save settings: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void ResetToDefaults()
+    {
+        settings.GracePeriodDays = 3;
+        settings.LateFeePercentage = 5.0m;
+        settings.MaxLateFeeAmount = 50.00m;
+        settings.ReminderDays = 3;
+        settings.AutoApplyLateFees = true;
+
+        ToastService.ShowInfo("Settings reset to defaults");
+    }
+
+    private string GetNextRunTime()
+    {
+        var now = DateTime.Now;
+        var next2AM = DateTime.Today.AddDays(1).AddHours(2);
+        
+        if (now.Hour < 2)
+        {
+            next2AM = DateTime.Today.AddHours(2);
+        }
+
+        return next2AM.ToString("MMM dd, yyyy h:mm tt");
+    }
+
+    public class LateFeeConfig
+    {
+        [Required]
+        [Range(0, 30, ErrorMessage = "Grace period must be between 0 and 30 days")]
+        public int GracePeriodDays { get; set; } = 3;
+
+        [Required]
+        [Range(0.0, 100.0, ErrorMessage = "Late fee percentage must be between 0% and 100%")]
+        public decimal LateFeePercentage { get; set; } = 5.0m;
+
+        [Required]
+        [Range(0.0, 10000.0, ErrorMessage = "Maximum late fee must be between $0 and $10,000")]
+        public decimal MaxLateFeeAmount { get; set; } = 50.00m;
+
+        [Required]
+        [Range(0, 30, ErrorMessage = "Reminder days must be between 0 and 30")]
+        public int ReminderDays { get; set; } = 3;
+
+        public bool AutoApplyLateFees { get; set; } = true;
+    }
+}

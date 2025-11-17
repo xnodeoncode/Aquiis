@@ -1,0 +1,21 @@
+@page "/about"
+
+<div class="text-center py-5">
+    <div class="container">
+        <h1 class="display-4">Property Management System</h1>
+        <p class="lead">Manage your rental properties, tenants, leases, and payments with ease.</p>
+        <hr class="my-4">
+        <AuthorizeView>
+        <Authorized>
+            <p>Welcome back! Access your <a href="/">dashboard</a> to manage your properties.</p>
+        </Authorized>
+        <NotAuthorized>
+        <p>Sign in to access your dashboard and manage your properties.</p>
+        <div class="btn-group">
+            <a class="btn btn-primary btn-lg" href="/Account/Login" role="button">Sign In</a>
+            <a class="btn btn-outline-primary btn-lg" href="/Account/Register" role="button">Create Account</a>
+        </div>
+        </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>

@@ -1,0 +1,131 @@
+@page "/reports"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "PropertyManager")]
+
+<PageTitle>Financial Reports - Aquiis</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h3>Financial Reports</h3>
+            <p class="text-muted">Generate comprehensive financial reports for your properties</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-file-earmark-spreadsheet text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Income Statement</h5>
+                    <p class="card-text text-muted">
+                        View income and expenses for a specific period with detailed breakdowns
+                    </p>
+                    <a href="/reports/income-statement" class="btn btn-primary">
+                        <i class="bi bi-arrow-right-circle"></i> Generate
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-list-check text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Rent Roll</h5>
+                    <p class="card-text text-muted">
+                        Current tenant status, rent amounts, and payment details across all properties
+                    </p>
+                    <a href="/reports/rent-roll" class="btn btn-success">
+                        <i class="bi bi-arrow-right-circle"></i> Generate
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-graph-up-arrow text-info" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Property Performance</h5>
+                    <p class="card-text text-muted">
+                        Compare income, expenses, ROI, and occupancy rates across all properties
+                    </p>
+                    <a href="/reports/property-performance" class="btn btn-info">
+                        <i class="bi bi-arrow-right-circle"></i> Generate
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-file-earmark-text text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Tax Report</h5>
+                    <p class="card-text text-muted">
+                        Schedule E data for tax filing with detailed expense categorization
+                    </p>
+                    <a href="/reports/tax-report" class="btn btn-warning">
+                        <i class="bi bi-arrow-right-circle"></i> Generate
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Report Features</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="bi bi-check-circle-fill"></i> Available Features</h6>
+                            <ul>
+                                <li>Customizable date ranges</li>
+                                <li>Property-specific or portfolio-wide reports</li>
+                                <li>Export to PDF for record keeping</li>
+                                <li>Real-time data from your database</li>
+                                <li>Professional formatting for tax purposes</li>
+                                <li>Detailed expense categorization</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info"><i class="bi bi-lightbulb-fill"></i> Tips</h6>
+                            <ul>
+                                <li>Generate reports regularly for better tracking</li>
+                                <li>Use income statements for monthly reviews</li>
+                                <li>Rent roll helps identify payment issues</li>
+                                <li>Property performance guides investment decisions</li>
+                                <li>Tax reports simplify year-end filing</li>
+                                <li>Keep PDF copies for audit trail</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
