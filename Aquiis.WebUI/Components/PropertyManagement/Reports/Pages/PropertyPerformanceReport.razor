@@ -6,6 +6,8 @@
 @inject FinancialReportService FinancialReportService
 @inject FinancialReportPdfGenerator PdfGenerator
 @inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject UserContextService UserContextService
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
@@ -105,11 +107,11 @@
                         <tfoot class="table-light">
                             <tr>
                                 <th colspan="2">TOTALS</th>
-                                <th class="text-end">@(performanceItems?.Sum(p => p.TotalIncome) ?? 0m).ToString("C")</th>
-                                <th class="text-end">@(performanceItems?.Sum(p => p.TotalExpenses) ?? 0m).ToString("C")</th>
+                                <th class="text-end">@performanceItems?.Sum(p => p.TotalIncome).ToString("C")</th>
+                                <th class="text-end">@performanceItems?.Sum(p => p.TotalExpenses).ToString("C")</th>
                                 <th class="text-end">
-                                    <strong class="@((performanceItems?.Sum(p => p.NetIncome) ?? 0m) >= 0 ? "text-success" : "text-danger")">
-                                        @(performanceItems?.Sum(p => p.NetIncome) ?? 0m).ToString("C")
+                                    <strong class="@(performanceItems?.Sum(p => p.NetIncome) >= 0 ? "text-success" : "text-danger")">
+                                        @performanceItems?.Sum(p => p.NetIncome).ToString("C")
                                     </strong>
                                 </th>
                                 <th class="text-end">
@@ -200,11 +202,12 @@
         {
             var authState = await AuthenticationStateTask;
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var organizationId = await UserContextService.GetOrganizationIdAsync();
 
             if (!string.IsNullOrEmpty(userId))
             {
                 performanceItems = await FinancialReportService.GeneratePropertyPerformanceAsync(
-                    userId, startDate, endDate);
+                    organizationId, startDate, endDate);
             }
         }
         finally

@@ -17,7 +17,7 @@ public class FinancialReportService
     /// Generate income statement for a specific period and optional property
     /// </summary>
     public async Task<IncomeStatement> GenerateIncomeStatementAsync(
-        string userId, 
+        string organizationId, 
         DateTime startDate, 
         DateTime endDate, 
         int? propertyId = null)
@@ -35,7 +35,7 @@ public class FinancialReportService
         if (propertyId.HasValue)
         {
             var property = await context.Properties
-                .Where(p => p.Id == propertyId.Value && p.UserId == userId)
+                .Where(p => p.Id == propertyId.Value && p.OrganizationId == organizationId)
                 .FirstOrDefaultAsync();
             statement.PropertyName = property?.Address;
         }
@@ -44,7 +44,7 @@ public class FinancialReportService
         var paymentsQuery = context.Payments
             .Include(p => p.Invoice)
             .ThenInclude(i => i.Lease)
-            .Where(p => p.Invoice.Lease.UserId == userId &&
+            .Where(p => p.Invoice.Lease.Property.OrganizationId == organizationId &&
                        p.PaymentDate >= startDate &&
                        p.PaymentDate <= endDate);
 
@@ -73,7 +73,7 @@ public class FinancialReportService
         {
             // For all properties, need to filter by user's properties
             var userPropertyIds = await context.Properties
-                .Where(p => p.UserId == userId)
+                .Where(p => p.OrganizationId == organizationId)
                 .Select(p => p.Id)
                 .ToListAsync();
             maintenanceQuery = maintenanceQuery.Where(m => userPropertyIds.Contains(m.PropertyId));
@@ -97,7 +97,7 @@ public class FinancialReportService
     /// <summary>
     /// Generate rent roll report showing all properties and tenants
     /// </summary>
-    public async Task<List<RentRollItem>> GenerateRentRollAsync(string userId, DateTime asOfDate)
+    public async Task<List<RentRollItem>> GenerateRentRollAsync(string organizationId, DateTime asOfDate)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
 
@@ -106,7 +106,7 @@ public class FinancialReportService
             .Include(l => l.Tenant)
             .Include(l => l.Invoices)
             .ThenInclude(i => i.Payments)
-            .Where(l => l.UserId == userId &&
+            .Where(l => l.Property.OrganizationId == organizationId &&
                        l.StartDate <= asOfDate &&
                        l.EndDate >= asOfDate)
             .OrderBy(l => l.Property.Address)
@@ -135,14 +135,14 @@ public class FinancialReportService
     /// Generate property performance comparison report
     /// </summary>
     public async Task<List<PropertyPerformance>> GeneratePropertyPerformanceAsync(
-        string userId, 
+        string organizationId, 
         DateTime startDate, 
         DateTime endDate)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
 
         var properties = await context.Properties
-            .Where(p => p.UserId == userId)
+            .Where(p => p.OrganizationId == organizationId)
             .ToListAsync();
 
         var performance = new List<PropertyPerformance>();
@@ -212,13 +212,13 @@ public class FinancialReportService
     /// <summary>
     /// Generate tax report data for Schedule E
     /// </summary>
-    public async Task<List<TaxReportData>> GenerateTaxReportAsync(string userId, int year, int? propertyId = null)
+    public async Task<List<TaxReportData>> GenerateTaxReportAsync(string organizationId, int year, int? propertyId = null)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var startDate = new DateTime(year, 1, 1);
         var endDate = new DateTime(year, 12, 31);
 
-        var propertiesQuery = context.Properties.Where(p => p.UserId == userId);
+        var propertiesQuery = context.Properties.Where(p => p.OrganizationId == organizationId);
         if (propertyId.HasValue)
         {
             propertiesQuery = propertiesQuery.Where(p => p.Id == propertyId.Value);
