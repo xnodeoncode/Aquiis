@@ -10,6 +10,7 @@
 @using Aquiis.WebUI.Components.PropertyManagement.Tenants
 @using Aquiis.WebUI.Components.PropertyManagement.MaintenanceRequests
 @using Aquiis.WebUI.Components.PropertyManagement.Invoices
+@using Aquiis.WebUI.Components.Shared
 
 @inject NavigationManager NavigationManager
 @inject PropertyManagementService PropertyManagementService
@@ -172,6 +173,9 @@
                     </div>
 
                     <div class="row">
+                        <div class="col-md-6">
+                            <LeaseRenewalWidget />
+                        </div>
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">

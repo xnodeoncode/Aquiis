@@ -43,6 +43,29 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Leases {
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
 
+        // Lease Renewal Tracking
+        public bool? RenewalNotificationSent { get; set; }
+        
+        public DateTime? RenewalNotificationSentOn { get; set; }
+        
+        public DateTime? RenewalReminderSentOn { get; set; }
+        
+        [StringLength(50)]
+        public string? RenewalStatus { get; set; } // NotRequired, Pending, Offered, Accepted, Declined, Expired
+        
+        public DateTime? RenewalOfferedOn { get; set; }
+        
+        public DateTime? RenewalResponseOn { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? ProposedRenewalRent { get; set; }
+        
+        [StringLength(1000)]
+        public string? RenewalNotes { get; set; }
+
+        // Lease Chain Tracking
+        public int? PreviousLeaseId { get; set; }
+
         // Navigation properties
         [ForeignKey("PropertyId")]
         public virtual Property Property { get; set; } = null!;
@@ -56,5 +79,7 @@ namespace Aquiis.WebUI.Components.PropertyManagement.Leases {
         // Computed properties
         public bool IsActive => Status == "Active" && DateTime.Now >= StartDate && DateTime.Now <= EndDate;
         public int DaysRemaining => EndDate > DateTime.Now ? (EndDate - DateTime.Now).Days : 0;
+        public bool IsExpiringSoon => DaysRemaining > 0 && DaysRemaining <= 90;
+        public bool IsExpired => DateTime.Now > EndDate;
     }
 }

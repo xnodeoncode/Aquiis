@@ -90,6 +90,9 @@ namespace Aquiis.WebUI.Services
 
                     // Task 3: Send payment reminders (placeholder for future email integration)
                     await SendPaymentReminders(dbContext, stoppingToken);
+
+                    // Task 4: Check for expiring leases and send renewal notifications
+                    await CheckLeaseRenewals(dbContext, stoppingToken);
                 }
             }
             catch (Exception ex)
@@ -226,6 +229,131 @@ namespace Aquiis.WebUI.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending payment reminders");
+            }
+        }
+
+        private async Task CheckLeaseRenewals(ApplicationDbContext dbContext, CancellationToken stoppingToken)
+        {
+            try
+            {
+                var today = DateTime.Today;
+                
+                // Check for leases expiring in 90 days (initial notification)
+                var leasesExpiring90Days = await dbContext.Leases
+                    .Include(l => l.Tenant)
+                    .Include(l => l.Property)
+                    .Where(l => !l.IsDeleted &&
+                               l.Status == "Active" &&
+                               l.EndDate >= today.AddDays(85) &&
+                               l.EndDate <= today.AddDays(95) &&
+                               (l.RenewalNotificationSent == null || !l.RenewalNotificationSent.Value))
+                    .ToListAsync(stoppingToken);
+
+                foreach (var lease in leasesExpiring90Days)
+                {
+                    // TODO: Send email notification when email service is integrated
+                    _logger.LogInformation(
+                        "Lease expiring in 90 days: Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
+                        lease.Id,
+                        lease.Property?.Address ?? "Unknown",
+                        lease.Tenant?.FullName ?? "Unknown",
+                        lease.EndDate.ToString("MMM dd, yyyy"));
+
+                    lease.RenewalNotificationSent = true;
+                    lease.RenewalNotificationSentOn = DateTime.UtcNow;
+                    lease.RenewalStatus = "Pending";
+                    lease.LastModifiedOn = DateTime.UtcNow;
+                    lease.LastModifiedBy = "System";
+                }
+
+                // Check for leases expiring in 60 days (reminder)
+                var leasesExpiring60Days = await dbContext.Leases
+                    .Include(l => l.Tenant)
+                    .Include(l => l.Property)
+                    .Where(l => !l.IsDeleted &&
+                               l.Status == "Active" &&
+                               l.EndDate >= today.AddDays(55) &&
+                               l.EndDate <= today.AddDays(65) &&
+                               l.RenewalNotificationSent == true &&
+                               l.RenewalReminderSentOn == null)
+                    .ToListAsync(stoppingToken);
+
+                foreach (var lease in leasesExpiring60Days)
+                {
+                    // TODO: Send reminder email
+                    _logger.LogInformation(
+                        "Lease expiring in 60 days (reminder): Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
+                        lease.Id,
+                        lease.Property?.Address ?? "Unknown",
+                        lease.Tenant?.FullName ?? "Unknown",
+                        lease.EndDate.ToString("MMM dd, yyyy"));
+
+                    lease.RenewalReminderSentOn = DateTime.UtcNow;
+                    lease.LastModifiedOn = DateTime.UtcNow;
+                    lease.LastModifiedBy = "System";
+                }
+
+                // Check for leases expiring in 30 days (final reminder)
+                var leasesExpiring30Days = await dbContext.Leases
+                    .Include(l => l.Tenant)
+                    .Include(l => l.Property)
+                    .Where(l => !l.IsDeleted &&
+                               l.Status == "Active" &&
+                               l.EndDate >= today.AddDays(25) &&
+                               l.EndDate <= today.AddDays(35) &&
+                               l.RenewalStatus == "Pending")
+                    .ToListAsync(stoppingToken);
+
+                foreach (var lease in leasesExpiring30Days)
+                {
+                    // TODO: Send final reminder
+                    _logger.LogInformation(
+                        "Lease expiring in 30 days (final reminder): Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
+                        lease.Id,
+                        lease.Property?.Address ?? "Unknown",
+                        lease.Tenant?.FullName ?? "Unknown",
+                        lease.EndDate.ToString("MMM dd, yyyy"));
+                }
+
+                // Update status for expired leases
+                var expiredLeases = await dbContext.Leases
+                    .Where(l => !l.IsDeleted &&
+                               l.Status == "Active" &&
+                               l.EndDate < today &&
+                               (l.RenewalStatus == null || l.RenewalStatus == "Pending"))
+                    .ToListAsync(stoppingToken);
+
+                foreach (var lease in expiredLeases)
+                {
+                    lease.Status = "Expired";
+                    lease.RenewalStatus = "Expired";
+                    lease.LastModifiedOn = DateTime.UtcNow;
+                    lease.LastModifiedBy = "System";
+
+                    _logger.LogInformation(
+                        "Lease expired: Lease ID {LeaseId}, End Date: {EndDate}",
+                        lease.Id,
+                        lease.EndDate.ToString("MMM dd, yyyy"));
+                }
+
+                var totalUpdated = leasesExpiring90Days.Count + leasesExpiring60Days.Count + 
+                                  leasesExpiring30Days.Count + expiredLeases.Count;
+
+                if (totalUpdated > 0)
+                {
+                    await dbContext.SaveChangesAsync(stoppingToken);
+                    _logger.LogInformation(
+                        "Processed {Count} lease renewals: {Initial} initial notifications, {Reminder60} 60-day reminders, {Reminder30} 30-day reminders, {Expired} expired",
+                        totalUpdated,
+                        leasesExpiring90Days.Count,
+                        leasesExpiring60Days.Count,
+                        leasesExpiring30Days.Count,
+                        expiredLeases.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking lease renewals");
             }
         }
 

@@ -343,6 +343,7 @@ else
                 FileData = pdfBytes,
                 FileSize = pdfBytes.Length,
                 FileType = "application/pdf",
+                ContentType = "application/pdf",
                 DocumentType = "Invoice",
                 Description = $"Invoice {invoice.InvoiceNumber}",
                 LeaseId = invoice.LeaseId,

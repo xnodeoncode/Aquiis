@@ -43,6 +43,8 @@ builder.Services.AddAuthentication(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString), ServiceLifetime.Scoped);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {
@@ -109,6 +111,9 @@ builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddSingleton<ToastService>();
+builder.Services.AddScoped<LeaseRenewalPdfGenerator>();
+builder.Services.AddScoped<FinancialReportService>();
+builder.Services.AddScoped<FinancialReportPdfGenerator>();
 
 // Register background service for scheduled tasks
 builder.Services.AddHostedService<ScheduledTaskService>();

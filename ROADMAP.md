@@ -65,24 +65,67 @@ This document outlines planned improvements and feature enhancements for the Aqu
 
 ### 4. Lease Renewal Tracking
 
-- **Status**: Planned
+- **Status**: ✅ Completed
 - **Description**:
   - Track expiring leases with alerts
   - Generate renewal offers
   - Dashboard widget showing leases expiring in 30/60/90 days
 - **Benefits**: Proactive lease management, reduced vacancy
 - **Implementation**: Service methods and dashboard component
+- **Components**:
+  - Updated `Lease.cs` model with renewal tracking fields
+  - `Services/ScheduledTaskService.cs` - Automated renewal checking (90/60/30 day notifications)
+  - `Components/Shared/LeaseRenewalWidget.razor` - Dashboard widget with filtering
+  - Enhanced `ViewLease.razor` - Renewal offer management interface
+  - Database migration: `39_AddLeaseRenewalTracking.sql`
+- **Features**:
+  - Automatic notifications at 90, 60, and 30 days before expiration
+  - Renewal status tracking (Pending, Offered, Accepted, Declined, Expired)
+  - Proposed rent tracking with percentage change calculation
+  - Dashboard widget with 30/60/90 day filters
+  - Visual urgency indicators (color-coded by days remaining)
+  - Send renewal offers directly from lease view
+  - Track offer dates and tenant responses
+  - Automatic lease expiration handling
+  - Renewal notes and audit trail
+- **Workflow**:
+  - System sends initial notification 90 days before expiration
+  - Reminder sent at 60 days
+  - Final reminder at 30 days
+  - Property manager can send renewal offer with proposed rent
+  - Track tenant acceptance/decline
+  - Expired leases automatically updated
+- **Completed**: November 2025
 
 ### 5. Financial Reports
 
-- **Status**: Planned
+- **Status**: ✅ Completed
 - **Description**: Generate comprehensive financial reports:
   - Monthly income statements
   - Rent roll reports
   - Profit/loss by property
-  - Tax reports (1099 forms)
+  - Tax reports (Schedule E for IRS)
 - **Benefits**: Better financial visibility and compliance
 - **Implementation**: Report generation service with PDF export
+- **Components**:
+  - `Components/PropertyManagement/Reports/IncomeStatement.cs` - Report models and DTOs
+  - `Services/FinancialReportService.cs` - Report generation logic
+  - `Services/FinancialReportPdfGenerator.cs` - PDF export functionality
+  - `Components/PropertyManagement/Reports/Pages/Reports.razor` - Report dashboard
+  - `Components/PropertyManagement/Reports/Pages/IncomeStatementReport.razor` - Income statement report
+  - `Components/PropertyManagement/Reports/Pages/RentRollReport.razor` - Rent roll report
+  - `Components/PropertyManagement/Reports/Pages/PropertyPerformanceReport.razor` - Property comparison
+  - `Components/PropertyManagement/Reports/Pages/TaxReport.razor` - Schedule E tax report
+- **Features**:
+  - Income Statement: Revenue and expense breakdown by category
+  - Rent Roll: Current tenant status, rent amounts, payment balances
+  - Property Performance: ROI, occupancy rates, net income comparison
+  - Tax Report: Schedule E format with depreciation calculations
+  - PDF export for all reports
+  - Date range filtering
+  - Property-specific or portfolio-wide reports
+  - Real-time data from database
+- **Completed**: November 2025
 
 ---
 
@@ -787,8 +830,8 @@ These features would enhance the application but are not critical for core funct
 
 - ✅ Toast notifications
 - ✅ Payment reminders and automated late fees
-- Financial reports
-- Lease renewal tracking
+- ✅ Lease renewal tracking
+- ✅ Financial reports
 
 ### Phase 2: Enhanced Features (Q2 2026)
 
