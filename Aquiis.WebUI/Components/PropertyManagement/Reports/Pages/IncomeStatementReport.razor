@@ -8,6 +8,9 @@
 @inject PropertyManagementService PropertyManagementService
 @inject FinancialReportPdfGenerator PdfGenerator
 @inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject UserContextService UserContextService
+
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
@@ -164,6 +167,8 @@
     private IncomeStatement? statement;
     private bool isLoading = false;
 
+    private string? organizationId = string.Empty;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
@@ -174,7 +179,9 @@
         var authState = await AuthenticationStateTask;
         var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        if (!string.IsNullOrEmpty(userId))
+        organizationId = await UserContextService.GetOrganizationIdAsync();
+
+        if (!string.IsNullOrEmpty(organizationId))
         {
             properties = await PropertyManagementService.GetPropertiesAsync();
         }
@@ -192,7 +199,7 @@
             var authState = await AuthenticationStateTask;
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(organizationId))
             {
                 int? propertyId = null;
                 if (!string.IsNullOrEmpty(selectedPropertyId) && int.TryParse(selectedPropertyId, out int pid))
@@ -201,7 +208,7 @@
                 }
 
                 statement = await FinancialReportService.GenerateIncomeStatementAsync(
-                    userId, startDate, endDate, propertyId);
+                    organizationId, startDate, endDate, propertyId);
             }
         }
         finally

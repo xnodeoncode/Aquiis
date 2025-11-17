@@ -204,7 +204,7 @@
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var organizationId = await UserContextService.GetOrganizationIdAsync();
 
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(organizationId))
             {
                 performanceItems = await FinancialReportService.GeneratePropertyPerformanceAsync(
                     organizationId, startDate, endDate);

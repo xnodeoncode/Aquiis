@@ -8,6 +8,8 @@
 @inject PropertyManagementService PropertyManagementService
 @inject FinancialReportPdfGenerator PdfGenerator
 @inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject UserContextService UserContextService
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
@@ -156,7 +158,7 @@
                                 </tr>
                                 <tr>
                                     <td>Total Expenses (including depreciation)</td>
-                                    <td class="text-end">(@(report.TotalExpenses + report.DepreciationAmount).ToString("C"))</td>
+                                    <td class="text-end">@((report.TotalExpenses + report.DepreciationAmount).ToString("C"))</td>
                                 </tr>
                                 <tr class="table-primary">
                                     <td><strong>21. Net rental income or (loss)</strong></td>
@@ -215,6 +217,8 @@
     private List<TaxReportData> taxReports = new();
     private bool isLoading = false;
 
+    private string? organizationId = string.Empty;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
@@ -224,6 +228,8 @@
 
         var authState = await AuthenticationStateTask;
         var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        organizationId = await UserContextService.GetOrganizationIdAsync();
 
         if (!string.IsNullOrEmpty(userId))
         {
@@ -243,7 +249,7 @@
             var authState = await AuthenticationStateTask;
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(organizationId))
             {
                 int? propertyId = null;
                 if (!string.IsNullOrEmpty(selectedPropertyId) && int.TryParse(selectedPropertyId, out int pid))
@@ -251,7 +257,7 @@
                     propertyId = pid;
                 }
 
-                taxReports = await FinancialReportService.GenerateTaxReportAsync(userId, taxYear, propertyId);
+                taxReports = await FinancialReportService.GenerateTaxReportAsync(organizationId, taxYear, propertyId);
             }
         }
         finally

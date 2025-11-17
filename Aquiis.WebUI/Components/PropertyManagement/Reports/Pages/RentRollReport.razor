@@ -6,6 +6,9 @@
 @inject FinancialReportService FinancialReportService
 @inject FinancialReportPdfGenerator PdfGenerator
 @inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject UserContextService UserContextService
+
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
@@ -173,6 +176,8 @@
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
+    private string? organizationId = string.Empty;
+
     private async Task GenerateReport()
     {
         if (AuthenticationStateTask == null) return;
@@ -185,9 +190,11 @@
             var authState = await AuthenticationStateTask;
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (!string.IsNullOrEmpty(userId))
+            organizationId = await UserContextService.GetOrganizationIdAsync();
+
+            if (!string.IsNullOrEmpty(organizationId))
             {
-                rentRollItems = await FinancialReportService.GenerateRentRollAsync(userId, asOfDate);
+                rentRollItems = await FinancialReportService.GenerateRentRollAsync(organizationId, asOfDate);
             }
         }
         finally
