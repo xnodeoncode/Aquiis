@@ -15,7 +15,7 @@
 <p>Welcome to the Application Dashboard. Here you can manage application-wide settings and monitor system status.</p>
 <!-- Additional dashboard components can be added below -->
 <div>
-    <button class="btn btn-primary">Manage Settings</button>
+    <button class="btn btn-primary" @onclick="GoToServices">Manage Scheduled Tasks</button>
     <button class="btn btn-secondary" @onclick="ViewDailyReport">View System Status</button>
 </div>
 
@@ -24,5 +24,11 @@
     {
         // Logic to view the daily system status report
         NavigationManager.NavigateTo("/administration/application/dailyreport");
+    }
+
+    private void GoToServices()
+    {
+        // Logic to navigate to the scheduled tasks management page
+        NavigationManager.NavigateTo("/administration/settings/services");
     }
 }

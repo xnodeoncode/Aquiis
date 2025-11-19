@@ -87,7 +87,7 @@
     }
 
     <div>
-    <button class="btn btn-primary">Manage Settings</button>
+    <button class="btn btn-primary" @onclick="ManageSettings">Manage Settings</button>
     <button class="btn btn-secondary" @onclick="ViewDailyReport">View System Status</button>
 </div>
 
@@ -132,5 +132,11 @@
     {
         // Logic to view the daily system status report
         NavigationManager.NavigateTo("/administration/application/dailyreport");
+    }
+
+    private void ManageSettings()
+    {
+        // Logic to navigate to the application settings page
+        NavigationManager.NavigateTo("/administration/settings/services");
     }
 }

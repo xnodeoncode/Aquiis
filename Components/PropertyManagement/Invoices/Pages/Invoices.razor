@@ -396,6 +396,10 @@ else
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? LeaseId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadInvoices();
@@ -409,6 +413,10 @@ else
         if (!string.IsNullOrEmpty(userId))
         {
             invoices = await PropertyManagementService.GetInvoicesAsync();
+            if (LeaseId.HasValue)
+            {
+                invoices = invoices.Where(i => i.LeaseId == LeaseId.Value).ToList();
+            }
             FilterInvoices();
             UpdateStatistics();
         }

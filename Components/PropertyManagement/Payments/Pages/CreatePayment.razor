@@ -199,13 +199,16 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? InvoiceId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateTask;
         var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        if (!string.IsNullOrEmpty(userId))
-        {
+        
             // Get all invoices and filter to those with outstanding balance
             List<Invoice>? allInvoices = await PropertyManagementService.GetInvoicesAsync();
             invoices = allInvoices
@@ -214,7 +217,11 @@
                 .ToList();
             
             paymentModel.PaymentDate = DateTime.Now;
-        }
+            if (InvoiceId.HasValue)
+            {
+                paymentModel.InvoiceId = InvoiceId.Value;
+                await OnInvoiceSelected();
+            }
     }
 
     private async Task OnInvoiceSelected()

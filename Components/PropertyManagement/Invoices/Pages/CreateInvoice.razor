@@ -189,12 +189,21 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? LeaseId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadLeases();
         invoiceModel.InvoiceNumber = await PropertyManagementService.GenerateInvoiceNumberAsync();
         invoiceModel.InvoiceDate = DateTime.Now;
         invoiceModel.DueDate = DateTime.Now.AddDays(30);
+        if (LeaseId.HasValue)
+        {
+            invoiceModel.LeaseId = LeaseId.Value;
+            OnLeaseSelected();
+        }
     }
 
     private async Task LoadLeases()
