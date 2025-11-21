@@ -326,7 +326,10 @@ namespace Aquiis.SimpleStart.Services
             return await CreateBackupAsync(backupReason);
         }
 
-        private async Task<string> GetDatabasePathAsync()
+        /// <summary>
+        /// Gets the database file path for both Electron and web modes
+        /// </summary>
+        public async Task<string> GetDatabasePathAsync()
         {
             if (HybridSupport.IsElectronActive)
             {

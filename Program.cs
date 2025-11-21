@@ -292,8 +292,56 @@ using (var scope = app.Services.CreateScope())
         {
             app.Logger.LogInformation("Applying database migrations for web mode");
             
+            // Get database path for web mode
+            var webConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (!string.IsNullOrEmpty(webConnectionString))
+            {
+                var dbPath = webConnectionString
+                    .Replace("Data Source=", "")
+                    .Replace("DataSource=", "")
+                    .Split(';')[0]
+                    .Trim();
+                
+                if (!Path.IsPathRooted(dbPath))
+                {
+                    dbPath = Path.Combine(Directory.GetCurrentDirectory(), dbPath);
+                }
+                
+                var stagedRestorePath = $"{dbPath}.restore_pending";
+                
+                // Check if there's a staged restore waiting
+                if (File.Exists(stagedRestorePath))
+                {
+                    app.Logger.LogInformation("Found staged restore file for web mode, applying it now");
+                    
+                    // Close all database connections
+                    await context.Database.CloseConnectionAsync();
+                    
+                    // Clear SQLite connection pool
+                    Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                    
+                    // Wait for connections to close
+                    await Task.Delay(500);
+                    
+                    // Backup current database if it exists
+                    if (File.Exists(dbPath))
+                    {
+                        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                        var beforeRestorePath = $"{dbPath}.beforeRestore.{timestamp}";
+                        File.Move(dbPath, beforeRestorePath);
+                        app.Logger.LogInformation("Current database backed up to: {Path}", beforeRestorePath);
+                    }
+                    
+                    // Move staged restore into place
+                    File.Move(stagedRestorePath, dbPath);
+                    app.Logger.LogInformation("Staged restore applied successfully for web mode");
+                }
+            }
+            
             // Check if there are pending migrations
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            var isNewDatabase = !pendingMigrations.Any() && !(await context.Database.GetAppliedMigrationsAsync()).Any();
+            
             if (pendingMigrations.Any())
             {
                 // Create backup before migration
@@ -306,6 +354,13 @@ using (var scope = app.Services.CreateScope())
             
             await context.Database.MigrateAsync();
             app.Logger.LogInformation("Database migrations applied successfully");
+            
+            // Create initial backup after creating a new database
+            if (isNewDatabase)
+            {
+                app.Logger.LogInformation("New database created, creating initial backup");
+                await backupService.CreateBackupAsync("InitialSetup");
+            }
         }
         catch (Exception ex)
         {

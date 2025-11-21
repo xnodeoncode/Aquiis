@@ -5,13 +5,11 @@
 @using Microsoft.Extensions.Options
 @using ElectronNET.API
 @inject DatabaseBackupService BackupService
-
 @inject NavigationManager Navigation
-
-
 @inject SchemaValidationService SchemaService
 @inject IOptions<ApplicationSettings> AppSettings
 @inject IJSRuntime JSRuntime
+@inject IHostApplicationLifetime AppLifetime
 @attribute [Authorize(Roles = "Administrator")]
 @rendermode InteractiveServer
 
@@ -151,6 +149,21 @@
                             }
                             Reset Database (Create New Blank)
                         </button>
+                        
+                        @if (!HybridSupport.IsElectronActive)
+                        {
+                            <button class="btn btn-secondary" @onclick="RestartApplication" disabled="@isRestarting">
+                                @if (isRestarting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-arrow-repeat me-2"></i>
+                                }
+                                Restart Application
+                            </button>
+                        }
                     </div>
                 </div>
             </div>
@@ -287,6 +300,7 @@
     private bool isUploading = false;
     private bool isResetting = false;
     private bool isDeleting = false;
+    private bool isRestarting = false;
     private (bool IsHealthy, string Message)? healthCheckResult;
     private DateTime? lastHealthCheck;
 
@@ -398,6 +412,32 @@
             isResetting = false;
         }
     }
+    
+    private async Task RestartApplication()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "Are you sure you want to restart the application?\n\n" +
+            "All users will be disconnected and the application will reload.");
+        
+        if (!confirmed) return;
+        
+        isRestarting = true;
+        successMessage = "Restarting application...";
+        StateHasChanged();
+        
+        try
+        {
+            await Task.Delay(1000); // Give time for the message to display
+            
+            // Stop the application - the host will automatically restart it
+            AppLifetime.StopApplication();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error restarting application: {ex.Message}";
+            isRestarting = false;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -481,8 +521,8 @@
         
         try
         {
-            // Get database path
-            var dbPath = await ElectronPathService.GetDatabasePathAsync();
+            // Get database path (works for both Electron and web mode)
+            var dbPath = await BackupService.GetDatabasePathAsync();
             var stagedRestorePath = $"{dbPath}.restore_pending";
             
             // Verify backup exists
@@ -510,7 +550,8 @@
             }
             else
             {
-                Navigation.NavigateTo("/", true);
+                // Web mode - stop the application, which will trigger a restart by the host
+                AppLifetime.StopApplication();
             }
         }
         catch (Exception ex)
