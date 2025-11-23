@@ -230,11 +230,26 @@ User authenticates → Fetch key from cloud → Decrypt database
 └─────────────────────────────────────────────┘
 ```
 
-### For Web: File System Encryption + Column-Level for PII
+### For Web: Environment-Based Encryption Password
 
-- Use encrypted volumes on server infrastructure
-- Add column-level encryption for highly sensitive data (SSN, payment info)
-- More practical than SQLCipher in multi-user web environments
+**Development Server:**
+
+- Set encryption password via environment variable
+- Password retrieved automatically on application startup
+- No user interaction required
+
+**Production Server:**
+
+- Use secure secret management (Azure Key Vault, AWS Secrets Manager)
+- Or environment variables with restricted file permissions
+- Single password configured once during deployment
+
+**User Experience:**
+
+- Web users never see the database encryption password
+- They just log in with their normal username/password
+- Server handles database decryption automatically
+- Simpler than Electron (no password prompts)
 
 ## Portability Strategy
 
@@ -276,6 +291,193 @@ Since property managers might:
 3. **Web**: Use Azure Key Vault, AWS Secrets Manager, or environment variables
 4. **User-based encryption**: Each user's key derived from their password
 5. **Master key rotation**: Plan for key rotation strategy
+
+## Web Server Configuration Options
+
+### Option 1: Environment Variable (Recommended for Development)
+
+**Linux/macOS:**
+
+```bash
+# In terminal before running
+export DB_ENCRYPTION_PASSWORD="your-secure-password-here"
+dotnet run
+
+# Or add to ~/.bashrc for persistence
+echo 'export DB_ENCRYPTION_PASSWORD="your-password"' >> ~/.bashrc
+```
+
+**launchSettings.json:**
+
+```json
+{
+  "profiles": {
+    "https": {
+      "environmentVariables": {
+        "DB_ENCRYPTION_PASSWORD": "dev-password-123"
+      }
+    }
+  }
+}
+```
+
+**systemd Service (Linux Production):**
+
+```ini
+[Service]
+Environment="DB_ENCRYPTION_PASSWORD=your-secure-password"
+# Or use EnvironmentFile for better security
+EnvironmentFile=/etc/aquiis/db.env
+```
+
+**Setup script for EnvironmentFile:**
+
+```bash
+#!/bin/bash
+sudo mkdir -p /etc/aquiis
+echo "DB_ENCRYPTION_PASSWORD=your-secure-production-password" | sudo tee /etc/aquiis/db.env
+sudo chmod 600 /etc/aquiis/db.env
+sudo chown aquiis-user:aquiis-user /etc/aquiis/db.env
+```
+
+### Option 2: Azure Key Vault (Recommended for Production)
+
+```csharp
+// In Program.cs
+var secretClient = new SecretClient(
+    new Uri(configuration["KeyVault:Url"]),
+    new DefaultAzureCredential()
+);
+var secret = await secretClient.GetSecretAsync("DatabaseEncryptionPassword");
+var encryptionPassword = secret.Value.Value;
+```
+
+**Advantages:**
+
+- Centralized secret management
+- Automatic rotation support
+- Audit logging
+- Access control via Azure AD
+- No secrets in configuration files
+
+### Option 3: AWS Secrets Manager
+
+```csharp
+// In Program.cs
+var client = new AmazonSecretsManagerClient(RegionEndpoint.USEast1);
+var request = new GetSecretValueRequest
+{
+    SecretId = "aquiis/database-encryption-password"
+};
+var response = await client.GetSecretValueAsync(request);
+var encryptionPassword = response.SecretString;
+```
+
+### Option 4: appsettings.Production.json (Less Secure, Not Recommended)
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=app.db;Password=your-password-here"
+  }
+}
+```
+
+**If using this approach:**
+
+- Add to `.gitignore` (never commit)
+- Set file permissions: `chmod 600 appsettings.Production.json`
+- Only readable by application user account
+- Consider using ASP.NET Data Protection to encrypt the file
+
+### Option 5: Docker Secrets
+
+```yaml
+# docker-compose.yml
+services:
+  aquiis:
+    image: aquiis-app
+    secrets:
+      - db_encryption_password
+    environment:
+      DB_ENCRYPTION_PASSWORD_FILE: /run/secrets/db_encryption_password
+
+secrets:
+  db_encryption_password:
+    file: ./secrets/db_password.txt
+```
+
+```csharp
+// In Program.cs
+var passwordFile = Environment.GetEnvironmentVariable("DB_ENCRYPTION_PASSWORD_FILE");
+if (!string.IsNullOrEmpty(passwordFile) && File.Exists(passwordFile))
+{
+    encryptionPassword = File.ReadAllText(passwordFile).Trim();
+}
+```
+
+## Implementation Pattern for Electron + Web
+
+```csharp
+// In Program.cs
+string? encryptionPassword = null;
+
+if (HybridSupport.IsElectronActive)
+{
+    // Electron: Try keychain first, fallback to password prompt
+    encryptionPassword = await GetElectronEncryptionPassword();
+}
+else
+{
+    // Web: Get from environment variable or secret manager
+    encryptionPassword = Environment.GetEnvironmentVariable("DB_ENCRYPTION_PASSWORD");
+
+    // Or from Azure Key Vault
+    if (string.IsNullOrEmpty(encryptionPassword) && !string.IsNullOrEmpty(keyVaultUrl))
+    {
+        var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        var secret = await secretClient.GetSecretAsync("DatabaseEncryptionPassword");
+        encryptionPassword = secret.Value.Value;
+    }
+
+    if (string.IsNullOrEmpty(encryptionPassword))
+    {
+        throw new InvalidOperationException(
+            "Database encryption password not configured. " +
+            "Set DB_ENCRYPTION_PASSWORD environment variable or configure Key Vault."
+        );
+    }
+}
+
+// Use password in connection string
+var connectionString = $"Data Source={dbPath};Password={encryptionPassword}";
+```
+
+## Password Management Best Practices
+
+### Development
+
+- Use simple password in environment variable
+- Document in README how to set it up
+- Include in `launchSettings.json` for team consistency
+
+### Staging/Production
+
+- **Never** use environment variables in shared hosting
+- Use Azure Key Vault or AWS Secrets Manager
+- Enable audit logging for secret access
+- Rotate passwords periodically
+- Use different passwords per environment
+
+### Security Checklist
+
+- ✅ Password never in source code
+- ✅ Password never in git repository
+- ✅ Password not in plain text files (production)
+- ✅ File permissions restricted (if using files)
+- ✅ Access logging enabled (cloud secret managers)
+- ✅ Different passwords for dev/staging/production
+- ✅ Password rotation strategy documented
 
 ## Implementation Technologies
 

@@ -27,6 +27,7 @@ if (HybridSupport.IsElectronActive)
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
     //Added for session state
 builder.Services.AddDistributedMemoryCache();
 
@@ -134,6 +135,7 @@ builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddSingleton<ToastService>();
+builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();
 builder.Services.AddScoped<FinancialReportService>();
 builder.Services.AddScoped<FinancialReportPdfGenerator>();
@@ -462,6 +464,8 @@ if (HybridSupport.IsElectronActive)
     {
         Width = 1400,
         Height = 900,
+        MinWidth = 800,
+        MinHeight = 600,
         Show = false
     });
 

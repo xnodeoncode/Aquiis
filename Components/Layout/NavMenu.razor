@@ -1,10 +1,16 @@
 ﻿@implements IDisposable
 
 @inject NavigationManager NavigationManager
+@inject ThemeService ThemeService
+@inject IJSRuntime JSRuntime
+
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
         <a class="navbar-brand" href="">Aquiis.SimpleStart</a>
+        <button class="btn btn-link text-white p-0" @onclick="ToggleTheme" title="Toggle theme">
+            <i class="bi @GetThemeIcon()" style="font-size: 1.4rem;"></i>
+        </button>
     </div>
 </div>
 
@@ -128,22 +134,99 @@
 
 @code {
     private string? currentUrl;
+    private string currentTheme = "light";
 
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        currentTheme = ThemeService.CurrentTheme;
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Load saved theme from localStorage and sync with service
+                var savedTheme = await JSRuntime.InvokeAsync<string>("eval", "localStorage.getItem('theme') || 'light'");
+                
+                // Only update if different from current
+                if (ThemeService.CurrentTheme != savedTheme)
+                {
+                    ThemeService.SetTheme(savedTheme);
+                }
+                
+                // Always ensure the DOM has the correct theme attribute
+                await JSRuntime.InvokeVoidAsync("themeManager.setTheme", savedTheme);
+                StateHasChanged();
+            }
+            catch
+            {
+                // Fallback if localStorage not available
+                ThemeService.SetTheme("light");
+                await JSRuntime.InvokeVoidAsync("themeManager.setTheme", "light");
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        try
+        {
+            ThemeService.ToggleTheme();
+            currentTheme = ThemeService.CurrentTheme;
+            // Save to localStorage and update DOM immediately
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.CurrentTheme);
+            StateHasChanged();
+            Console.WriteLine($"Theme toggled to: {ThemeService.CurrentTheme}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling theme: {ex.Message}");
+        }
+    }
+
+    private string GetThemeIcon()
+    {
+        return currentTheme == "light" ? "bi-moon-fill" : "bi-sun-fill";
+    }
+
+    private void OnThemeChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            try
+            {
+                currentTheme = ThemeService.CurrentTheme;
+                // Re-apply theme when service notifies of change
+                await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.CurrentTheme);
+            }
+            catch { }
+            StateHasChanged();
+        });
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        
+        // Re-apply current theme after navigation
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.CurrentTheme);
+        }
+        catch { }
+        
         StateHasChanged();
     }
 
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        ThemeService.OnThemeChanged -= OnThemeChanged;
     }
 }
 

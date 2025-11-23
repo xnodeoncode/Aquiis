@@ -379,7 +379,7 @@ else
             }
 
             // Generate the PDF receipt
-            byte[] pdfBytes = PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
+            byte[] pdfBytes = Aquiis.SimpleStart.Components.PropertyManagement.Documents.PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
 
             // Create the document entity
             var document = new Document

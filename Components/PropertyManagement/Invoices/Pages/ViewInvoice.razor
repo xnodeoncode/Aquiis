@@ -372,7 +372,7 @@ else
             }
 
             // Generate the PDF
-            byte[] pdfBytes = InvoicePdfGenerator.GenerateInvoicePdf(invoice!);
+            byte[] pdfBytes = Aquiis.SimpleStart.Components.PropertyManagement.Documents.InvoicePdfGenerator.GenerateInvoicePdf(invoice!);
 
             // Create the document entity
             var document = new Document
