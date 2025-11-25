@@ -132,15 +132,43 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddScoped<PropertyManagementService>();
+builder.Services.AddScoped<Aquiis.SimpleStart.Components.PropertyManagement.Checklists.ChecklistService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<UserContextService>();
+builder.Services.AddScoped<DocumentService>();
 builder.Services.AddSingleton<ToastService>();
 builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();
 builder.Services.AddScoped<FinancialReportService>();
 builder.Services.AddScoped<FinancialReportPdfGenerator>();
+builder.Services.AddScoped<ChecklistPdfGenerator>();
 builder.Services.AddScoped<DatabaseBackupService>();
 builder.Services.AddScoped<SchemaValidationService>();
+
+// Configure and register session timeout service
+builder.Services.AddScoped<SessionTimeoutService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var service = new SessionTimeoutService();
+    
+    // Load configuration
+    var timeoutMinutes = config.GetValue<int>("SessionTimeout:InactivityTimeoutMinutes", 30);
+    var warningMinutes = config.GetValue<int>("SessionTimeout:WarningDurationMinutes", 2);
+    var enabled = config.GetValue<bool>("SessionTimeout:Enabled", true);
+    
+    // Disable for Electron in development, or use longer timeout
+    if (HybridSupport.IsElectronActive)
+    {
+        timeoutMinutes = 120; // 2 hours for desktop app
+        enabled = false; // Typically disabled for desktop
+    }
+    
+    service.InactivityTimeout = TimeSpan.FromMinutes(timeoutMinutes);
+    service.WarningDuration = TimeSpan.FromMinutes(warningMinutes);
+    service.IsEnabled = enabled;
+    
+    return service;
+});
 
 // Register background service for scheduled tasks
 builder.Services.AddHostedService<ScheduledTaskService>();
@@ -453,6 +481,15 @@ app.MapRazorComponents<Aquiis.SimpleStart.Components.App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// Add session refresh endpoint for session timeout feature
+app.MapPost("/api/session/refresh", async (HttpContext context) =>
+{
+    // Simply accessing the session refreshes it
+    context.Session.SetString("LastRefresh", DateTime.UtcNow.ToString("O"));
+    await Task.CompletedTask;
+    return Results.Ok(new { success = true, timestamp = DateTime.UtcNow });
+}).RequireAuthorization();
 
 // Start the app for Electron
 await app.StartAsync();

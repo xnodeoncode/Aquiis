@@ -3,6 +3,7 @@ using System;
 using Aquiis.SimpleStart.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquiis.SimpleStart.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123223208_MakePropertyIdNullableInChecklist")]
+    partial class MakePropertyIdNullableInChecklist
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -1053,10 +1056,6 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<int?>("DocumentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("GeneralNotes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
@@ -1162,11 +1161,8 @@ namespace Aquiis.SimpleStart.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("RequiresValue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Value")
-                        .HasMaxLength(200)
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1280,9 +1276,6 @@ namespace Aquiis.SimpleStart.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("RequiresValue")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

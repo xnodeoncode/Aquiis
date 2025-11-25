@@ -1,0 +1,20 @@
+/* Ignore file for Aquiis.SimpleStart project */
+
+/bin/**
+/obj/**
+
+obj/**
+bin/**
+
+*.db
+
+Data/*.db
+/Data/*.db
+Data/Backups/**
+/Data/Backups/**
+
+Data/*app.db
+/Data/*app.db
+
+/Data/app*
+

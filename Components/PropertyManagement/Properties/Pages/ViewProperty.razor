@@ -5,10 +5,14 @@
 @using Aquiis.SimpleStart.Components.PropertyManagement.Documents
 @using Aquiis.SimpleStart.Components.PropertyManagement.MaintenanceRequests
 @using Aquiis.SimpleStart.Components.PropertyManagement.Inspections
+@using Aquiis.SimpleStart.Components.PropertyManagement.Checklists
 @using Aquiis.SimpleStart.Components.PropertyManagement
+@using Aquiis.SimpleStart.Components.Administration.Application
+@using Aquiis.SimpleStart.Models
 @using Microsoft.AspNetCore.Authorization
 
 @inject PropertyManagementService PropertyManagementService
+@inject ChecklistService ChecklistService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @attribute [Authorize(Roles = "PropertyManager")]
@@ -174,6 +178,73 @@ else
                             <p class="mb-0 mt-2">No maintenance requests for this property</p>
                             <button class="btn btn-sm btn-primary mt-2" @onclick="CreateMaintenanceRequest">
                                 <i class="bi bi-plus-circle"></i> Create First Request
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+            <!-- Completed Checklists Section -->
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Completed Checklists</h5>
+                    <button class="btn btn-sm btn-primary" @onclick="CreateChecklist">
+                        <i class="bi bi-plus-circle"></i> New Checklist
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (propertyChecklists.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var checklist in propertyChecklists.OrderByDescending(c => c.CompletedOn ?? c.CreatedOn).Take(5))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <strong class="me-2">@checklist.Name</strong>
+                                                <span class="badge @GetChecklistStatusBadge(checklist.Status)">@checklist.Status</span>
+                                            </div>
+                                            <small class="text-muted d-block mb-1">@checklist.ChecklistType</small>
+                                            <small class="text-muted">
+                                                @if (checklist.CompletedOn.HasValue)
+                                                {
+                                                    <span>Completed: @checklist.CompletedOn.Value.ToString("MMM dd, yyyy")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Created: @checklist.CreatedOn.ToString("MMM dd, yyyy")</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" @onclick="() => ViewChecklist(checklist.Id)">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            @if (checklist.Status != ApplicationConstants.ChecklistStatuses.Completed)
+                                            {
+                                                <button class="btn btn-outline-success" @onclick="() => CompleteChecklist(checklist.Id)">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (propertyChecklists.Count > 5)
+                        {
+                            <div class="mt-2">
+                                <small class="text-muted">Showing 5 of @propertyChecklists.Count checklists</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-list-check" style="font-size: 2rem;"></i>
+                            <p class="mb-0 mt-2">No checklists for this property</p>
+                            <button class="btn btn-sm btn-primary mt-2" @onclick="CreateChecklist">
+                                <i class="bi bi-plus-circle"></i> Create First Checklist
                             </button>
                         </div>
                     }
@@ -374,6 +445,7 @@ else
     List<Document> propertyDocuments = new();
     List<MaintenanceRequest> maintenanceRequests = new();
     List<Inspection> propertyInspections = new();
+    List<Checklist> propertyChecklists = new();
 
     private bool isAuthorized = true; 
 
@@ -423,6 +495,13 @@ else
         
         // Load inspections for this property
         propertyInspections = await PropertyManagementService.GetInspectionsByPropertyIdAsync(PropertyId);
+        
+        // Load checklists for this property
+        var allChecklists = await ChecklistService.GetChecklistsAsync(includeArchived: false);
+        propertyChecklists = allChecklists
+            .Where(c => c.PropertyId == PropertyId)
+            .OrderByDescending(c => c.CompletedOn ?? c.CreatedOn)
+            .ToList();
     }
 
     private void EditProperty()
@@ -520,5 +599,31 @@ else
             "Not Scheduled" => "bg-secondary",
             _ => "bg-secondary"
         };
+    }
+
+    private string GetChecklistStatusBadge(string status)
+    {
+        return status switch
+        {
+            "Completed" => "bg-success",
+            "In Progress" => "bg-warning",
+            "Draft" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void CreateChecklist()
+    {
+        NavigationManager.NavigateTo("/propertymanagement/checklists");
+    }
+
+    private void ViewChecklist(int checklistId)
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/checklists/view/{checklistId}");
+    }
+
+    private void CompleteChecklist(int checklistId)
+    {
+        NavigationManager.NavigateTo($"/propertymanagement/checklists/complete/{checklistId}");
     }
 }

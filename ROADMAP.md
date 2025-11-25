@@ -215,10 +215,28 @@ This document outlines planned improvements and feature enhancements for the Aqu
 
 ### Session Timeout
 
-- **Status**: Planned
-- **Description**: Automatic logout after inactivity
-- **Benefits**: Security for shared computers
-- **Implementation**: Cookie/session timeout configuration
+- **Status**: ✅ Completed
+- **Description**: Automatic logout after inactivity with warning modal and countdown
+- **Benefits**: Security for shared computers, prevents unauthorized access
+- **Implementation**: SessionTimeoutService, JavaScript activity tracking, warning modal with session refresh
+- **Components**:
+  - `Services/SessionTimeoutService.cs` - Core timeout management
+  - `Components/Shared/SessionTimeoutModal.razor` - Warning dialog with countdown
+  - `wwwroot/js/sessionTimeout.js` - Client-side activity monitoring
+  - `/api/session/refresh` - Session extension endpoint
+- **Features**:
+  - Configurable timeout durations per environment
+  - Warning modal appears before timeout
+  - Countdown timer showing seconds remaining
+  - "Stay Logged In" to extend session
+  - Activity tracking (mouse, keyboard, touch, scroll)
+  - Automatic logout on timeout expiration
+  - Disabled by default in development and Electron modes
+- **Configuration**:
+  - Production: 30 min timeout, 2 min warning
+  - Development: 60 min timeout, disabled for easier testing
+  - Electron: 120 min timeout, disabled (desktop convenience)
+- **Completed**: November 2025
 
 ### API Rate Limiting
 

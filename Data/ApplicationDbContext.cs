@@ -32,6 +32,10 @@ namespace Aquiis.SimpleStart.Data
         public DbSet<MaintenanceRequest> MaintenanceRequests { get; set; }
         public DbSet<OrganizationSettings> OrganizationSettings { get; set; }
         public DbSet<SchemaVersion> SchemaVersions { get; set; }
+        public DbSet<ChecklistTemplate> ChecklistTemplates { get; set; }
+        public DbSet<ChecklistTemplateItem> ChecklistTemplateItems { get; set; }
+        public DbSet<Checklist> Checklists { get; set; }
+        public DbSet<ChecklistItem> ChecklistItems { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -226,6 +230,65 @@ namespace Aquiis.SimpleStart.Data
                 entity.HasIndex(e => e.OrganizationId).IsUnique();
                 entity.Property(e => e.LateFeePercentage).HasPrecision(5, 4);
                 entity.Property(e => e.MaxLateFeeAmount).HasPrecision(18, 2);
+            });
+
+            // Configure ChecklistTemplate entity
+            modelBuilder.Entity<ChecklistTemplate>(entity =>
+            {
+                entity.HasIndex(e => e.OrganizationId);
+                entity.HasIndex(e => e.Category);
+            });
+
+            // Configure ChecklistTemplateItem entity
+            modelBuilder.Entity<ChecklistTemplateItem>(entity =>
+            {
+                entity.HasOne(cti => cti.ChecklistTemplate)
+                    .WithMany(ct => ct.Items)
+                    .HasForeignKey(cti => cti.ChecklistTemplateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.ChecklistTemplateId);
+            });
+
+            // Configure Checklist entity
+            modelBuilder.Entity<Checklist>(entity =>
+            {
+                entity.HasOne(c => c.Property)
+                    .WithMany()
+                    .HasForeignKey(c => c.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Lease)
+                    .WithMany()
+                    .HasForeignKey(c => c.LeaseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(c => c.ChecklistTemplate)
+                    .WithMany(ct => ct.Checklists)
+                    .HasForeignKey(c => c.ChecklistTemplateId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Document)
+                    .WithMany()
+                    .HasForeignKey(c => c.DocumentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.PropertyId);
+                entity.HasIndex(e => e.LeaseId);
+                entity.HasIndex(e => e.ChecklistType);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.CompletedOn);
+            });
+
+            // Configure ChecklistItem entity
+            modelBuilder.Entity<ChecklistItem>(entity =>
+            {
+                entity.HasOne(ci => ci.Checklist)
+                    .WithMany(c => c.Items)
+                    .HasForeignKey(ci => ci.ChecklistId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.ChecklistId);
             });
         }
 

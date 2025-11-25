@@ -305,6 +305,37 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
 
         }
 
+        public static class ChecklistTypes
+        {
+            public const string MoveIn = "Move-In";
+            public const string MoveOut = "Move-Out";
+            public const string OpenHouse = "Open House";
+            public const string Custom = "Custom";
+
+            public static IReadOnlyList<string> AllChecklistTypes { get; } = new List<string>
+            {
+                MoveIn,
+                MoveOut,
+                OpenHouse,
+                Custom
+            };
+        }
+
+        public static class ChecklistStatuses
+        {
+            public const string Draft = "Draft";
+            public const string InProgress = "In Progress";
+            public const string Completed = "Completed";
+
+            public static IReadOnlyList<string> AllChecklistStatuses { get; } = new List<string>
+            {
+                Draft,
+                InProgress,
+                Completed
+            };
+        }
+
+
         
 
     }

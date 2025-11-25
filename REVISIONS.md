@@ -1,5 +1,132 @@
 # Aquiis - Revision History
 
+## November 23, 2025
+
+### Session Timeout Implementation
+
+**Automatic Logout on Inactivity**
+
+- ✅ Created SessionTimeoutService for timeout state management
+- ✅ Implemented client-side activity tracking with JavaScript
+- ✅ Added warning modal with countdown display
+- ✅ Configured different timeouts for web vs Electron modes
+
+**Components Created:**
+
+1. **SessionTimeoutService.cs** - Core timeout management service
+
+   - Configurable inactivity timeout and warning duration
+   - Event-driven architecture (OnWarningTriggered, OnWarningCountdown, OnTimeout)
+   - Thread-safe timer management with lock synchronization
+   - Activity recording and session extension methods
+   - Enable/disable functionality for different deployment modes
+
+2. **sessionTimeout.js** - Client-side activity monitoring
+
+   - Tracks mouse movements, keyboard input, scrolling, and touch events
+   - Passive event listeners for optimal performance
+   - Invokes .NET methods via JSInterop to record activity
+   - Start/stop tracking capabilities
+   - Clean disposal pattern
+
+3. **SessionTimeoutModal.razor** - Warning UI component
+
+   - Modal dialog with countdown timer display
+   - "Stay Logged In" button to extend session
+   - "Logout Now" button for immediate logout
+   - Professional styling with warning colors and icons
+   - Integrates with JavaScript activity tracker
+   - Interactive Server render mode for real-time updates
+
+4. **Configuration Settings:**
+   - Production (appsettings.json): 30 min timeout, 2 min warning, enabled
+   - Development (appsettings.Development.json): 60 min timeout, 2 min warning, disabled by default
+   - Electron mode: 120 min timeout, disabled by default (desktop app convenience)
+
+**Features:**
+
+- **Automatic Warning**: Modal appears when approaching timeout
+- **Countdown Display**: Shows seconds remaining before auto-logout
+- **Session Extension**: Refresh session cookie with server API call
+- **Activity Monitoring**: Detects user interaction to reset timer
+- **Configurable Timeouts**: Different settings per environment
+- **Event-Driven**: Service uses events for loose coupling
+- **Thread-Safe**: Proper locking for timer operations
+
+**Technical Implementation:**
+
+- SessionTimeoutService registered as scoped service (one per user session)
+- Configuration loaded from appsettings.json on service creation
+- JavaScript activity manager initialized on modal component render
+- Activity events call .NET method to record activity via JSInterop
+- Service timers trigger warning and logout at configured intervals
+- Modal subscribes to service events for real-time UI updates
+- Session refresh endpoint at `/api/session/refresh` (POST, requires auth)
+
+**Workflow:**
+
+1. User logs in, SessionTimeoutService starts monitoring
+2. JavaScript tracks all user activity (mouse, keyboard, etc.)
+3. Activity resets the inactivity timer
+4. After inactivity period (minus warning duration), warning modal appears
+5. Countdown shows seconds remaining
+6. User can click "Stay Logged In" to refresh session or do nothing
+7. If countdown reaches zero, auto-logout occurs
+8. User redirected to logout page
+
+**Configuration Example:**
+
+```json
+"SessionTimeout": {
+  "InactivityTimeoutMinutes": 30,
+  "WarningDurationMinutes": 2,
+  "Enabled": true
+}
+```
+
+**Files Created:**
+
+```
+Aquiis.SimpleStart/
+├── Services/
+│   └── SessionTimeoutService.cs (Timeout management service)
+├── Components/Shared/
+│   └── SessionTimeoutModal.razor (Warning modal component)
+├── wwwroot/js/
+│   └── sessionTimeout.js (Activity tracking JavaScript)
+└── appsettings.json / appsettings.Development.json (Configuration)
+```
+
+**Files Modified:**
+
+```
+Aquiis.SimpleStart/
+├── Program.cs (Registered SessionTimeoutService, added session refresh endpoint)
+├── Components/App.razor (Added sessionTimeout.js script reference)
+└── Components/Layout/MainLayout.razor (Added SessionTimeoutModal with AuthorizeView)
+```
+
+**Benefits:**
+
+- ✅ Security: Automatic logout prevents unauthorized access on shared computers
+- ✅ User-Friendly: Warning gives users chance to stay logged in
+- ✅ Configurable: Different settings for different environments
+- ✅ Professional: Clean modal design with countdown and icons
+- ✅ Flexible: Can be disabled for desktop app (Electron mode)
+- ✅ Performance: Efficient event handling with passive listeners
+
+**Testing:**
+
+- Set `InactivityTimeoutMinutes: 2` and `WarningDurationMinutes: 1` in appsettings.Development.json
+- Enable with `"Enabled": true`
+- Log in and wait without interacting
+- Warning modal appears after 1 minute of inactivity
+- Countdown shows 60 seconds
+- Click "Stay Logged In" to extend session
+- Or wait for auto-logout after countdown completes
+
+---
+
 ## November 19, 2025 - Session 2 (Continued)
 
 ### Database Backup & Restore System - Critical Fixes

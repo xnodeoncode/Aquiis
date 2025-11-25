@@ -46,6 +46,16 @@ a,
   border-color: #1861ac;
 }
 
+/* Checklist template card hover effect */
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px);
+}
+
 .btn:focus,
 .btn:active:focus,
 .btn-link.nav-link:focus,

@@ -3,6 +3,7 @@ using System;
 using Aquiis.SimpleStart.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquiis.SimpleStart.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123210402_AddMoveInMoveOutFieldsToInspections")]
+    partial class AddMoveInMoveOutFieldsToInspections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -256,6 +259,12 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<string>("CarbonMonoxideDetectorsNotes")
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("CleaningCost")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("CleaningRequired")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -264,13 +273,23 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DeductionDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("DocumentId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("ElectricMeterReading")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("ElectricalSystemGood")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ElectricalSystemNotes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("EstimatedRepairCost")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("ExteriorDoorsGood")
@@ -307,6 +326,16 @@ namespace Aquiis.SimpleStart.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ExteriorWindowsNotes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ForwardingAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ForwardingAddressProvided")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("GasMeterReading")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GeneralNotes")
@@ -364,6 +393,16 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("KeyCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("KeyTypes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("KeysProvided")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("KitchenAppliancesGood")
                         .HasColumnType("INTEGER");
 
@@ -404,6 +443,9 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<int?>("LeaseId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("MeterReadingDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("OrganizationId")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -412,6 +454,13 @@ namespace Aquiis.SimpleStart.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ParkingPassNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ParkingPassProvided")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("PlumbingSystemGood")
                         .HasColumnType("INTEGER");
@@ -422,6 +471,25 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("RemoteControlTypes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("RemoteControlsProvided")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RepairsRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("SecurityDepositAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SecurityDepositDeductions")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SecurityDepositRefundAmount")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("SmokeDetectorsGood")
                         .HasColumnType("INTEGER");
 
@@ -430,6 +498,9 @@ namespace Aquiis.SimpleStart.Data.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("WaterMeterReading")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1021,276 +1092,6 @@ namespace Aquiis.SimpleStart.Data.Migrations
                     b.ToTable("Tenants");
                 });
 
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.Checklist", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ChecklistTemplateId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ChecklistType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CompletedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CompletedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("DocumentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("GeneralNotes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("LeaseId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OrganizationId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("PropertyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChecklistTemplateId");
-
-                    b.HasIndex("ChecklistType");
-
-                    b.HasIndex("CompletedOn");
-
-                    b.HasIndex("DocumentId");
-
-                    b.HasIndex("LeaseId");
-
-                    b.HasIndex("PropertyId");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("Checklists");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CategorySection")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ChecklistId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsChecked")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ItemOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ItemText")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OrganizationId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("RequiresValue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Value")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChecklistId");
-
-                    b.ToTable("ChecklistItems");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsSystemTemplate")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OrganizationId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Category");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("ChecklistTemplates");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistTemplateItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("AllowsNotes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CategorySection")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ChecklistTemplateId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ItemOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ItemText")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OrganizationId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("RequiresValue")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChecklistTemplateId");
-
-                    b.ToTable("ChecklistTemplateItems");
-                });
-
             modelBuilder.Entity("Aquiis.SimpleStart.Models.OrganizationSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -1691,60 +1492,6 @@ namespace Aquiis.SimpleStart.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.Checklist", b =>
-                {
-                    b.HasOne("Aquiis.SimpleStart.Models.ChecklistTemplate", "ChecklistTemplate")
-                        .WithMany("Checklists")
-                        .HasForeignKey("ChecklistTemplateId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Documents.Document", "Document")
-                        .WithMany()
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Leases.Lease", "Lease")
-                        .WithMany()
-                        .HasForeignKey("LeaseId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Properties.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ChecklistTemplate");
-
-                    b.Navigation("Document");
-
-                    b.Navigation("Lease");
-
-                    b.Navigation("Property");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistItem", b =>
-                {
-                    b.HasOne("Aquiis.SimpleStart.Models.Checklist", "Checklist")
-                        .WithMany("Items")
-                        .HasForeignKey("ChecklistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Checklist");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistTemplateItem", b =>
-                {
-                    b.HasOne("Aquiis.SimpleStart.Models.ChecklistTemplate", "ChecklistTemplate")
-                        .WithMany("Items")
-                        .HasForeignKey("ChecklistTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChecklistTemplate");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1818,18 +1565,6 @@ namespace Aquiis.SimpleStart.Data.Migrations
             modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", b =>
                 {
                     b.Navigation("Leases");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.Checklist", b =>
-                {
-                    b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistTemplate", b =>
-                {
-                    b.Navigation("Checklists");
-
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }
