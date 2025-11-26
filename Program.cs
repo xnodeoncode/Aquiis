@@ -138,6 +138,7 @@ builder.Services.AddScoped<CalendarEventService>();
 builder.Services.AddScoped<RentalApplicationService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<NoteService>();
 builder.Services.AddSingleton<ToastService>();
 builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();

@@ -169,7 +169,6 @@ namespace Aquiis.SimpleStart.Services
             existing.EndOn = calendarEvent.EndOn;
             existing.DurationMinutes = calendarEvent.DurationMinutes;
             existing.Description = calendarEvent.Description;
-            existing.Notes = calendarEvent.Notes;
             existing.PropertyId = calendarEvent.PropertyId;
             existing.Location = calendarEvent.Location;
             existing.Status = calendarEvent.Status;
@@ -179,6 +178,20 @@ namespace Aquiis.SimpleStart.Services
             await _context.SaveChangesAsync();
 
             return existing;
+        }
+
+        /// <summary>
+        /// Get all calendar events for a specific property
+        /// </summary>
+        public async Task<List<CalendarEvent>> GetEventsByPropertyIdAsync(int propertyId, string organizationId)
+        {
+            return await _context.CalendarEvents
+                .Include(e => e.Property)
+                .Where(e => e.PropertyId == propertyId 
+                    && e.OrganizationId == organizationId 
+                    && !e.IsDeleted)
+                .OrderByDescending(e => e.StartOn)
+                .ToListAsync();
         }
 
         /// <summary>

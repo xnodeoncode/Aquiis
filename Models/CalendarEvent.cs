@@ -38,10 +38,6 @@ namespace Aquiis.SimpleStart.Models
         [Display(Name = "Description")]
         public string? Description { get; set; }
 
-        [StringLength(4000)]
-        [Display(Name = "Notes")]
-        public string? Notes { get; set; }
-
         [Display(Name = "Property")]
         public int? PropertyId { get; set; }
 

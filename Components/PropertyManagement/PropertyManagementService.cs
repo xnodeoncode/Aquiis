@@ -83,6 +83,38 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement
             .FirstOrDefaultAsync(p => p.Id == propertyId && p.OrganizationId == organizationId && !p.IsDeleted);
         }
 
+        public async Task<List<Property>> SearchPropertiesByAddressAsync(string searchTerm)
+        {
+            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (_userId == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+            
+            var organizationId = await _userContext.GetOrganizationIdAsync();
+            
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return await _dbContext.Properties
+                    .Where(p => !p.IsDeleted && p.OrganizationId == organizationId)
+                    .OrderBy(p => p.Address)
+                    .Take(20)
+                    .ToListAsync();
+            }
+            
+            return await _dbContext.Properties
+                .Where(p => !p.IsDeleted && 
+                           p.OrganizationId == organizationId &&
+                           (p.Address.Contains(searchTerm) || 
+                            p.City.Contains(searchTerm) ||
+                            p.State.Contains(searchTerm) ||
+                            p.ZipCode.Contains(searchTerm)))
+                .OrderBy(p => p.Address)
+                .Take(20)
+                .ToListAsync();
+        }
+
         public async Task<List<Property>> GetPropertiesByOrganizationIdAsync(string organizationId)
         {
             var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

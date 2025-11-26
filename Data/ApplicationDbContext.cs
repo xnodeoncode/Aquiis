@@ -42,6 +42,7 @@ namespace Aquiis.SimpleStart.Data
         public DbSet<ApplicationScreening> ApplicationScreenings { get; set; }
         public DbSet<CalendarEvent> CalendarEvents { get; set; }
         public DbSet<CalendarSettings> CalendarSettings { get; set; }
+        public DbSet<Note> Notes { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

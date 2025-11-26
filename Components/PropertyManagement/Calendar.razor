@@ -6,6 +6,7 @@
 @using Aquiis.SimpleStart.Components.PropertyManagement.Inspections
 @using Aquiis.SimpleStart.Components.PropertyManagement.Properties
 @using Aquiis.SimpleStart.Components.PropertyManagement.MaintenanceRequests
+@using Aquiis.SimpleStart.Components.Shared
 
 
 @using Microsoft.AspNetCore.Authorization
@@ -194,6 +195,20 @@
                         </div>
                     </div>
 
+                    @if (selectedEvent.PropertyId.HasValue && selectedEvent.Property != null)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h6><i class="bi bi-house"></i> Property</h6>
+                                <p>
+                                    <a href="/PropertyManagement/Properties/Details/@selectedEvent.PropertyId" class="text-decoration-none">
+                                        @selectedEvent.Property.Address, @selectedEvent.Property.City, @selectedEvent.Property.State @selectedEvent.Property.ZipCode
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    }
+
                     @if (!string.IsNullOrEmpty(selectedEvent.Location))
                     {
                         <div class="row mb-3">
@@ -214,17 +229,13 @@
                         </div>
                     }
 
-                    @* Notes field for custom events (visible when In Progress, Completed, or Cancelled) *@
+                    @* Notes timeline for custom events (visible when In Progress, Completed, or Cancelled) *@
                     @if (selectedEvent != null && selectedEvent.IsCustomEvent && 
                          (selectedEvent.Status == "In Progress" || selectedEvent.Status == "Completed" || selectedEvent.Status == "Cancelled"))
                     {
                         <div class="row mb-3">
                             <div class="col-12">
-                                <h6><i class="bi bi-journal-text"></i> Notes</h6>
-                                <textarea class="form-control" rows="4" @bind="eventNotes" placeholder="Add notes about this event..."></textarea>
-                                <button class="btn btn-sm btn-primary mt-2" @onclick="SaveEventNotes">
-                                    <i class="bi bi-save"></i> Save Notes
-                                </button>
+                                <NotesTimeline EntityType="CalendarEvent" EntityId="@selectedEvent.Id" />
                             </div>
                         </div>
                     }
@@ -539,6 +550,42 @@
                             </div>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Link to Property</label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       value="@propertySearchTerm" 
+                                       @oninput="OnPropertySearchInput"
+                                       placeholder="Search by address..."
+                                       autocomplete="off" />
+                                @if (newEvent.PropertyId.HasValue && selectedPropertyForEvent != null)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="ClearPropertySelection">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                }
+                            </div>
+                            @if (newEvent.PropertyId.HasValue && selectedPropertyForEvent != null)
+                            {
+                                <div class="alert alert-info mt-2 mb-0">
+                                    <i class="bi bi-house"></i> <strong>@selectedPropertyForEvent.Address</strong>, @selectedPropertyForEvent.City, @selectedPropertyForEvent.State @selectedPropertyForEvent.ZipCode
+                                </div>
+                            }
+                            @if (showPropertySearchResults && propertySearchResults.Any())
+                            {
+                                <div class="list-group mt-1" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var property in propertySearchResults)
+                                    {
+                                        <button type="button" 
+                                                class="list-group-item list-group-item-action" 
+                                                @onclick="() => SelectProperty(property)">
+                                            <i class="bi bi-house"></i> @property.Address, @property.City, @property.State @property.ZipCode
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Description</label>
                             <InputTextArea @bind-Value="newEvent.Description" class="form-control" rows="3" placeholder="Event description" />
                         </div>
@@ -590,7 +637,10 @@
     private bool showFilters = false;
     private bool showAddEventModal = false;
     private CalendarEvent newEvent = new();
-    private string eventNotes = string.Empty;
+    private string propertySearchTerm = string.Empty;
+    private List<Property> propertySearchResults = new();
+    private bool showPropertySearchResults = false;
+    private Property? selectedPropertyForEvent = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -706,6 +756,50 @@
     {
         showAddEventModal = false;
         newEvent = new();
+        propertySearchTerm = string.Empty;
+        propertySearchResults.Clear();
+        showPropertySearchResults = false;
+        selectedPropertyForEvent = null;
+    }
+
+    private async Task OnPropertySearchInput(ChangeEventArgs e)
+    {
+        propertySearchTerm = e.Value?.ToString() ?? string.Empty;
+        
+        if (string.IsNullOrWhiteSpace(propertySearchTerm))
+        {
+            propertySearchResults.Clear();
+            showPropertySearchResults = false;
+            return;
+        }
+        
+        try
+        {
+            propertySearchResults = await PropertyManagementService.SearchPropertiesByAddressAsync(propertySearchTerm);
+            showPropertySearchResults = propertySearchResults.Any();
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error searching properties: {ex.Message}");
+        }
+    }
+
+    private void SelectProperty(Property property)
+    {
+        selectedPropertyForEvent = property;
+        newEvent.PropertyId = property.Id;
+        propertySearchTerm = $"{property.Address}, {property.City}, {property.State} {property.ZipCode}";
+        showPropertySearchResults = false;
+        propertySearchResults.Clear();
+    }
+
+    private void ClearPropertySelection()
+    {
+        selectedPropertyForEvent = null;
+        newEvent.PropertyId = null;
+        propertySearchTerm = string.Empty;
+        propertySearchResults.Clear();
+        showPropertySearchResults = false;
     }
 
     private async Task SaveCustomEvent()
@@ -1117,9 +1211,6 @@
     {
         // Load entity and show modal for all event types
         selectedEvent = calendarEvent;
-        
-        // Load notes for custom events
-        eventNotes = calendarEvent.Notes ?? string.Empty;
 
         if (!calendarEvent.SourceEntityId.HasValue)
         {
@@ -1455,47 +1546,6 @@
         catch (Exception ex)
         {
             ToastService.ShowError($"Error updating event status: {ex.Message}");
-        }
-    }
-
-    private async Task SaveEventNotes()
-    {
-        try
-        {
-            if (selectedEvent == null || !selectedEvent.IsCustomEvent)
-            {
-                ToastService.ShowError("Can only save notes for custom events");
-                return;
-            }
-
-            var orgId = await UserContext.GetOrganizationIdAsync();
-            var userId = await UserContext.GetUserIdAsync();
-            
-            if (string.IsNullOrEmpty(orgId) || string.IsNullOrEmpty(userId))
-            {
-                ToastService.ShowError("Unable to identify user or organization");
-                return;
-            }
-
-            var calendarEvent = await CalendarEventService.GetEventByIdAsync(selectedEvent.Id, orgId);
-            if (calendarEvent != null)
-            {
-                calendarEvent.Notes = eventNotes;
-                calendarEvent.LastModifiedBy = userId;
-                calendarEvent.LastModifiedOn = DateTime.UtcNow;
-                
-                await CalendarEventService.UpdateCustomEventAsync(calendarEvent);
-                
-                // Update the selected event to reflect the change
-                selectedEvent.Notes = eventNotes;
-                
-                ToastService.ShowSuccess("Notes saved successfully");
-                await LoadEvents();
-            }
-        }
-        catch (Exception ex)
-        {
-            ToastService.ShowError($"Error saving notes: {ex.Message}");
         }
     }
 
