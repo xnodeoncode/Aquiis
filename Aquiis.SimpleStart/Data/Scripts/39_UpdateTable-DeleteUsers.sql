@@ -1,3 +1,0 @@
-
-DELETE FROM AspNetUsers
-WHERE LockoutEnd IS NOT NULL

@@ -10,16 +10,14 @@ obj/Host/node_modules/
 # Node modules everywhere
 node_modules/
 
-# Database files
-*.db
+# SQL Scripts - using migrations instead
+**/Data/Scripts
 
-Data/*.db
-/Data/*.db
+# Database files
+*.db*
+
 Data/Backups/**
 /Data/Backups/**
-
-Data/*app.db
-/Data/*app.db
 
 /Data/app*
 
