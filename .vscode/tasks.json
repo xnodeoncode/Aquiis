@@ -22,7 +22,7 @@
     {
       "label": "git: stage all and commit",
       "type": "shell",
-      "command": "git add -A && git commit -m 'See REVISIONS.md for details' && git push",
+      "command": "git add . && git commit -m 'See REVISIONS.md for details' && git push",
       "problemMatcher": []
     }
   ],
