@@ -122,6 +122,13 @@ namespace Aquiis.SimpleStart.Models
         [Display(Name = "Fee Paid On")]
         public DateTime? ApplicationFeePaidOn { get; set; }
 
+        [StringLength(50)]
+        [Display(Name = "Payment Method")]
+        public string? ApplicationFeePaymentMethod { get; set; }
+
+        [Display(Name = "Expires On")]
+        public DateTime? ExpiresOn { get; set; }
+
         // Decision
         [StringLength(1000)]
         [Display(Name = "Denial Reason")]

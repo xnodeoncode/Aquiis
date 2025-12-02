@@ -45,7 +45,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Property *</label>
-                            <InputSelect @bind-Value="leaseModel.PropertyId" class="form-select" @onchange="OnPropertyChanged">
+                            <InputSelect @bind-Value="leaseModel.PropertyId" class="form-select" @onchange="@(async () => await OnPropertyChanged())">
                                 <option value="">Select a property</option>
                                 @foreach (var property in availableProperties)
                                 {
@@ -241,16 +241,22 @@
         leaseModel.Status = ApplicationConstants.LeaseStatuses.Active;
     }
 
-    private void OnPropertyChanged()
+    private async Task OnPropertyChanged()
     {
         if (leaseModel.PropertyId > 0)
         {
             selectedProperty = availableProperties.FirstOrDefault(p => p.Id == leaseModel.PropertyId);
             if (selectedProperty != null)
             {
+                // Get organization settings for security deposit calculation
+                var settings = await PropertyManagementService.GetOrganizationSettingsAsync();
+                var depositMultiplier = settings?.AutoCalculateSecurityDeposit == true 
+                    ? settings.SecurityDepositMultiplier 
+                    : 1.0m;
+
                 leaseModel.PropertyAddress = selectedProperty.Address;
                 leaseModel.MonthlyRent = selectedProperty.MonthlyRent;
-                leaseModel.SecurityDeposit = selectedProperty.MonthlyRent; // Default to one month rent
+                leaseModel.SecurityDeposit = selectedProperty.MonthlyRent * depositMultiplier;
             }
         }
         else

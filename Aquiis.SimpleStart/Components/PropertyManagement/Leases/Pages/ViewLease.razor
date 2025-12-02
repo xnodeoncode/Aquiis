@@ -69,8 +69,16 @@ else
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Tenant:</strong>
-                            <p>@lease.Tenant?.FullName</p>
-                            <small class="text-muted">@lease.Tenant?.Email</small>
+                            @if (lease.Tenant != null)
+                            {
+                                <p>@lease.Tenant.FullName</p>
+                                <small class="text-muted">@lease.Tenant.Email</small>
+                            }
+                            else
+                            {
+                                <p class="text-warning"><i class="bi bi-hourglass-split"></i> Lease Offer - Awaiting Acceptance</p>
+                                <small class="text-muted">Tenant will be assigned upon acceptance</small>
+                            }
                         </div>
                     </div>
 
@@ -415,7 +423,7 @@ else
         if (PropertyId.HasValue)
         {
             leaseModel.PropertyId = PropertyId.Value;
-            OnPropertyChanged();
+            await OnPropertyChanged();
         }
         
         // If TenantId is provided in query string, pre-select it
@@ -682,15 +690,21 @@ else
         }
     }
 
-    private void OnPropertyChanged()
+    private async Task OnPropertyChanged()
     {
         if (leaseModel.PropertyId > 0)
         {
             selectedProperty = availableProperties.FirstOrDefault(p => p.Id == leaseModel.PropertyId);
             if (selectedProperty != null)
             {
+                // Get organization settings for security deposit calculation
+                var settings = await PropertyManagementService.GetOrganizationSettingsAsync();
+                var depositMultiplier = settings?.AutoCalculateSecurityDeposit == true 
+                    ? settings.SecurityDepositMultiplier 
+                    : 1.0m;
+
                 leaseModel.MonthlyRent = selectedProperty.MonthlyRent;
-                leaseModel.SecurityDeposit = selectedProperty.MonthlyRent; // Default to one month rent
+                leaseModel.SecurityDeposit = selectedProperty.MonthlyRent * depositMultiplier;
             }
         }
         else

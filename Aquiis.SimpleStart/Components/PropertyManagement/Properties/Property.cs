@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Aquiis.SimpleStart.Components.PropertyManagement.Documents;
 using Aquiis.SimpleStart.Components.PropertyManagement.Leases;
+using Aquiis.SimpleStart.Components.Administration.Application;
 using Aquiis.SimpleStart.Models;
 
 namespace Aquiis.SimpleStart.Components.PropertyManagement.Properties
@@ -109,6 +110,11 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Properties
         [Display(Name = "Is Available?", Description = "Indicates if the property is currently available for lease")]
         public bool IsAvailable { get; set; } = true;
 
+        [JsonInclude]
+        [StringLength(50)]
+        [Display(Name = "Property Status", Description = "Current status in the rental lifecycle")]
+        public string Status { get; set; } = ApplicationConstants.PropertyStatuses.Available;
+
         // Inspection tracking
     
 
@@ -123,24 +129,10 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Properties
         public virtual ICollection<Lease> Leases { get; set; } = new List<Lease>();
         public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 
-        // Computed property for property status
+        // Computed property for pending application count
+        [NotMapped]
         [JsonInclude]
-        public string Status
-        {
-            get
-            {
-                // Check for active lease
-                var activeLease = Leases?.FirstOrDefault(l => l.Status == "Active");
-                if (activeLease != null) return "Occupied";
-                
-                // Check for pending lease
-                var pendingLease = Leases?.FirstOrDefault(l => l.Status == "Pending");
-                if (pendingLease != null) return "Pending";
-                
-                // Otherwise use IsAvailable flag
-                return IsAvailable ? "Available" : "Occupied";
-            }
-        }
+        public int PendingApplicationCount => 0; // Will be populated when RentalApplications are added
 
         // Computed property for inspection status
         [NotMapped]

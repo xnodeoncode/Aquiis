@@ -43,11 +43,11 @@
                             <InputText @bind-Value="propertyModel.UnitNumber" class="form-control" placeholder="e.g., Apt 2B, Unit 101" />
                             <ValidationMessage For="() => propertyModel.UnitNumber" class="text-danger" />
                         </div>
-                        <div class="col-md-4 mb-3">
+                        @* <div class="col-md-4 mb-3">
                             <label class="form-label" for="@propertyModel.ZipCode">Postal Code</label>
                             <InputText @bind-Value="propertyModel.ZipCode" class="form-control" placeholder="#####-####" />
                             <ValidationMessage For="() => propertyModel.ZipCode" class="text-danger" />
-                        </div>
+                        </div> *@
                     </div>
 
                     <div class="row">
@@ -93,6 +93,21 @@
                             <label class="form-label">Monthly Rent *</label>
                             <InputNumber @bind-Value="propertyModel.MonthlyRent" class="form-control" placeholder="0.00" />
                             <ValidationMessage For="() => propertyModel.MonthlyRent" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status *</label>
+                            <InputSelect @bind-Value="propertyModel.Status" class="form-select">
+                                <option value="@ApplicationConstants.PropertyStatuses.Available">Available</option>
+                                <option value="@ApplicationConstants.PropertyStatuses.ApplicationPending">Application Pending</option>
+                                <option value="@ApplicationConstants.PropertyStatuses.LeasePending">Lease Pending</option>
+                                <option value="@ApplicationConstants.PropertyStatuses.Occupied">Occupied</option>
+                                <option value="@ApplicationConstants.PropertyStatuses.UnderRenovation">Under Renovation</option>
+                                <option value="@ApplicationConstants.PropertyStatuses.OffMarket">Off Market</option>
+                            </InputSelect>
+                            <ValidationMessage For="() => propertyModel.Status" class="text-danger" />
                         </div>
                     </div>
 
@@ -182,6 +197,7 @@
             Bathrooms = propertyModel.Bathrooms,
             SquareFeet = propertyModel.SquareFeet,
             Description = propertyModel.Description,
+            Status = propertyModel.Status,
             IsAvailable = propertyModel.IsAvailable,
             CreatedBy = userId,
             CreatedOn = DateTime.UtcNow,
@@ -243,6 +259,10 @@
 
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
         public string Description { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Status is required")]
+        [StringLength(50, ErrorMessage = "Status cannot exceed 50 characters")]
+        public string Status { get; set; } = ApplicationConstants.PropertyStatuses.Available;
 
         public bool IsAvailable { get; set; } = true;
     }

@@ -133,12 +133,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<Aquiis.SimpleStart.Components.PropertyManagement.Checklists.ChecklistService>();
+builder.Services.AddScoped<Aquiis.SimpleStart.Components.Administration.Application.ApplicationService>();
 builder.Services.AddScoped<CalendarSettingsService>();
 builder.Services.AddScoped<CalendarEventService>();
-builder.Services.AddScoped<RentalApplicationService>();
+builder.Services.AddScoped<TenantConversionService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<NoteService>();
+builder.Services.AddScoped<SecurityDepositService>();
 builder.Services.AddSingleton<ToastService>();
 builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();

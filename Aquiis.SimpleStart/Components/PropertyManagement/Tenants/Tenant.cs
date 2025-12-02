@@ -9,8 +9,8 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Tenants {
 
         public string OrganizationId { get; set; } = string.Empty;
 
-        [Required]
-        public string UserId { get; set; } = string.Empty;
+        // Not currently used - tenants are tied to organization, not individual users
+        public string? UserId { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -47,6 +47,9 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Tenants {
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
+
+        // Link back to prospect for audit trail
+        public int? ProspectiveTenantId { get; set; }
 
         // Navigation properties
         public virtual ICollection<Lease> Leases { get; set; } = new List<Lease>();

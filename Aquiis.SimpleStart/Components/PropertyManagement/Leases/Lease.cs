@@ -19,6 +19,9 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Leases {
         [Required]
         public int TenantId { get; set; }
 
+        // Reference to the lease offer if this lease was created from an accepted offer
+        public int? LeaseOfferId { get; set; }
+
         [Required]
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
@@ -42,6 +45,15 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Leases {
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
+
+        // Lease Offer & Acceptance Tracking
+        public DateTime? OfferedOn { get; set; }
+        
+        public DateTime? SignedOn { get; set; }
+        
+        public DateTime? DeclinedOn { get; set; }
+        
+        public DateTime? ExpiresOn { get; set; } // Lease offer expires 30 days from OfferedOn
 
         // Lease Renewal Tracking
         public bool? RenewalNotificationSent { get; set; }
@@ -74,7 +86,7 @@ namespace Aquiis.SimpleStart.Components.PropertyManagement.Leases {
         public virtual Property Property { get; set; } = null!;
 
         [ForeignKey("TenantId")]
-        public virtual Tenant Tenant { get; set; } = null!;
+        public virtual Tenant? Tenant { get; set; }
 
         [ForeignKey("DocumentId")]
         public virtual Document? Document { get; set; }

@@ -6,7 +6,6 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "SuperAdministrator,Administrator,PropertyManager")]
-@inject RentalApplicationService ApplicationService
 @inject PropertyManagementService PropertyService
 @inject ChecklistService ChecklistService
 @inject UserContextService UserContext
@@ -203,7 +202,7 @@
             var orgId = await UserContext.GetOrganizationIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                prospect = await ApplicationService.GetProspectiveTenantByIdAsync(ProspectId, orgId);
+                prospect = await PropertyService.GetProspectiveTenantByIdAsync(ProspectId, orgId);
                 
                 if (prospect != null)
                 {
@@ -222,7 +221,7 @@
                         .ToList();
 
                     // Load existing tours for this prospect
-                    upcomingTours = await ApplicationService.GetToursByProspectiveIdAsync(ProspectId, orgId);
+                    upcomingTours = await PropertyService.GetToursByProspectiveIdAsync(ProspectId, orgId);
                     upcomingTours = upcomingTours
                         .Where(s => s.ScheduledOn >= DateTime.Now && s.Status == ApplicationConstants.TourStatuses.Scheduled)
                         .OrderBy(s => s.ScheduledOn)
@@ -286,7 +285,7 @@
                 CreatedBy = userId
             };
             
-            await ApplicationService.CreateTourAsync(tour, newTour.ChecklistTemplateId);
+            await PropertyService.CreateTourAsync(tour, newTour.ChecklistTemplateId);
             
             ToastService.ShowSuccess("Tour scheduled successfully");
             Navigation.NavigateTo("/PropertyManagement/Tours");

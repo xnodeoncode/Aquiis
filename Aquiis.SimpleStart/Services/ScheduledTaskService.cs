@@ -410,6 +410,7 @@ namespace Aquiis.SimpleStart.Services
             {
                 using var scope = _serviceProvider.CreateScope();
                 var propertyManagementService = scope.ServiceProvider.GetRequiredService<PropertyManagementService>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
                 // Calculate daily payment totals
                 var today = DateTime.Today;
@@ -447,6 +448,14 @@ namespace Aquiis.SimpleStart.Services
                         dueSoonInspections.Count);
                 }
 
+                // Check for expired rental applications
+                var expiredApplicationsCount = await ExpireOldApplications(dbContext);
+                if (expiredApplicationsCount > 0)
+                {
+                    _logger.LogInformation("Expired {Count} rental application(s) that passed their expiration date", 
+                        expiredApplicationsCount);
+                }
+
                 // You can add more daily tasks here:
                 // - Generate daily reports
                 // - Send payment reminders
@@ -468,7 +477,6 @@ namespace Aquiis.SimpleStart.Services
             {
                 using var scope = _serviceProvider.CreateScope();
                 var propertyManagementService = scope.ServiceProvider.GetRequiredService<PropertyManagementService>();
-                var rentalApplicationService = scope.ServiceProvider.GetRequiredService<RentalApplicationService>();
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
                 // Get all organizations
@@ -485,7 +493,7 @@ namespace Aquiis.SimpleStart.Services
 
                     // Check for tours that should be marked as no-show
                     var cutoffTime = DateTime.Now.AddHours(-gracePeriodHours);
-                    var potentialNoShowTours = await rentalApplicationService.GetAllToursAsync(organizationId);
+                    var potentialNoShowTours = await propertyManagementService.GetAllToursAsync(organizationId);
                     
                     var noShowTours = potentialNoShowTours
                         .Where(t => t.Status == ApplicationConstants.TourStatuses.Scheduled &&
@@ -495,7 +503,7 @@ namespace Aquiis.SimpleStart.Services
 
                     foreach (var tour in noShowTours)
                     {
-                        await rentalApplicationService.MarkTourAsNoShowAsync(tour.Id, organizationId, "System");
+                        await propertyManagementService.MarkTourAsNoShowAsync(tour.Id, organizationId, "System");
                         totalMarkedNoShow++;
                         
                         _logger.LogInformation(
@@ -552,6 +560,46 @@ namespace Aquiis.SimpleStart.Services
             }
 
             return (next2AM - now).TotalMinutes;
+        }
+
+        private async Task<int> ExpireOldApplications(ApplicationDbContext dbContext)
+        {
+            try
+            {
+                // Find all applications that are expired but not yet marked as such
+                var expiredApplications = await dbContext.RentalApplications
+                    .Where(a => !a.IsDeleted &&
+                               (a.Status == ApplicationConstants.ApplicationStatuses.Submitted ||
+                                a.Status == ApplicationConstants.ApplicationStatuses.UnderReview ||
+                                a.Status == ApplicationConstants.ApplicationStatuses.Screening) &&
+                               a.ExpiresOn.HasValue &&
+                               a.ExpiresOn.Value < DateTime.UtcNow)
+                    .ToListAsync();
+
+                foreach (var application in expiredApplications)
+                {
+                    application.Status = ApplicationConstants.ApplicationStatuses.Expired;
+                    application.LastModifiedOn = DateTime.UtcNow;
+                    application.LastModifiedBy = "System";
+                    
+                    _logger.LogInformation("Expired application {ApplicationId} for property {PropertyId} (Expired on: {ExpirationDate})",
+                        application.Id,
+                        application.PropertyId,
+                        application.ExpiresOn.Value.ToString("yyyy-MM-dd"));
+                }
+
+                if (expiredApplications.Any())
+                {
+                    await dbContext.SaveChangesAsync();
+                }
+
+                return expiredApplications.Count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error expiring old applications");
+                return 0;
+            }
         }
 
         public override Task StopAsync(CancellationToken stoppingToken)

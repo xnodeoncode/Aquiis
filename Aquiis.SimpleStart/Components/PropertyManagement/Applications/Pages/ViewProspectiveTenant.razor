@@ -6,7 +6,6 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "SuperAdministrator,Administrator,PropertyManager")]
-@inject RentalApplicationService ApplicationService
 @inject PropertyManagementService PropertyService
 @inject UserContextService UserContext
 @inject NavigationManager Navigation
@@ -353,12 +352,36 @@
                                             @if (application.ApplicationFeePaid)
                                             {
                                                 <span class="badge bg-success">Paid</span>
+                                                @if (application.ApplicationFeePaidOn.HasValue)
+                                                {
+                                                    <small class="text-muted d-block">@application.ApplicationFeePaidOn.Value.ToString("MMM dd, yyyy")</small>
+                                                }
+                                                @if (!string.IsNullOrEmpty(application.ApplicationFeePaymentMethod))
+                                                {
+                                                    <small class="text-muted d-block">via @application.ApplicationFeePaymentMethod</small>
+                                                }
                                             }
                                             else
                                             {
                                                 <span class="badge bg-warning">Unpaid</span>
                                             }
                                         </dd>
+
+                                        @if (application.ExpiresOn.HasValue)
+                                        {
+                                            <dt class="col-sm-5">Expires On:</dt>
+                                            <dd class="col-sm-7">
+                                                @application.ExpiresOn.Value.ToString("MMM dd, yyyy")
+                                                @if (application.ExpiresOn.Value < DateTime.UtcNow && application.Status != ApplicationConstants.ApplicationStatuses.Expired)
+                                                {
+                                                    <span class="badge bg-danger">Expired</span>
+                                                }
+                                                else if (application.ExpiresOn.Value < DateTime.UtcNow.AddDays(7))
+                                                {
+                                                    <span class="badge bg-warning">Expires Soon</span>
+                                                }
+                                            </dd>
+                                        }
                                     </dl>
                                 </div>
                             </div>
@@ -431,6 +454,20 @@
                             {
                                 <button class="btn btn-primary" @onclick="ViewTours">
                                     <i class="bi bi-calendar-event"></i> View Tours
+                                </button>
+                            }
+                            
+                            @if (application == null && (prospect.Status == ApplicationConstants.ProspectiveStatuses.Lead || 
+                                                          prospect.Status == ApplicationConstants.ProspectiveStatuses.TourScheduled))
+                            {
+                                <button class="btn btn-success" @onclick="BeginApplication">
+                                    <i class="bi bi-file-earmark-text"></i> Begin Application
+                                </button>
+                            }
+                            else if (application != null)
+                            {
+                                <button class="btn btn-outline-info" @onclick="ViewApplication">
+                                    <i class="bi bi-eye"></i> View Application
                                 </button>
                             }
                             
@@ -550,12 +587,12 @@
             var orgId = await UserContext.GetOrganizationIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                prospect = await ApplicationService.GetProspectiveTenantByIdAsync(ProspectId, orgId);
+                prospect = await PropertyService.GetProspectiveTenantByIdAsync(ProspectId, orgId);
                 
                 if (prospect != null)
                 {
-                    tours = await ApplicationService.GetToursByProspectiveIdAsync(ProspectId, orgId);
-                    application = await ApplicationService.GetApplicationByProspectiveIdAsync(ProspectId, orgId);
+                    tours = await PropertyService.GetToursByProspectiveIdAsync(ProspectId, orgId);
+                    application = await PropertyService.GetApplicationByProspectiveIdAsync(ProspectId, orgId);
                     
                     // Load properties for edit dropdown
                     availableProperties = await PropertyService.GetPropertiesByOrganizationIdAsync(orgId);
@@ -623,7 +660,7 @@
             prospect.LastModifiedBy = userId ?? "";
             prospect.LastModifiedOn = DateTime.UtcNow;
 
-            await ApplicationService.UpdateProspectiveTenantAsync(prospect);
+            await PropertyService.UpdateProspectiveTenantAsync(prospect);
             
             ToastService.ShowSuccess("Prospect updated successfully");
             isEditing = false;
@@ -638,6 +675,19 @@
     private void ScheduleTour()
     {
         Navigation.NavigateTo($"/PropertyManagement/Tours/Schedule/{ProspectId}");
+    }
+
+    private void BeginApplication()
+    {
+        Navigation.NavigateTo($"/propertymanagement/prospects/{ProspectId}/submit-application");
+    }
+
+    private void ViewApplication()
+    {
+        if (application != null)
+        {
+            Navigation.NavigateTo($"/propertymanagement/applications/{application.Id}/review");
+        }
     }
 
     private void ViewTours()

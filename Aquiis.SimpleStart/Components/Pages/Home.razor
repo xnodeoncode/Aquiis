@@ -132,7 +132,7 @@
                                                         <small class="text-muted">@property.City, @property.State - @property.PropertyType</small>
                                                     </div>
                                                     <div class="text-end">
-                                                        <span class="badge bg-success mb-1">Available</span>
+                                                        <span class="badge @GetStatusBadgeClass(property.Status) mb-1">@FormatPropertyStatus(property.Status)</span>
                                                         <br>
                                                         <small class="text-muted">@property.MonthlyRent.ToString("C")</small>
                                                     </div>
@@ -167,7 +167,7 @@
                                                         </h6>
                                                         <small>@lease.CreatedOn.ToString("MMM dd, yyyy")</small>
                                                     </div>
-                                                    <p class="mb-1">@lease.Tenant.FullName</p>
+                                                    <p class="mb-1">@(lease.Tenant?.FullName ?? "Pending")</p>
                                                     <div class="d-flex justify-content-between">
                                                         <small class="text-muted">Start: @lease.StartDate.ToString("MMM dd, yyyy")</small>
                                                         <span class="badge bg-warning">Pending</span>
@@ -515,6 +515,32 @@
             "Overdue" => "bg-danger",
             "Cancelled" => "bg-secondary",
             _ => "bg-info"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "ApplicationPending" => "bg-info",
+            "LeasePending" => "bg-warning",
+            "Occupied" => "bg-danger",
+            "UnderRenovation" => "bg-secondary",
+            "OffMarket" => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string FormatPropertyStatus(string status)
+    {
+        return status switch
+        {
+            "ApplicationPending" => "Application Pending",
+            "LeasePending" => "Lease Pending",
+            "UnderRenovation" => "Under Renovation",
+            "OffMarket" => "Off Market",
+            _ => status
         };
     }
 

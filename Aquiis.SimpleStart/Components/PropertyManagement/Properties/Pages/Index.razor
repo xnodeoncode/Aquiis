@@ -1,5 +1,6 @@
 @page "/propertymanagement/properties"
 @using Aquiis.SimpleStart.Components.PropertyManagement
+@using Aquiis.SimpleStart.Components.Administration.Application
 @using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
@@ -234,7 +235,7 @@ else
                                     <td class="text-end">@property.SquareFeet.ToString("N0")</td>
                                     <td>
                                         <span class="badge @GetStatusBadgeClass(property.Status)">
-                                            @property.Status
+                                            @FormatPropertyStatus(property.Status)
                                         </span>
                                     </td>
                                     <td class="text-end">
@@ -387,7 +388,7 @@ else
              p.ZipCode.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
              p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
              p.PropertyType.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(selectedPropertyStatus) || p.Status == selectedPropertyStatus)
+            (string.IsNullOrEmpty(selectedPropertyStatus) || p.Status.ToString() == selectedPropertyStatus)
         ).ToList();
         
         CalculateMetrics();
@@ -397,9 +398,9 @@ else
     private void CalculateMetrics(){
         if (filteredProperties != null)
         {
-            availableCount = filteredProperties.Count(p => p.Status == "Available");
-            pendingCount = filteredProperties.Count(p => p.Status == "Pending");
-            occupiedCount = filteredProperties.Count(p => p.Status == "Occupied");
+            availableCount = filteredProperties.Count(p => p.Status == ApplicationConstants.PropertyStatuses.Available);
+            pendingCount = filteredProperties.Count(p => p.Status == ApplicationConstants.PropertyStatuses.ApplicationPending || p.Status == ApplicationConstants.PropertyStatuses.LeasePending);
+            occupiedCount = filteredProperties.Count(p => p.Status == ApplicationConstants.PropertyStatuses.Occupied);
             totalMonthlyRent = filteredProperties.Sum(p => p.MonthlyRent);
         }
     }
@@ -518,10 +519,25 @@ else
     {
         return status switch
         {
-            "Available" => "bg-success",
-            "Pending" => "bg-info",
-            "Occupied" => "bg-warning",
+            var s when s == ApplicationConstants.PropertyStatuses.Available => "bg-success",
+            var s when s == ApplicationConstants.PropertyStatuses.ApplicationPending => "bg-info",
+            var s when s == ApplicationConstants.PropertyStatuses.LeasePending => "bg-warning",
+            var s when s == ApplicationConstants.PropertyStatuses.Occupied => "bg-danger",
+            var s when s == ApplicationConstants.PropertyStatuses.UnderRenovation => "bg-secondary",
+            var s when s == ApplicationConstants.PropertyStatuses.OffMarket => "bg-dark",
             _ => "bg-secondary"
+        };
+    }
+
+    private string FormatPropertyStatus(string status)
+    {
+        return status switch
+        {
+            var s when s == ApplicationConstants.PropertyStatuses.ApplicationPending => "Application Pending",
+            var s when s == ApplicationConstants.PropertyStatuses.LeasePending => "Lease Pending",
+            var s when s == ApplicationConstants.PropertyStatuses.UnderRenovation => "Under Renovation",
+            var s when s == ApplicationConstants.PropertyStatuses.OffMarket => "Off Market",
+            _ => status
         };
     }
 }

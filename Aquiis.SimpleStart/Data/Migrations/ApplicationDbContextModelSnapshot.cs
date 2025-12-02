@@ -562,10 +562,16 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("DeclinedOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("DocumentId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresOn")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDeleted")
@@ -578,6 +584,9 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("LeaseOfferId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal>("MonthlyRent")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -585,6 +594,9 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Property<string>("Notes")
                         .IsRequired()
                         .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("OfferedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("PreviousLeaseId")
@@ -622,6 +634,9 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Property<decimal>("SecurityDeposit")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("SignedOn")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
@@ -918,6 +933,11 @@ namespace Aquiis.SimpleStart.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("UnitNumber")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
@@ -938,6 +958,307 @@ namespace Aquiis.SimpleStart.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDeposit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateReceived")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("DeductionsAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("DeductionsReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("InInvestmentPool")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LeaseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OrganizationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PoolEntryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PoolExitDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RefundMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RefundProcessedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefundReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TransactionReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InInvestmentPool");
+
+                    b.HasIndex("LeaseId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("SecurityDeposits");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDepositDividend", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("BaseDividendAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ChoiceMadeOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("DividendAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("InvestmentPoolId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LeaseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MailingAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MonthsInPool")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OrganizationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PaymentProcessedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("ProrationFactor")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("SecurityDepositId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvestmentPoolId");
+
+                    b.HasIndex("LeaseId");
+
+                    b.HasIndex("SecurityDepositId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("Year");
+
+                    b.ToTable("SecurityDepositDividends");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDepositInvestmentPool", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ActiveLeaseCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("DividendPerLease")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("DividendsCalculatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DividendsDistributedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("EndingBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OrganizationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("OrganizationShare")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OrganizationSharePercentage")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("ReturnRate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("StartingBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("TenantShareTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalEarnings")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Year")
+                        .IsUnique();
+
+                    b.ToTable("SecurityDepositInvestmentPools");
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", b =>
@@ -1013,8 +1334,10 @@ namespace Aquiis.SimpleStart.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ProspectiveTenantId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1483,6 +1806,56 @@ namespace Aquiis.SimpleStart.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("ChecklistTemplates");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Category = "Tour",
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Standard property showing checklist",
+                            IsDeleted = false,
+                            IsSystemTemplate = true,
+                            Name = "Property Tour",
+                            OrganizationId = "SYSTEM"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Category = "MoveIn",
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Move-in inspection checklist",
+                            IsDeleted = false,
+                            IsSystemTemplate = true,
+                            Name = "Move-In",
+                            OrganizationId = "SYSTEM"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Category = "MoveOut",
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Move-out inspection checklist",
+                            IsDeleted = false,
+                            IsSystemTemplate = true,
+                            Name = "Move-Out",
+                            OrganizationId = "SYSTEM"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Category = "Tour",
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Open house event checklist",
+                            IsDeleted = false,
+                            IsSystemTemplate = true,
+                            Name = "Open House",
+                            OrganizationId = "SYSTEM"
+                        });
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Models.ChecklistTemplateItem", b =>
@@ -1546,6 +1919,610 @@ namespace Aquiis.SimpleStart.Migrations
                     b.HasIndex("ChecklistTemplateId");
 
                     b.ToTable("ChecklistTemplateItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AllowsNotes = true,
+                            CategorySection = "Arrival & Introduction",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 1,
+                            ItemText = "Greeted prospect and verified appointment",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AllowsNotes = true,
+                            CategorySection = "Arrival & Introduction",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 2,
+                            ItemText = "Reviewed property exterior and curb appeal",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AllowsNotes = true,
+                            CategorySection = "Arrival & Introduction",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 3,
+                            ItemText = "Showed parking area/garage",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AllowsNotes = true,
+                            CategorySection = "Interior Tour",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 4,
+                            ItemText = "Toured living room/common areas",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AllowsNotes = true,
+                            CategorySection = "Interior Tour",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 5,
+                            ItemText = "Showed all bedrooms",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 2
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AllowsNotes = true,
+                            CategorySection = "Interior Tour",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 6,
+                            ItemText = "Showed all bathrooms",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 2
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AllowsNotes = true,
+                            CategorySection = "Kitchen & Appliances",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 7,
+                            ItemText = "Toured kitchen and demonstrated appliances",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AllowsNotes = true,
+                            CategorySection = "Kitchen & Appliances",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 8,
+                            ItemText = "Explained which appliances are included",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 3
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AllowsNotes = true,
+                            CategorySection = "Utilities & Systems",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 9,
+                            ItemText = "Explained HVAC system and thermostat controls",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 4
+                        },
+                        new
+                        {
+                            Id = 10,
+                            AllowsNotes = true,
+                            CategorySection = "Utilities & Systems",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 10,
+                            ItemText = "Reviewed utility responsibilities (tenant vs landlord)",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 4
+                        },
+                        new
+                        {
+                            Id = 11,
+                            AllowsNotes = true,
+                            CategorySection = "Utilities & Systems",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 11,
+                            ItemText = "Showed water heater location",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 4
+                        },
+                        new
+                        {
+                            Id = 12,
+                            AllowsNotes = true,
+                            CategorySection = "Storage & Amenities",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 12,
+                            ItemText = "Showed storage areas (closets, attic, basement)",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 5
+                        },
+                        new
+                        {
+                            Id = 13,
+                            AllowsNotes = true,
+                            CategorySection = "Storage & Amenities",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 13,
+                            ItemText = "Showed laundry facilities",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 5
+                        },
+                        new
+                        {
+                            Id = 14,
+                            AllowsNotes = true,
+                            CategorySection = "Storage & Amenities",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 14,
+                            ItemText = "Showed outdoor space (yard, patio, balcony)",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 5
+                        },
+                        new
+                        {
+                            Id = 15,
+                            AllowsNotes = true,
+                            CategorySection = "Lease Terms",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 15,
+                            ItemText = "Discussed monthly rent amount",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = true,
+                            SectionOrder = 6
+                        },
+                        new
+                        {
+                            Id = 16,
+                            AllowsNotes = true,
+                            CategorySection = "Lease Terms",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 16,
+                            ItemText = "Explained security deposit and move-in costs",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = true,
+                            SectionOrder = 6
+                        },
+                        new
+                        {
+                            Id = 17,
+                            AllowsNotes = true,
+                            CategorySection = "Lease Terms",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 17,
+                            ItemText = "Reviewed lease term length and start date",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 6
+                        },
+                        new
+                        {
+                            Id = 18,
+                            AllowsNotes = true,
+                            CategorySection = "Lease Terms",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 18,
+                            ItemText = "Explained pet policy",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 6
+                        },
+                        new
+                        {
+                            Id = 19,
+                            AllowsNotes = true,
+                            CategorySection = "Next Steps",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 19,
+                            ItemText = "Explained application process and requirements",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 7
+                        },
+                        new
+                        {
+                            Id = 20,
+                            AllowsNotes = true,
+                            CategorySection = "Next Steps",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 20,
+                            ItemText = "Reviewed screening process (background, credit check)",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 7
+                        },
+                        new
+                        {
+                            Id = 21,
+                            AllowsNotes = true,
+                            CategorySection = "Next Steps",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 21,
+                            ItemText = "Answered all prospect questions",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 7
+                        },
+                        new
+                        {
+                            Id = 22,
+                            AllowsNotes = true,
+                            CategorySection = "Assessment",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 22,
+                            ItemText = "Prospect Interest Level",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = true,
+                            SectionOrder = 8
+                        },
+                        new
+                        {
+                            Id = 23,
+                            AllowsNotes = true,
+                            CategorySection = "Assessment",
+                            ChecklistTemplateId = 1,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 23,
+                            ItemText = "Overall showing feedback and notes",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = true,
+                            SectionOrder = 8
+                        },
+                        new
+                        {
+                            Id = 24,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 2,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 1,
+                            ItemText = "Document property condition",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 25,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 2,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 2,
+                            ItemText = "Collect keys and access codes",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 26,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 2,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 3,
+                            ItemText = "Review lease terms with tenant",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 27,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 3,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 1,
+                            ItemText = "Inspect property condition",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 28,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 3,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 2,
+                            ItemText = "Collect all keys and access devices",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 29,
+                            AllowsNotes = true,
+                            CategorySection = "General",
+                            ChecklistTemplateId = 3,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 3,
+                            ItemText = "Document damages and needed repairs",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 30,
+                            AllowsNotes = true,
+                            CategorySection = "Preparation",
+                            ChecklistTemplateId = 4,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 1,
+                            ItemText = "Set up signage and directional markers",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 31,
+                            AllowsNotes = true,
+                            CategorySection = "Preparation",
+                            ChecklistTemplateId = 4,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 2,
+                            ItemText = "Prepare information packets",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        },
+                        new
+                        {
+                            Id = 32,
+                            AllowsNotes = true,
+                            CategorySection = "Preparation",
+                            ChecklistTemplateId = 4,
+                            CreatedBy = "SYSTEM",
+                            CreatedOn = new DateTime(2025, 11, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsRequired = true,
+                            ItemOrder = 3,
+                            ItemText = "Set up visitor sign-in sheet",
+                            OrganizationId = "SYSTEM",
+                            RequiresValue = false,
+                            SectionOrder = 1
+                        });
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Models.LeaseOffer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ConvertedLeaseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("MonthlyRent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("OfferedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProspectiveTenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RentalApplicationId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("RespondedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResponseNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("SecurityDeposit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Terms")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("ProspectiveTenantId");
+
+                    b.HasIndex("RentalApplicationId");
+
+                    b.ToTable("LeaseOffers");
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Models.Note", b =>
@@ -1607,6 +2584,18 @@ namespace Aquiis.SimpleStart.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("AllowTenantDividendChoice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ApplicationExpirationDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ApplicationFeeEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AutoCalculateSecurityDeposit")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1614,6 +2603,18 @@ namespace Aquiis.SimpleStart.Migrations
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
+
+                    b.Property<decimal>("DefaultApplicationFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultDividendPaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DividendDistributionMonth")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
@@ -1650,11 +2651,25 @@ namespace Aquiis.SimpleStart.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("OrganizationSharePercentage")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<int>("PaymentReminderDaysBefore")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("PaymentReminderEnabled")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("RefundProcessingDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("SecurityDepositInvestmentEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("SecurityDepositMultiplier")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("TourNoShowGracePeriodHours")
                         .HasColumnType("INTEGER");
@@ -1778,6 +2793,10 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Property<DateTime?>("ApplicationFeePaidOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ApplicationFeePaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("AppliedOn")
                         .HasColumnType("TEXT");
 
@@ -1831,6 +2850,9 @@ namespace Aquiis.SimpleStart.Migrations
 
                     b.Property<int>("EmploymentLengthMonths")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ExpiresOn")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
@@ -2329,13 +3351,66 @@ namespace Aquiis.SimpleStart.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDeposit", b =>
+                {
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Leases.Lease", "Lease")
+                        .WithMany()
+                        .HasForeignKey("LeaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lease");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDepositDividend", b =>
+                {
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDepositInvestmentPool", "InvestmentPool")
+                        .WithMany("Dividends")
+                        .HasForeignKey("InvestmentPoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Leases.Lease", "Lease")
+                        .WithMany()
+                        .HasForeignKey("LeaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDeposit", "SecurityDeposit")
+                        .WithMany("Dividends")
+                        .HasForeignKey("SecurityDepositId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InvestmentPool");
+
+                    b.Navigation("Lease");
+
+                    b.Navigation("SecurityDeposit");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", b =>
                 {
                     b.HasOne("Aquiis.SimpleStart.Components.Account.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Models.ApplicationScreening", b =>
@@ -2411,6 +3486,33 @@ namespace Aquiis.SimpleStart.Migrations
                         .IsRequired();
 
                     b.Navigation("ChecklistTemplate");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Models.LeaseOffer", b =>
+                {
+                    b.HasOne("Aquiis.SimpleStart.Components.PropertyManagement.Properties.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Models.ProspectiveTenant", "ProspectiveTenant")
+                        .WithMany()
+                        .HasForeignKey("ProspectiveTenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquiis.SimpleStart.Models.RentalApplication", "RentalApplication")
+                        .WithMany()
+                        .HasForeignKey("RentalApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+
+                    b.Navigation("ProspectiveTenant");
+
+                    b.Navigation("RentalApplication");
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Models.Note", b =>
@@ -2546,6 +3648,16 @@ namespace Aquiis.SimpleStart.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("Leases");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDeposit", b =>
+                {
+                    b.Navigation("Dividends");
+                });
+
+            modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.SecurityDeposits.SecurityDepositInvestmentPool", b =>
+                {
+                    b.Navigation("Dividends");
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Components.PropertyManagement.Tenants.Tenant", b =>

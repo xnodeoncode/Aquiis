@@ -34,13 +34,147 @@ Aquiis is a multi-tenant property management system built with **ASP.NET Core 9.
 - Use `@attribute [Authorize(Roles = "Administrator,PropertyManager")]` on Blazor pages
 - User context pattern: Inject `UserContextService` instead of repeatedly querying `AuthenticationStateProvider`
 
+## Property & Tenant Lifecycle Workflows
+
+### Property Status Management
+
+Properties follow a status-driven lifecycle (string values from `ApplicationConstants.PropertyStatuses`):
+
+- **Available** - Ready to market and show to prospects
+- **ApplicationPending** - One or more applications submitted and under review
+- **LeasePending** - Application approved, lease offered, awaiting tenant signature
+- **Occupied** - Active lease in place
+- **UnderRenovation** - Not marketable, undergoing repairs/upgrades
+- **OffMarket** - Temporarily unavailable
+
+**Important:** `Property.Status` is a `string` field (max 50 chars), NOT an enum. Always use `ApplicationConstants.PropertyStatuses.*` constants.
+
+**Status transitions are automatic** based on application/lease workflow events.
+
+### Prospect-to-Tenant Journey
+
+1. **Lead/Inquiry** → ProspectiveTenant created with Status: `Inquiry`
+2. **Tour Scheduled** → Tour record created, Status: `TourScheduled`
+3. **Tour Completed** → Status: `Toured`, interest level captured
+4. **Application Submitted** → RentalApplication created, **Property.Status → ApplicationPending**, Status: `ApplicationSubmitted`
+   - **Page:** `/propertymanagement/prospects/{id}/submit-application`
+   - Application fee collected (per-application, non-refundable)
+   - Application valid for 30 days, auto-expires if not processed
+   - Property status automatically changes from Available to ApplicationPending
+   - All required fields: current address, landlord info, employment, references
+   - Income-to-rent ratio calculated and displayed
+5. **Screening** → ApplicationScreening created (background + credit checks), Status: `UnderReview`
+   - **Page:** `/propertymanagement/applications/{id}/review` (Initiate Screening button)
+   - Background check requested with status tracking
+   - Credit check requested with credit score capture
+   - Overall screening result: Pending, Passed, Failed, ConditionalPass
+6. **Application Approved** → Lease created with Status: `Offered`, **Property.Status → LeasePending**, Status: `ApplicationApproved`
+   - **Page:** `/propertymanagement/applications/{id}/review` (Approve button after screening passes)
+   - All other pending applications for this property auto-denied
+   - Lease offer expires in 30 days if not signed
+   - `Lease.OfferedOn` and `Lease.ExpiresOn` (30 days) are set
+7. **Lease Signed** → **Tenant created from ProspectiveTenant**, SecurityDeposit collected, **Property.Status → Occupied**, Status: `ConvertedToTenant`
+   - **Page:** `/propertymanagement/leases/{id}/accept`
+   - `TenantConversionService` handles conversion with validation
+   - `Tenant.ProspectiveTenantId` links back to prospect for audit trail
+   - `Lease.SignedOn` timestamp recorded for compliance
+   - SecurityDeposit must be paid in full upfront
+   - Move-in inspection auto-scheduled
+8. **Lease Declined** → **Property.Status → Available or ApplicationPending** (if other apps exist), Status: `LeaseDeclined`
+   - `Lease.DeclinedOn` timestamp recorded
+9. **Application Denied** → Status: `ApplicationDenied`, Property returns to Available if no other pending apps
+
+**Key Services:**
+
+- `TenantConversionService` - Handles ProspectiveTenant → Tenant conversion
+  - `ConvertProspectToTenantAsync(prospectId, userId)` - Creates tenant with audit trail
+  - Returns existing Tenant if already converted (idempotent operation)
+  - `IsProspectAlreadyConvertedAsync()` - Prevents duplicate conversions
+  - `GetProspectHistoryForTenantAsync()` - Retrieves full prospect history for compliance
+
+**Key Pages:**
+
+- `GenerateLeaseOffer.razor` - `/propertymanagement/applications/{id}/generate-lease-offer`
+
+  - Generates lease offer from approved application
+  - Sets `Lease.OfferedOn` and `Lease.ExpiresOn` (30 days)
+  - Updates Property.Status to LeasePending
+  - Auto-denies all competing applications for the property
+  - Accessible to PropertyManager and Administrator roles only
+
+- `AcceptLease.razor` - `/propertymanagement/leases/{id}/accept`
+  - Accepts lease offer with full signature audit trail
+  - Captures: timestamp, IP address, user ID, payment method
+  - Calls TenantConversionService to create Tenant record
+  - Sets `Lease.SignedOn`, updates status to Active
+  - Updates Property.Status to Occupied
+  - Prevents acceptance of expired offers (checks `Lease.ExpiresOn`)
+  - Includes decline workflow (sets `Lease.DeclinedOn`)
+
+**Lease Lifecycle Fields:**
+
+- `OfferedOn` (DateTime?) - When lease offer was generated
+- `SignedOn` (DateTime?) - When tenant accepted/signed the lease
+- `DeclinedOn` (DateTime?) - When tenant declined the offer
+- `ExpiresOn` (DateTime?) - Offer expiration date (30 days from OfferedOn)
+
+**Status Constants:**
+
+- ProspectiveStatuses: `LeaseOffered`, `LeaseDeclined`, `ConvertedToTenant`
+- ApplicationStatuses: `LeaseOffered`, `LeaseAccepted`, `LeaseDeclined`
+- LeaseStatuses: `Offered`, `Active`, `Declined`, `Terminated`, `Expired`
+
+### Multi-Lease Support
+
+- Tenants can have **multiple active leases simultaneously**
+- Same tenant can lease multiple units in same or different buildings
+- Each lease has independent security deposit, dividend tracking, and payment schedule
+
+### Security Deposit Investment Model
+
+**Investment Pool Approach:**
+
+- All security deposits pooled into investment account
+- Annual earnings distributed as dividends
+- Organization takes configurable percentage (default 20%), remainder distributed to tenants
+- Dividend = (TenantShare / ActiveLeaseCount) per lease
+- **Losses absorbed by organization** - no negative dividends
+
+**Dividend Distribution Rules:**
+
+- **Pro-rated** for tenants who moved in mid-year (e.g., 6 months = 50% dividend)
+- Distributed at year-end even if tenant has moved out (sent to forwarding address)
+- Tenant chooses: apply as lease credit OR receive as check
+- Each active lease gets separate dividend (tenant with 2 leases gets 2 dividends)
+
+**Tracking:**
+
+- `SecurityDepositInvestmentPool` - annual pool performance
+- `SecurityDepositDividend` - per-lease dividend with payment method choice
+- Full audit trail of investment performance visible in tenant portal
+
+### E-Signature & Audit Trail
+
+- Lease offers require acceptance (checkbox "I Accept" for dev/demo)
+- Full signature audit: IP address, timestamp, document version, user agent
+- Lease offer expires after 30 days if not signed
+- Unsigned leases roll to month-to-month at higher rate
+
 ## Code Patterns & Conventions
+
+### Enums & Constants Location
+
+- **Status and type values** stored as string constants in `ApplicationConstants.cs` static classes
+- Example: `ApplicationConstants.PropertyStatuses.Available`, `ApplicationConstants.LeaseStatuses.Active`
+- **Enums** (PropertyStatus, ProspectStatus, etc.) defined in `ApplicationSettings.cs` for type safety but NOT used in database
+- Database fields use `string` type with validation against ApplicationConstants values
+- Never hard-code status/type values - always reference ApplicationConstants classes
 
 ### Blazor Component Structure
 
 ```csharp
 @page "/propertymanagement/entities/create"
-@using Aquiis.WebUI.Components.PropertyManagement.Entities
+@using Aquiis.SimpleStart.Components.PropertyManagement.Entities
 @attribute [Authorize(Roles = "Administrator,PropertyManager")]
 @inject PropertyManagementService PropertyService
 @inject UserContextService UserContext
@@ -95,16 +229,24 @@ public async Task<List<Entity>> GetEntitiesAsync()
 
 ### Database Changes
 
-1. **Manual SQL Scripts**: Preferred approach - create numbered scripts in `Data/Scripts/` (e.g., `40_AddNewTable.sql`)
-2. Update `ApplicationDbContext.cs` with DbSet and entity configuration
-3. No EF migrations - database is managed via SQL scripts
+1. **EF Core Migrations**: Primary approach for schema changes
+   - Migrations stored in `Data/Migrations/`
+   - Run `dotnet ef migrations add MigrationName --project Aquiis.SimpleStart`
+   - Apply with `dotnet ef database update --project Aquiis.SimpleStart`
+   - Generate SQL script: `dotnet ef migrations script --output schema.sql`
+2. **SQL Scripts**: Reference scripts in `Data/Scripts/` (not executed, for documentation)
+3. Update `ApplicationDbContext.cs` with DbSet and entity configuration
 4. Connection string in `appsettings.json`: `"DefaultConnection": "Data Source=./Data/app.db"`
+5. **Database**: SQLite (not SQL Server) - scripts will be SQLite syntax
 
-### Running the Application
+### Development Workflows
 
+**Running the Application:**
+
+- **Ctrl+Shift+B** to run `dotnet watch` (hot reload, default build task)
 - **F5** in VS Code to debug (configured in `.vscode/launch.json`)
-- Or: `dotnet run` in `Aquiis.WebUI/` directory
-- Default URLs: `https://localhost:7244` (HTTPS), `http://localhost:5244` (HTTP)
+- Or: `dotnet run` in `Aquiis.SimpleStart/` directory
+- Default URLs: Check terminal output for ports
 - Default admin: `superadmin@example.local` / `SuperAdmin@123!`
 
 ### Build Tasks (VS Code)

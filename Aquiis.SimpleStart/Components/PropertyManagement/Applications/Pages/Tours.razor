@@ -4,10 +4,10 @@
 @using Aquiis.SimpleStart.Components.Administration.Application
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "SuperAdministrator,Administrator,PropertyManager")]
-@inject RentalApplicationService ApplicationService
 @inject UserContextService UserContext
 @inject NavigationManager Navigation
 @inject ToastService ToastService
+@inject PropertyManagementService PropertyService
 
 @rendermode InteractiveServer
 
@@ -271,8 +271,8 @@
             var orgId = await UserContext.GetOrganizationIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                allTours = await ApplicationService.GetAllToursAsync(orgId);
-                upcomingTours = await ApplicationService.GetUpcomingToursAsync(orgId, 7);
+                allTours = await PropertyService.GetAllToursAsync(orgId);
+                upcomingTours = await PropertyService.GetUpcomingToursAsync(orgId, 7);
             }
         }
         catch (Exception ex)
@@ -307,7 +307,7 @@
             var orgId = await UserContext.GetOrganizationIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                var tour = await ApplicationService.GetTourByIdAsync(tourId, orgId);
+                var tour = await PropertyService.GetTourByIdAsync(tourId, orgId);
                 if (tour != null)
                 {
                     // Navigate to the property tour checklist to complete it
@@ -337,7 +337,7 @@
             var userId = await UserContext.GetUserIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                await ApplicationService.CancelTourAsync(tourId, orgId, userId);
+                await PropertyService.CancelTourAsync(tourId, orgId, userId);
                 
                 ToastService.ShowSuccess("Tour cancelled");
                 await LoadData();

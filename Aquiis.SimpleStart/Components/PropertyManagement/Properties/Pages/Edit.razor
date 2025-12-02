@@ -120,6 +120,21 @@ else
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status *</label>
+                                <InputSelect @bind-Value="propertyModel.Status" class="form-select">
+                                    <option value="@ApplicationConstants.PropertyStatuses.Available">Available</option>
+                                    <option value="@ApplicationConstants.PropertyStatuses.ApplicationPending">Application Pending</option>
+                                    <option value="@ApplicationConstants.PropertyStatuses.LeasePending">Lease Pending</option>
+                                    <option value="@ApplicationConstants.PropertyStatuses.Occupied">Occupied</option>
+                                    <option value="@ApplicationConstants.PropertyStatuses.UnderRenovation">Under Renovation</option>
+                                    <option value="@ApplicationConstants.PropertyStatuses.OffMarket">Off Market</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => propertyModel.Status" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Bedrooms</label>
                                 <InputNumber @bind-Value="propertyModel.Bedrooms" class="form-control" />
@@ -263,6 +278,7 @@ else
             Bathrooms = property.Bathrooms,
             SquareFeet = property.SquareFeet,
             Description = property.Description,
+            Status = property.Status,
             IsAvailable = property.IsAvailable
         };
     }
@@ -343,6 +359,7 @@ else
             property.Bathrooms = propertyModel.Bathrooms;
             property.SquareFeet = propertyModel.SquareFeet;
             property.Description = propertyModel.Description;
+            property.Status = propertyModel.Status;
             property.IsAvailable = propertyModel.IsAvailable;
             property.LastModifiedOn = DateTime.UtcNow;
 
@@ -405,6 +422,10 @@ else
 
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
         public string Description { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Status is required")]
+        [StringLength(50, ErrorMessage = "Status cannot exceed 50 characters")]
+        public string Status { get; set; } = ApplicationConstants.PropertyStatuses.Available;
 
         public bool IsAvailable { get; set; } = true;
     }

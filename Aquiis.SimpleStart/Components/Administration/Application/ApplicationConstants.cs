@@ -139,15 +139,19 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
         }
 
         public static class LeaseStatuses { 
+            public const string Offered = "Offered";
             public const string Pending = "Pending";
             public const string Active = "Active";
+            public const string Declined = "Declined";
             public const string Terminated = "Terminated";
             public const string Expired = "Expired";
 
             public static IReadOnlyList<string> AllLeaseStatuses { get; } = new List<string>
             {
+                Offered,
                 Pending,
                 Active,
+                Declined,
                 Terminated,
                 Expired
             };
@@ -183,27 +187,21 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
         public static class PropertyStatuses
         {
             public const string Available = "Available";
-            public const string PendingLease = "Pending Lease";
+            public const string ApplicationPending = "ApplicationPending";
+            public const string LeasePending = "LeasePending";
             public const string Occupied = "Occupied";
-            public const string UnderContract = "Under Contract";
-            public const string PendingInspection = "Pending Inspection";
-            public const string UnderMaintenance = "Under Maintenance";
-            public const string Sold = "Sold";
-            public const string Foreclosed = "Foreclosed";
-            public const string Other = "Other";
+            public const string UnderRenovation = "UnderRenovation";
+            public const string OffMarket = "OffMarket";
+            
             public static IReadOnlyList<string> AllPropertyStatuses { get; } = new List<string>
             {
                 Available,
-                PendingLease,
+                ApplicationPending,
+                LeasePending,
                 Occupied,
-                UnderContract,
-                PendingInspection,
-                UnderMaintenance,
-                Sold,
-                Foreclosed,
-                Other
+                UnderRenovation,
+                OffMarket
             };
-
         }
 
        
@@ -345,6 +343,9 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
             public const string Screening = "Screening";
             public const string Approved = "Approved";
             public const string Denied = "Denied";
+            public const string Withdrawn = "Withdrawn";
+            public const string LeaseOffered = "LeaseOffered";
+            public const string LeaseDeclined = "LeaseDeclined";
             public const string ConvertedToTenant = "ConvertedToTenant";
 
             public static IReadOnlyList<string> AllProspectiveStatuses { get; } = new List<string>
@@ -355,6 +356,9 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
                 Screening,
                 Approved,
                 Denied,
+                Withdrawn,
+                LeaseOffered,
+                LeaseDeclined,
                 ConvertedToTenant
             };
         }
@@ -422,6 +426,11 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
             public const string Screening = "Screening";
             public const string Approved = "Approved";
             public const string Denied = "Denied";
+            public const string Expired = "Expired";
+            public const string Withdrawn = "Withdrawn";
+            public const string LeaseOffered = "LeaseOffered";
+            public const string LeaseAccepted = "LeaseAccepted";
+            public const string LeaseDeclined = "LeaseDeclined";
 
             public static IReadOnlyList<string> AllApplicationStatuses { get; } = new List<string>
             {
@@ -429,7 +438,12 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
                 UnderReview,
                 Screening,
                 Approved,
-                Denied
+                Denied,
+                Expired,
+                Withdrawn,
+                LeaseOffered,
+                LeaseAccepted,
+                LeaseDeclined
             };
         }
 
@@ -446,6 +460,70 @@ namespace Aquiis.SimpleStart.Components.Administration.Application
                 Passed,
                 Failed,
                 ConditionalPass
+            };
+        }
+
+        public static class SecurityDepositStatuses
+        {
+            public const string Held = "Held";
+            public const string Released = "Released";
+            public const string Refunded = "Refunded";
+            public const string Forfeited = "Forfeited";
+            public const string PartiallyRefunded = "PartiallyRefunded";
+
+            public static IReadOnlyList<string> AllSecurityDepositStatuses { get; } = new List<string>
+            {
+                Held,
+                Released,
+                Refunded,
+                Forfeited,
+                PartiallyRefunded
+            };
+        }
+
+        public static class InvestmentPoolStatuses
+        {
+            public const string Open = "Open";
+            public const string Calculated = "Calculated";
+            public const string Distributed = "Distributed";
+            public const string Closed = "Closed";
+
+            public static IReadOnlyList<string> AllInvestmentPoolStatuses { get; } = new List<string>
+            {
+                Open,
+                Calculated,
+                Distributed,
+                Closed
+            };
+        }
+
+        public static class DividendPaymentMethods
+        {
+            public const string Pending = "Pending";
+            public const string LeaseCredit = "LeaseCredit";
+            public const string Check = "Check";
+
+            public static IReadOnlyList<string> AllDividendPaymentMethods { get; } = new List<string>
+            {
+                Pending,
+                LeaseCredit,
+                Check
+            };
+        }
+
+        public static class DividendStatuses
+        {
+            public const string Pending = "Pending";
+            public const string ChoiceMade = "ChoiceMade";
+            public const string Applied = "Applied";
+            public const string Paid = "Paid";
+
+            public static IReadOnlyList<string> AllDividendStatuses { get; } = new List<string>
+            {
+                Pending,
+                ChoiceMade,
+                Applied,
+                Paid
             };
         }
 

@@ -60,6 +60,62 @@ namespace Aquiis.SimpleStart.Models
 
         #endregion
 
+        #region Application Fee Settings
+
+        [Display(Name = "Enable Application Fees")]
+        public bool ApplicationFeeEnabled { get; set; } = true;
+
+        [Required]
+        [Range(0, 1000)]
+        [Display(Name = "Default Application Fee")]
+        public decimal DefaultApplicationFee { get; set; } = 50.00m;
+
+        [Required]
+        [Range(1, 90)]
+        [Display(Name = "Application Expiration (Days)")]
+        public int ApplicationExpirationDays { get; set; } = 30;
+
+        #endregion
+
+        #region Security Deposit Settings
+
+        [Display(Name = "Enable Security Deposit Investment Pool")]
+        public bool SecurityDepositInvestmentEnabled { get; set; } = true;
+
+        [Required]
+        [Range(0, 1)]
+        [Display(Name = "Organization Share Percentage")]
+        [Column(TypeName = "decimal(18,6)")]
+        public decimal OrganizationSharePercentage { get; set; } = 0.20m; // Default 20%
+
+        [Display(Name = "Auto-Calculate Security Deposit from Rent")]
+        public bool AutoCalculateSecurityDeposit { get; set; } = true;
+
+        [Required]
+        [Range(0.5, 3.0)]
+        [Display(Name = "Security Deposit Multiplier")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SecurityDepositMultiplier { get; set; } = 1.0m; // Default 1x monthly rent
+
+        [Required]
+        [Range(1, 12)]
+        [Display(Name = "Refund Processing Days")]
+        public int RefundProcessingDays { get; set; } = 30; // Days after move-out to process refund
+
+        [Required]
+        [Range(1, 12)]
+        [Display(Name = "Dividend Distribution Month")]
+        public int DividendDistributionMonth { get; set; } = 1; // January = 1
+
+        [Display(Name = "Allow Tenant Choice for Dividend Payment")]
+        public bool AllowTenantDividendChoice { get; set; } = true;
+
+        [Display(Name = "Default Dividend Payment Method")]
+        [StringLength(50)]
+        public string DefaultDividendPaymentMethod { get; set; } = "LeaseCredit"; // LeaseCredit or Check
+
+        #endregion
+
         // Future settings can be added here as new regions:
         // - Default lease terms
         // - Routine inspection intervals

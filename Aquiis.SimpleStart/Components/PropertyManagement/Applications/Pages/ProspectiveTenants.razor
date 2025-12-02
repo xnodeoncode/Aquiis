@@ -6,11 +6,10 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "SuperAdministrator,Administrator,PropertyManager")]
-@inject RentalApplicationService ApplicationService
 @inject UserContextService UserContext
 @inject NavigationManager Navigation
 @inject ToastService ToastService
-@inject PropertyManagementService propertyService
+@inject PropertyManagementService PropertyService
 
 @rendermode InteractiveServer
 
@@ -225,16 +224,31 @@
                                         <td>@prospect.FirstContactedOn?.ToString("MM/dd/yyyy")</td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" 
-                                                        @onclick="() => ScheduleTour(prospect.Id)">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                </button>
+                                                @if (prospect.Status == ApplicationConstants.ProspectiveStatuses.Lead)
+                                                {
+                                                    <button class="btn btn-outline-primary" 
+                                                            @onclick="() => ScheduleTour(prospect.Id)"
+                                                            title="Schedule Tour">
+                                                        <i class="bi bi-calendar-plus"></i>
+                                                    </button>
+                                                }
+                                                @if (prospect.Status == ApplicationConstants.ProspectiveStatuses.TourScheduled || 
+                                                     prospect.Status == ApplicationConstants.ProspectiveStatuses.Lead)
+                                                {
+                                                    <button class="btn btn-success" 
+                                                            @onclick="() => BeginApplication(prospect.Id)"
+                                                            title="Begin Application">
+                                                        <i class="bi bi-file-earmark-text"></i> Apply
+                                                    </button>
+                                                }
                                                 <button class="btn btn-outline-info" 
-                                                        @onclick="() => ViewDetails(prospect.Id)">
+                                                        @onclick="() => ViewDetails(prospect.Id)"
+                                                        title="View Details">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 <button class="btn btn-outline-danger" 
-                                                        @onclick="() => DeleteProspect(prospect.Id)">
+                                                        @onclick="() => DeleteProspect(prospect.Id)"
+                                                        title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -276,12 +290,12 @@
             var orgId = await UserContext.GetOrganizationIdAsync();
             if (!string.IsNullOrEmpty(orgId))
             {
-                prospects = await ApplicationService.GetAllProspectiveTenantsAsync(orgId);
+                prospects = await PropertyService.GetAllProspectiveTenantsAsync(orgId);
                 
                 // Load properties for dropdown
                 var dbContextFactory = Navigation.ToAbsoluteUri("/").ToString(); // Get service
                 // For now, we'll need to inject PropertyManagementService
-                var allProperties = await propertyService.GetPropertiesAsync();
+                var allProperties = await PropertyService.GetPropertiesAsync();
                 properties = allProperties.Where(p => p.IsAvailable).ToList();
             }
         }
@@ -338,7 +352,7 @@
                 CreatedBy = userId
             };
             
-            await ApplicationService.CreateProspectiveTenantAsync(prospect);
+            await PropertyService.CreateProspectiveTenantAsync(prospect);
             
             ToastService.ShowSuccess("Prospective tenant added successfully");
             showAddForm = false;
@@ -360,6 +374,11 @@
         Navigation.NavigateTo($"/PropertyManagement/Tours/Schedule/{prospectId}");
     }
 
+    private void BeginApplication(int prospectId)
+    {
+        Navigation.NavigateTo($"/propertymanagement/prospects/{prospectId}/submit-application");
+    }
+
     private void ViewDetails(int prospectId)
     {
         Navigation.NavigateTo($"/PropertyManagement/ProspectiveTenants/{prospectId}");
@@ -375,7 +394,7 @@
             
             if (!string.IsNullOrEmpty(orgId) && !string.IsNullOrEmpty(userId))
             {
-                await ApplicationService.DeleteProspectiveTenantAsync(prospectId, orgId, userId);
+                await PropertyService.DeleteProspectiveTenantAsync(prospectId, orgId, userId);
                 ToastService.ShowSuccess("Prospect deleted successfully");
                 await LoadData();
             }

@@ -107,6 +107,7 @@ public class FinancialReportService
             .Include(l => l.Invoices)
             .ThenInclude(i => i.Payments)
             .Where(l => l.Property.OrganizationId == organizationId &&
+                       l.Tenant != null &&
                        l.StartDate <= asOfDate &&
                        l.EndDate >= asOfDate)
             .OrderBy(l => l.Property.Address)
@@ -117,7 +118,7 @@ public class FinancialReportService
                 PropertyName = l.Property.Address,
                 PropertyAddress = l.Property.Address,
                 TenantId = l.TenantId,
-                TenantName = l.Tenant != null ? $"{l.Tenant.FirstName} {l.Tenant.LastName}" : "Vacant",
+                TenantName = $"{l.Tenant.FirstName} {l.Tenant.LastName}",
                 LeaseStatus = l.Status,
                 LeaseStartDate = l.StartDate,
                 LeaseEndDate = l.EndDate,

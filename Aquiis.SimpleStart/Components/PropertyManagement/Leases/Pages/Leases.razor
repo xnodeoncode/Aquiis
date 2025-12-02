@@ -42,6 +42,9 @@
         }
     </div>
     <div class="btn-group">
+        <button class="btn btn-outline-info" @onclick="ViewLeaseOffers">
+            <i class="bi bi-file-earmark-check"></i> View Lease Offers
+        </button>
         <button class="btn btn-primary" @onclick="CreateLease">
             <i class="bi bi-plus-lg"></i> Add Lease
         </button>
@@ -212,11 +215,17 @@ else
                                         {
                                             <tr class="@(lease.IsActive ? "" : "table-warning")">
                                                 <td>
-                                                    <strong>@lease.Tenant?.FullName</strong>
                                                     @if (lease.Tenant != null)
                                                     {
+                                                        <strong>@lease.Tenant.FullName</strong>
                                                         <br />
                                                         <small class="text-muted">@lease.Tenant.Email</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-warning"><i class="bi bi-hourglass-split"></i> Pending Acceptance</span>
+                                                        <br />
+                                                        <small class="text-muted">Lease offer awaiting tenant</small>
                                                     }
                                                 </td>
                                                 <td>@lease.StartDate.ToString("MMM dd, yyyy")</td>
@@ -394,11 +403,17 @@ else
                                     }
                                 </td>
                                 <td>
-                                    <strong>@lease.Tenant?.FullName</strong>
                                     @if (lease.Tenant != null)
                                     {
+                                        <strong>@lease.Tenant.FullName</strong>
                                         <br />
                                         <small class="text-muted">@lease.Tenant.Email</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning"><i class="bi bi-hourglass-split"></i> Pending Acceptance</span>
+                                        <br />
+                                        <small class="text-muted">Lease offer awaiting tenant</small>
                                     }
                                 </td>
                                 <td>@lease.StartDate.ToString("MMM dd, yyyy")</td>
@@ -614,7 +629,7 @@ else
         filteredLeases = leases.Where(l =>
             (string.IsNullOrEmpty(searchTerm) ||
              l.Property?.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) == true ||
-             l.Tenant?.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) == true ||
+             (l.Tenant != null && l.Tenant.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
              l.Notes.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
              l.Terms.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrEmpty(selectedLeaseStatus) || l.Status == selectedLeaseStatus) &&
@@ -743,6 +758,11 @@ else
             "Terminated" => "bg-danger",
             _ => "bg-secondary"
         };
+    }
+
+    private void ViewLeaseOffers()
+    {
+        NavigationManager.NavigateTo("/propertymanagement/leaseoffers");
     }
 
     private void CreateLease()

@@ -87,6 +87,7 @@
     }
 
     <div>
+    <button class="btn btn-outline-primary" @onclick="GoToOrganizationSettings">Organization Settings</button>
     <button class="btn btn-primary" @onclick="GoToServiceSettings">Service Settings</button>
     <button class="btn btn-secondary" @onclick="GoToLateFeeSettings">Late Fee Settings</button>
     <button class="btn btn-info" @onclick="GoToDatabaseSettings">Manage Database</button>
@@ -158,5 +159,10 @@
     {
         // Logic to navigate to the user management page
         NavigationManager.NavigateTo("/administration/users/manage");
+    }
+    private void GoToOrganizationSettings()
+    {
+        // Logic to navigate to the organization settings page
+        NavigationManager.NavigateTo("/administration/settings/organization");
     }
 }
