@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Aquiis.SimpleStart.Components;
 using Aquiis.SimpleStart.Shared.Components.Account;
 using Aquiis.SimpleStart.Infrastructure.Data;
 using Aquiis.SimpleStart.Features.PropertyManagement;
@@ -483,7 +482,7 @@ if (!HybridSupport.IsElectronActive)
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-app.MapRazorComponents<Aquiis.SimpleStart.Components.App>()
+app.MapRazorComponents<Aquiis.SimpleStart.Shared.App>()
     .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
