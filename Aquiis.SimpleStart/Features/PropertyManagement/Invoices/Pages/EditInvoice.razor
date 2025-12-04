@@ -306,7 +306,6 @@ else
             invoice.AmountPaid = invoiceModel.AmountPaid;
             invoice.PaidOn = invoiceModel.PaidOn;
             invoice.Notes = invoiceModel.Notes ?? string.Empty;
-            invoice.LastModifiedBy = userId;
 
             await PropertyManagementService.UpdateInvoiceAsync(invoice);
 

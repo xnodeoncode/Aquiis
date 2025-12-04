@@ -480,6 +480,43 @@ app.MapPost("/api/session/refresh", async (HttpContext context) =>
     return Results.Ok(new { success = true, timestamp = DateTime.UtcNow });
 }).RequireAuthorization();
 
+// Create system service account for background jobs
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    
+    var systemUser = await userManager.FindByIdAsync(ApplicationConstants.SystemUser.Id);
+    if (systemUser == null)
+    {
+        systemUser = new ApplicationUser
+        {
+            Id = ApplicationConstants.SystemUser.Id,
+            UserName = ApplicationConstants.SystemUser.Email, // UserName = Email in this system
+            NormalizedUserName = ApplicationConstants.SystemUser.Email.ToUpperInvariant(),
+            Email = ApplicationConstants.SystemUser.Email,
+            NormalizedEmail = ApplicationConstants.SystemUser.Email.ToUpperInvariant(),
+            EmailConfirmed = true,
+            FirstName = ApplicationConstants.SystemUser.FirstName,
+            LastName = ApplicationConstants.SystemUser.LastName,
+            LockoutEnabled = true,  // CRITICAL: Account is locked by default
+            LockoutEnd = DateTimeOffset.MaxValue,  // Locked until end of time
+            AccessFailedCount = 0
+        };
+        
+        // Create without password - cannot be used for login
+        var result = await userManager.CreateAsync(systemUser);
+        
+        if (!result.Succeeded)
+        {
+            throw new Exception($"Failed to create system user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+        
+        // DO NOT assign to any organization - service account is org-agnostic
+        // DO NOT create UserOrganizations entries
+        // DO NOT set ActiveOrganizationId
+    }
+}
+
 // Start the app for Electron
 await app.StartAsync();
 

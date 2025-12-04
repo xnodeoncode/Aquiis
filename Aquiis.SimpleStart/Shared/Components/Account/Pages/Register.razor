@@ -103,8 +103,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if this is the first user
-        var userCount = await Task.Run(() => DbContext.Users.Count());
+        // Check if this is the first user (excluding system user)
+        var userCount = await Task.Run(() => DbContext.Users
+            .Count(u => u.Id != ApplicationConstants.SystemUser.Id));
         _isFirstUser = userCount == 0;
         _allowRegistration = _isFirstUser; // Only allow registration if this is the first user
     }

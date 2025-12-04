@@ -504,16 +504,11 @@ else
 
         try
         {
-           var userId = await UserContextService.GetUserIdAsync();
-           var organizationId = await UserContextService.GetOrganizationIdAsync();
-
             // Update lease with renewal offer details
             lease.RenewalStatus = "Offered";
             lease.ProposedRenewalRent = proposedRent;
             lease.RenewalOfferedOn = DateTime.UtcNow;
             lease.RenewalNotes = renewalNotes;
-            lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = userId;
 
             await PropertyManagementService.UpdateLeaseAsync(lease);
             
@@ -540,14 +535,6 @@ else
             isGeneratingPdf = true;
             StateHasChanged();
 
-            var userId = await UserContextService.GetUserIdAsync();
-            var organizationId = await UserContextService.GetOrganizationIdAsync();
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId) || lease == null || lease.OrganizationId != organizationId)
-            {
-                throw new UnauthorizedAccessException("User is not authorized.");
-            }
-
             // Ensure proposed rent is set
             if (!lease.ProposedRenewalRent.HasValue)
             {
@@ -561,7 +548,6 @@ else
             // Save PDF to Documents table
             var document = new Document
             {
-                OrganizationId = organizationId,
                 PropertyId = lease.PropertyId,
                 TenantId = lease.TenantId,
                 LeaseId = lease.Id,
@@ -572,9 +558,7 @@ else
                 FileExtension = ".pdf",
                 ContentType = "application/pdf",
                 DocumentType = "Lease Renewal Offer",
-                Description = $"Renewal offer letter for {lease.Property?.Address}. Proposed rent: {lease.ProposedRenewalRent:C}",
-                CreatedBy = userId,
-                CreatedOn = DateTime.UtcNow
+                Description = $"Renewal offer letter for {lease.Property?.Address}. Proposed rent: {lease.ProposedRenewalRent:C}"
             };
 
             await PropertyManagementService.AddDocumentAsync(document);
@@ -598,20 +582,10 @@ else
 
         try
         {
-            var userId = await UserContextService.GetUserIdAsync();
-            var organizationId = await UserContextService.GetOrganizationIdAsync();
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId) || lease == null || lease.OrganizationId != organizationId)
-            {
-                throw new UnauthorizedAccessException("User is not authorized.");
-            }
-
             // Update current lease status
             lease.RenewalStatus = "Accepted";
             lease.RenewalResponseOn = DateTime.UtcNow;
             lease.Status = "Expired"; // Mark current lease as expired since it's being renewed
-            lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = userId;
 
             await PropertyManagementService.UpdateLeaseAsync(lease);
 
@@ -621,7 +595,6 @@ else
 
             var newLease = new Lease
             {
-                OrganizationId = organizationId,
                 PropertyId = lease.PropertyId,
                 TenantId = lease.TenantId,
                 StartDate = newLeaseStartDate,
@@ -631,11 +604,7 @@ else
                 Status = "Active",
                 Terms = lease.Terms,
                 Notes = $"Renewed lease from previous lease ID {lease.Id}. Renewal accepted on {DateTime.Now:MMM dd, yyyy}.",
-                PreviousLeaseId = lease.Id,
-                CreatedBy = userId,
-                CreatedOn = DateTime.UtcNow,
-                LastModifiedBy = userId,
-                LastModifiedOn = DateTime.UtcNow
+                PreviousLeaseId = lease.Id
             };
 
             await PropertyManagementService.AddLeaseAsync(newLease);
@@ -657,13 +626,8 @@ else
 
         try
         {
-            var userId = await UserContextService.GetUserIdAsync();
-            var organizationId = await UserContextService.GetOrganizationIdAsync();
-                
             lease.RenewalStatus = "Declined";
             lease.RenewalResponseOn = DateTime.UtcNow;
-            lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = userId;
             await PropertyManagementService.UpdateLeaseAsync(lease);
             await LoadLease();
             StateHasChanged();
@@ -753,21 +717,12 @@ else
 
         try
         {
-            var userId = await UserContextService.GetUserIdAsync();
-            var organizationId = await UserContextService.GetOrganizationIdAsync();
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId) || lease == null || lease.OrganizationId != organizationId)
-            {
-                throw new UnauthorizedAccessException("User is not authorized.");
-            }
-
             // Generate the PDF
             byte[] pdfBytes = await LeasePdfGenerator.GenerateLeasePdf(lease!);
 
             // Create the document entity
             var document = new Document
             {
-                OrganizationId = organizationId,
                 FileName = $"Lease_{lease!.Property?.Address?.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf",
                 FileExtension = ".pdf",
                 FileData = pdfBytes,

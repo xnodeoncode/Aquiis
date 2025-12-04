@@ -14,7 +14,7 @@
 @inject UserContextService UserContext
 @inject ToastService ToastService
 
-@attribute [Authorize(Roles = "PropertyManager,Administrator,Tenant")]
+@attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager", "Tenant")]
 @rendermode InteractiveServer
 
 <PageTitle>Submit Rental Application</PageTitle>

@@ -153,7 +153,7 @@ namespace Aquiis.SimpleStart.Application.Services
                     invoice.Amount += lateFee;
                     invoice.Status = "Overdue";
                     invoice.LastModifiedOn = DateTime.UtcNow;
-                    invoice.LastModifiedBy = string.Empty;
+                    invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                     invoice.Notes = string.IsNullOrEmpty(invoice.Notes)
                         ? $"Late fee of {lateFee:C} applied on {DateTime.Now:MMM dd, yyyy}"
                         : $"{invoice.Notes}\nLate fee of {lateFee:C} applied on {DateTime.Now:MMM dd, yyyy}";
@@ -195,7 +195,7 @@ namespace Aquiis.SimpleStart.Application.Services
                 {
                     invoice.Status = "Overdue";
                     invoice.LastModifiedOn = DateTime.UtcNow;
-                    invoice.LastModifiedBy = string.Empty;
+                    invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                 }
 
                 if (newlyOverdueInvoices.Any())
@@ -249,7 +249,7 @@ namespace Aquiis.SimpleStart.Application.Services
                     invoice.ReminderSent = true;
                     invoice.ReminderSentOn = DateTime.UtcNow;
                     invoice.LastModifiedOn = DateTime.UtcNow;
-                    invoice.LastModifiedBy = string.Empty;
+                    invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                 }
 
                 if (upcomingInvoices.Any())
@@ -297,7 +297,7 @@ namespace Aquiis.SimpleStart.Application.Services
                     lease.RenewalNotificationSentOn = DateTime.UtcNow;
                     lease.RenewalStatus = "Pending";
                     lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = string.Empty;
+                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                 }
 
                 // Check for leases expiring in 60 days (reminder)
@@ -325,7 +325,7 @@ namespace Aquiis.SimpleStart.Application.Services
 
                     lease.RenewalReminderSentOn = DateTime.UtcNow;
                     lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = string.Empty;
+                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                 }
 
                 // Check for leases expiring in 30 days (final reminder)
@@ -365,7 +365,7 @@ namespace Aquiis.SimpleStart.Application.Services
                     lease.Status = "Expired";
                     lease.RenewalStatus = "Expired";
                     lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = string.Empty;
+                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
 
                     _logger.LogInformation(
                         "Lease expired: Lease ID {LeaseId}, End Date: {EndDate}",
@@ -573,7 +573,7 @@ namespace Aquiis.SimpleStart.Application.Services
                 {
                     application.Status = ApplicationConstants.ApplicationStatuses.Expired;
                     application.LastModifiedOn = DateTime.UtcNow;
-                    application.LastModifiedBy = string.Empty;
+                    application.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
                     
                     _logger.LogInformation("Expired application {ApplicationId} for property {PropertyId} (Expired on: {ExpirationDate})",
                         application.Id,

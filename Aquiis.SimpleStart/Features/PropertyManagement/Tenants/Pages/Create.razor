@@ -155,10 +155,7 @@
                 EmergencyContactPhone = tenantModel.EmergencyContactPhone,
                 Notes = tenantModel.Notes,
                 IdentificationNumber = tenantModel.IdentificationNumber,
-                IsActive = true,
-                CreatedOn = DateTime.UtcNow,
-                LastModifiedOn = DateTime.UtcNow,
-                LastModifiedBy = userId
+                IsActive = true
             };
 
             await PropertyManagementService.AddTenantAsync(tenant);

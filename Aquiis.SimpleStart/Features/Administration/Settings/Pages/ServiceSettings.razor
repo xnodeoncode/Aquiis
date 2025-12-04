@@ -316,7 +316,7 @@
             invoice.Amount += lateFee;
             invoice.Status = "Overdue";
             invoice.LastModifiedOn = DateTime.UtcNow;
-            invoice.LastModifiedBy = "System";
+            invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id;
             invoice.Notes = string.IsNullOrEmpty(invoice.Notes)
                 ? $"Late fee of {lateFee:C} applied on {DateTime.Now:MMM dd, yyyy}"
                 : $"{invoice.Notes}\nLate fee of {lateFee:C} applied on {DateTime.Now:MMM dd, yyyy}";
@@ -345,7 +345,7 @@
         {
             invoice.Status = "Overdue";
             invoice.LastModifiedOn = DateTime.UtcNow;
-            invoice.LastModifiedBy = "System";
+            invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id;
         }
 
         if (newlyOverdueInvoices.Any())
@@ -385,7 +385,7 @@
             invoice.ReminderSent = true;
             invoice.ReminderSentOn = DateTime.UtcNow;
             invoice.LastModifiedOn = DateTime.UtcNow;
-            invoice.LastModifiedBy = "System";
+            invoice.LastModifiedBy = ApplicationConstants.SystemUser.Id;
         }
 
         if (upcomingInvoices.Any())
@@ -419,7 +419,7 @@
             lease.RenewalNotificationSentOn = DateTime.UtcNow;
             lease.RenewalStatus = "Pending";
             lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = "System";
+            lease.LastModifiedBy = ApplicationConstants.SystemUser.Id;
             totalProcessed++;
         }
 
@@ -437,7 +437,7 @@
             lease.Status = "Expired";
             lease.RenewalStatus = "Expired";
             lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = "System";
+            lease.LastModifiedBy = ApplicationConstants.SystemUser.Id;
             totalProcessed++;
         }
 

@@ -9,6 +9,7 @@
 @using System.ComponentModel.DataAnnotations
 
 @inject PropertyManagementService PropertyService
+@inject UserContextService UserContext
 @inject ToastService ToastService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -18,7 +19,19 @@
 <PageTitle>Late Fee Settings</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="bi bi-gear"></i> Late Fee Settings</h1>
+    <div>
+        <h1><i class="bi bi-gear"></i> Late Fee Settings</h1>
+        @if (!string.IsNullOrEmpty(organizationName))
+        {
+            <p class="text-muted mb-0">
+                Settings for <strong>@organizationName</strong>
+                @if (!string.IsNullOrEmpty(userRole))
+                {
+                    <span class="badge @GetRoleBadgeClass() ms-2">@userRole</span>
+                }
+            </p>
+        }
+    </div>
     <button class="btn btn-secondary" @onclick="BackToDashboard">
         <i class="bi bi-arrow-left"></i> Back to Dashboard
     </button>
@@ -157,16 +170,22 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                        <button type="submit" class="btn btn-primary" disabled="@(isSaving || !canEdit)">
                             @if (isSaving)
                             {
                                 <span class="spinner-border spinner-border-sm me-2"></span>
                             }
                             <i class="bi bi-save"></i> Save Settings
                         </button>
-                        <button type="button" class="btn btn-secondary" @onclick="ResetToDefaults">
+                        <button type="button" class="btn btn-secondary" @onclick="ResetToDefaults" disabled="@(!canEdit)">
                             <i class="bi bi-arrow-clockwise"></i> Reset to Defaults
                         </button>
+                        @if (!canEdit)
+                        {
+                            <div class="text-muted mt-2 w-100">
+                                <small><i class="bi bi-info-circle me-1"></i>You have read-only access to these settings.</small>
+                            </div>
+                        }
                     </div>
                 </EditForm>
             </div>
@@ -254,11 +273,20 @@
 @code {
     private LateFeeSettingsViewModel viewModel = new();
     private bool isSaving = false;
+    private string organizationName = string.Empty;
+    private string userRole = string.Empty;
+    private bool canEdit = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Get organization and role context
+            var org = await UserContext.GetActiveOrganizationAsync();
+            organizationName = org?.Name ?? "Unknown Organization";
+            userRole = await UserContext.GetCurrentOrganizationRoleAsync() ?? "User";
+            canEdit = userRole != "User"; // User role is read-only
+            
             var settings = await PropertyService.GetOrganizationSettingsAsync();
             
             if (settings != null)
@@ -287,6 +315,18 @@
     private void BackToDashboard()
     {
         Navigation.NavigateTo("/administration/dashboard");
+    }
+
+    private string GetRoleBadgeClass()
+    {
+        return userRole switch
+        {
+            "Owner" => "bg-primary",
+            "Administrator" => "bg-success",
+            "PropertyManager" => "bg-info",
+            "User" => "bg-secondary",
+            _ => "bg-secondary"
+        };
     }
 
     private async Task SaveSettings()

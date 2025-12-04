@@ -255,9 +255,7 @@
                 Status = invoiceModel.Status,
                 AmountPaid = invoiceModel.Status == "Paid" ? invoiceModel.AmountPaid : 0,
                 PaidOn = invoiceModel.Status == "Paid" ? invoiceModel.PaidOn : null,
-                Notes = invoiceModel.Notes ?? string.Empty,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = userId
+                Notes = invoiceModel.Notes ?? string.Empty
             };
 
             await PropertyManagementService.AddInvoiceAsync(invoice);

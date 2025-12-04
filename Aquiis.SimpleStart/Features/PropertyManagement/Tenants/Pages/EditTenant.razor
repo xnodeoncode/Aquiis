@@ -254,8 +254,6 @@ else
             tenant.EmergencyContactName = tenantModel.EmergencyContactName;
             tenant.EmergencyContactPhone = tenantModel.EmergencyContactPhone;
             tenant.Notes = tenantModel.Notes;
-            tenant.LastModifiedOn = DateTime.UtcNow;
-            tenant.LastModifiedBy = userId;
 
             await PropertyManagementService.UpdateTenantAsync(tenant);
             successMessage = "Tenant updated successfully!";

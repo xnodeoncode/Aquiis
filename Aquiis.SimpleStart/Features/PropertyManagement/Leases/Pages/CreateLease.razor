@@ -304,9 +304,7 @@
                 SecurityDeposit = leaseModel.SecurityDeposit,
                 Status = leaseModel.Status,
                 Terms = leaseModel.Terms,
-                Notes = leaseModel.Notes,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = userId
+                Notes = leaseModel.Notes
             };
 
             await PropertyManagementService.AddLeaseAsync(lease);

@@ -285,10 +285,6 @@ else
             return;
         }
 
-        // Set these on the inspection model immediately for validation
-        inspection.OrganizationId = organizationId;
-        inspection.CreatedBy = userId; // Use email if available, otherwise userId
-
         if (PropertyId.HasValue)
         {
             property = await PropertyManagementService.GetPropertyByIdAsync(PropertyId.Value);

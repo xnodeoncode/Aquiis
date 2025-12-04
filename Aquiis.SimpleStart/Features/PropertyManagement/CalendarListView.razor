@@ -758,24 +758,16 @@
     {
         try
         {
-            var organizationId = await UserContext.GetActiveOrganizationIdAsync();
-            var userId = await UserContext.GetUserIdAsync();
-            
-            if (!string.IsNullOrEmpty(organizationId) && !string.IsNullOrEmpty(userId))
+            var request = await PropertyService.GetMaintenanceRequestByIdAsync(maintenanceRequestId);
+            if (request != null)
             {
-                var request = await PropertyService.GetMaintenanceRequestByIdAsync(maintenanceRequestId);
-                if (request != null)
-                {
-                    request.Status = ApplicationConstants.MaintenanceRequestStatuses.InProgress;
-                    request.LastModifiedBy = userId;
-                    request.LastModifiedOn = DateTime.UtcNow;
-                    
-                    await PropertyService.UpdateMaintenanceRequestAsync(request);
-                    ToastService.ShowSuccess("Work started on maintenance request");
-                    
-                    await ShowMaintenanceRequestDetailById(maintenanceRequestId);
-                    await LoadEvents();
-                }
+                request.Status = ApplicationConstants.MaintenanceRequestStatuses.InProgress;
+                
+                await PropertyService.UpdateMaintenanceRequestAsync(request);
+                ToastService.ShowSuccess("Work started on maintenance request");
+                
+                await ShowMaintenanceRequestDetailById(maintenanceRequestId);
+                await LoadEvents();
             }
         }
         catch (Exception ex)

@@ -94,9 +94,20 @@ namespace Aquiis.SimpleStart.Application.Services
         public async Task<bool> AddToInvestmentPoolAsync(int securityDepositId)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify deposit belongs to active organization
             var deposit = await _context.SecurityDeposits
                 .Include(sd => sd.Lease)
-                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && !sd.IsDeleted);
+                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && 
+                                          sd.OrganizationId == organizationId && 
+                                          !sd.IsDeleted);
 
             if (deposit == null)
                 return false;
@@ -104,6 +115,7 @@ namespace Aquiis.SimpleStart.Application.Services
             if (deposit.InInvestmentPool)
                 return true; // Already in pool
 
+            // Set tracking fields automatically
             deposit.InInvestmentPool = true;
             deposit.PoolEntryDate = DateTime.UtcNow;
             deposit.LastModifiedBy = userId;
@@ -119,8 +131,19 @@ namespace Aquiis.SimpleStart.Application.Services
         public async Task<bool> RemoveFromInvestmentPoolAsync(int securityDepositId)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify deposit belongs to active organization
             var deposit = await _context.SecurityDeposits
-                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && !sd.IsDeleted);
+                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && 
+                                          sd.OrganizationId == organizationId && 
+                                          !sd.IsDeleted);
 
             if (deposit == null)
                 return false;
@@ -128,6 +151,7 @@ namespace Aquiis.SimpleStart.Application.Services
             if (!deposit.InInvestmentPool)
                 return true; // Already removed
 
+            // Set tracking fields automatically
             deposit.InInvestmentPool = false;
             deposit.PoolExitDate = DateTime.UtcNow;
             deposit.LastModifiedBy = userId;
@@ -266,8 +290,12 @@ namespace Aquiis.SimpleStart.Application.Services
             decimal endingBalance,
             decimal totalEarnings)
         {
-
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
 
             var pool = await GetOrCreateInvestmentPoolAsync(year);
 
@@ -289,6 +317,7 @@ namespace Aquiis.SimpleStart.Application.Services
                 pool.TenantShareTotal = 0;
             }
 
+            // Set tracking fields automatically
             pool.LastModifiedBy = userId;
             pool.LastModifiedOn = DateTime.UtcNow;
 
@@ -298,6 +327,7 @@ namespace Aquiis.SimpleStart.Application.Services
 
         /// <summary>
         /// Calculates dividends for all active deposits in a year.
+        /// This is typically run as a background job, so it uses the system account.
         /// </summary>
         public async Task<List<SecurityDepositDividend>> CalculateDividendsAsync(int year)
         {
@@ -305,9 +335,9 @@ namespace Aquiis.SimpleStart.Application.Services
             if (organizationId == null)
                 throw new InvalidOperationException("Organization context is required");
             
-            var userId = await _userContext.GetUserIdAsync();
+            // Use system account for automated calculations
+            var userId = ApplicationConstants.SystemUser.Id;
 
-            
             var pool = await GetOrCreateInvestmentPoolAsync(year);
 
             // Get all deposits that were in the pool during this year
@@ -393,7 +423,7 @@ namespace Aquiis.SimpleStart.Application.Services
                     PaymentMethod = defaultPaymentMethod,
                     Status = ApplicationConstants.DividendStatuses.Pending,
                     MonthsInPool = monthsInPool,
-                    CreatedBy = userId ?? string.Empty,
+                    CreatedBy = userId, // System account for automated calculations
                     CreatedOn = DateTime.UtcNow
                 };
 
@@ -465,12 +495,24 @@ namespace Aquiis.SimpleStart.Application.Services
             string? mailingAddress)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify dividend belongs to active organization
             var dividend = await _context.SecurityDepositDividends
-                .FirstOrDefaultAsync(d => d.Id == dividendId && !d.IsDeleted);
+                .FirstOrDefaultAsync(d => d.Id == dividendId && 
+                                         d.OrganizationId == organizationId && 
+                                         !d.IsDeleted);
 
             if (dividend == null)
                 return false;
 
+            // Set tracking fields automatically
             dividend.PaymentMethod = paymentMethod;
             dividend.MailingAddress = mailingAddress;
             dividend.ChoiceMadeOn = DateTime.UtcNow;
@@ -490,13 +532,25 @@ namespace Aquiis.SimpleStart.Application.Services
             string? paymentReference)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify dividend belongs to active organization
             var dividend = await _context.SecurityDepositDividends
                 .Include(d => d.Lease)
-                .FirstOrDefaultAsync(d => d.Id == dividendId && !d.IsDeleted);
+                .FirstOrDefaultAsync(d => d.Id == dividendId && 
+                                         d.OrganizationId == organizationId && 
+                                         !d.IsDeleted);
 
             if (dividend == null)
                 return false;
 
+            // Set tracking fields automatically
             dividend.PaymentReference = paymentReference;
             dividend.PaymentProcessedOn = DateTime.UtcNow;
             dividend.Status = dividend.PaymentMethod == ApplicationConstants.DividendPaymentMethods.LeaseCredit
@@ -585,9 +639,20 @@ namespace Aquiis.SimpleStart.Application.Services
             string? refundReference)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify deposit belongs to active organization
             var deposit = await _context.SecurityDeposits
                 .Include(sd => sd.Dividends)
-                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && !sd.IsDeleted);
+                .FirstOrDefaultAsync(sd => sd.Id == securityDepositId && 
+                                          sd.OrganizationId == organizationId && 
+                                          !sd.IsDeleted);
 
             if (deposit == null)
                 throw new InvalidOperationException($"Security deposit {securityDepositId} not found");
@@ -645,12 +710,24 @@ namespace Aquiis.SimpleStart.Application.Services
         public async Task<SecurityDepositInvestmentPool> CloseInvestmentPoolAsync(int poolId)
         {
             var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify pool belongs to active organization
             var pool = await _context.SecurityDepositInvestmentPools
-                .FirstOrDefaultAsync(p => p.Id == poolId && !p.IsDeleted);
+                .FirstOrDefaultAsync(p => p.Id == poolId && 
+                                         p.OrganizationId == organizationId && 
+                                         !p.IsDeleted);
 
             if (pool == null)
                 throw new InvalidOperationException($"Investment pool {poolId} not found");
 
+            // Set tracking fields automatically
             pool.Status = ApplicationConstants.InvestmentPoolStatuses.Closed;
             pool.LastModifiedBy = userId;
             pool.LastModifiedOn = DateTime.UtcNow;

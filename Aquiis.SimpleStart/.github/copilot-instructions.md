@@ -20,6 +20,113 @@ Aquiis is a multi-tenant property management system built with **ASP.NET Core 9.
 - All CRUD operations go through this service - components never access `ApplicationDbContext` directly
 - Service is injected into Blazor components: `@inject PropertyManagementService PropertyService`
 
+**CRITICAL: Tracking Fields Must Be Set at Service Layer**
+
+All tracking fields and organization context MUST be set at the **service layer**, never in UI components:
+
+- **Tracking Fields**: `CreatedBy`, `CreatedOn`, `LastModifiedBy`, `LastModifiedOn`, `OrganizationId`
+- **Source of Truth**: Services inject `UserContextService` to get current user and active organization
+- **Security**: UI cannot manipulate tracking fields or bypass organization isolation
+- **Maintainability**: All tracking logic centralized in services (change once, apply everywhere)
+- **Simplicity**: UI components don't need to inject `UserContextService` or pass these values
+
+**Service Method Pattern (CORRECT):**
+
+```csharp
+// Service injects UserContextService
+private readonly UserContextService _userContext;
+
+// Create method - tracking fields set internally
+public async Task<Property> CreatePropertyAsync(Property property)
+{
+    var userId = await _userContext.GetUserIdAsync();
+    var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
+    
+    // Service sets tracking fields - UI never touches these
+    property.CreatedBy = userId;
+    property.CreatedOn = DateTime.UtcNow;
+    property.OrganizationId = activeOrgId;
+    
+    _dbContext.Properties.Add(property);
+    await _dbContext.SaveChangesAsync();
+    return property;
+}
+
+// Update method - LastModified tracking + org security check
+public async Task<bool> UpdatePropertyAsync(Property property)
+{
+    var userId = await _userContext.GetUserIdAsync();
+    var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
+    
+    // Verify property belongs to active organization (security)
+    var existing = await _dbContext.Properties
+        .FirstOrDefaultAsync(p => p.Id == property.Id && p.OrganizationId == activeOrgId);
+    
+    if (existing == null) return false;
+    
+    // Service sets tracking fields
+    property.LastModifiedBy = userId;
+    property.LastModifiedOn = DateTime.UtcNow;
+    property.OrganizationId = activeOrgId; // Prevent org hijacking
+    
+    _dbContext.Entry(existing).CurrentValues.SetValues(property);
+    await _dbContext.SaveChangesAsync();
+    return true;
+}
+
+// Query method - automatic active organization filtering
+public async Task<List<Property>> GetPropertiesAsync()
+{
+    var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
+    
+    return await _dbContext.Properties
+        .Where(p => p.OrganizationId == activeOrgId && !p.IsDeleted)
+        .ToListAsync();
+}
+```
+
+**UI Pattern (CORRECT):**
+
+```csharp
+// UI only passes entity - NO userId, NO organizationId
+private async Task CreateProperty()
+{
+    // Simple, clean, secure
+    var created = await PropertyService.CreatePropertyAsync(newProperty);
+    Navigation.NavigateTo("/propertymanagement/properties");
+}
+```
+
+**❌ ANTI-PATTERN (DO NOT DO THIS):**
+
+```csharp
+// BAD: UI passes tracking values (insecure, boilerplate, wrong layer)
+public async Task<Property> CreatePropertyAsync(Property property, string userId, string organizationId)
+{
+    property.CreatedBy = userId;
+    property.OrganizationId = organizationId;
+    // ...
+}
+
+// BAD: UI must inject UserContextService (wrong responsibility)
+@inject UserContextService UserContext
+
+private async Task CreateProperty()
+{
+    var userId = await UserContext.GetUserIdAsync();
+    var orgId = await UserContext.GetActiveOrganizationIdAsync();
+    await PropertyService.CreatePropertyAsync(newProperty, userId, orgId); // WRONG
+}
+```
+
+**Key Principles:**
+
+1. Services own tracking field logic - UI never sets these values
+2. All queries automatically filter by active organization (via UserContextService)
+3. Update operations verify entity belongs to active org (security)
+4. UI components stay simple - just pass entities, no context plumbing
+5. Future refactoring happens in services only (change once, not in 40+ UI files)
+
 ### Soft Delete Pattern
 
 - Entities inherit from `BaseModel` which provides audit fields (`CreatedOn`, `CreatedBy`, `LastModifiedOn`, `LastModifiedBy`, `IsDeleted`)
@@ -187,30 +294,53 @@ Properties follow a status-driven lifecycle (string values from `ApplicationCons
 ### Creating Entities
 
 ```csharp
+// UI component creates entity with business data only
 private async Task CreateEntity()
 {
-    entity.OrganizationId = await UserContext.GetOrganizationIdAsync();
-    entity.CreatedBy = await UserContext.GetUserIdAsync();
-    entity.CreatedOn = DateTime.UtcNow;
-
-    await PropertyService.AddEntityAsync(entity);
+    // Service handles CreatedBy, CreatedOn, OrganizationId automatically
+    var created = await PropertyService.AddEntityAsync(entity);
     Navigation.NavigateTo("/propertymanagement/entities");
 }
 ```
 
+**Note:** Do NOT set tracking fields in UI. The service layer automatically sets:
+- `CreatedBy` - from `UserContextService.GetUserIdAsync()`
+- `CreatedOn` - `DateTime.UtcNow`
+- `OrganizationId` - from `UserContextService.GetActiveOrganizationIdAsync()`
+
 ### Service Method Pattern
 
 ```csharp
+// Service method automatically handles organization context and tracking
 public async Task<List<Entity>> GetEntitiesAsync()
 {
-    var organizationId = await _userContext.GetOrganizationIdAsync();
+    // Get active organization from UserContextService (injected in constructor)
+    var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
 
     return await _dbContext.Entities
         .Include(e => e.RelatedEntity)
-        .Where(e => !e.IsDeleted && e.OrganizationId == organizationId)
+        .Where(e => !e.IsDeleted && e.OrganizationId == activeOrgId)
         .ToListAsync();
 }
+
+// Create method sets tracking fields internally
+public async Task<Entity> AddEntityAsync(Entity entity)
+{
+    var userId = await _userContext.GetUserIdAsync();
+    var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
+    
+    // Service owns this logic - UI never sets these
+    entity.CreatedBy = userId;
+    entity.CreatedOn = DateTime.UtcNow;
+    entity.OrganizationId = activeOrgId;
+    
+    _dbContext.Entities.Add(entity);
+    await _dbContext.SaveChangesAsync();
+    return entity;
+}
 ```
+
+**Important:** Never expose `organizationId` or `userId` as parameters in service methods. Services get these values from `UserContextService` automatically.
 
 ### Constants Usage
 
@@ -354,3 +484,108 @@ Components/PropertyManagement/[Entity]/
 - Use string interpolation for logging: `$"Processing {entityId}"`
 - Handle errors with try-catch and user-friendly messages
 - Include XML comments on service methods describing purpose
+
+## Documentation & Roadmap Management
+
+### Documentation Structure
+
+The project maintains comprehensive documentation organized by implementation status and version:
+
+**Roadmap Folder** (`/Documentation/Roadmap/`):
+- **Purpose:** Implementation planning and feature proposals
+- **Status:** Active consideration - may be approved or rejected
+- **Workflow:** One file at a time - focus on current implementation
+- **File Naming:** Descriptive names (e.g., `00-PROPERTY-TENANT-LIFECYCLE-ROADMAP.md`)
+- **Rejection:** Rejected proposals have rejection reason added at the top of the file
+
+**Version Folders** (`/Documentation/vX.X.X/`):
+- **Purpose:** Completed implementation notes for each version release
+- **Status:** Historical record of what was actually implemented
+- **Content:** Feature additions, changes, and implementation details for that specific release
+- **File Naming:** Match feature/module names (e.g., `multi-organization-management.md`)
+
+### Semantic Versioning & Database Management
+
+The project follows **Semantic Versioning (MAJOR.MINOR.PATCH)**:
+
+- **MAJOR** version (X.0.0): Breaking changes that trigger database schema updates
+- **MINOR** version (0.X.0): Significant UI changes or new features (backward compatible)
+- **PATCH** version (0.0.X): Bug fixes, minor updates, safe application updates
+
+**Current Development Status:**
+- **Production version:** v0.1.1 (in production)
+- **Development version:** v0.2.0 (current work in progress)
+- **Next major milestone:** v1.0.0 (when entity refactoring stabilizes)
+
+**Database Version Management:**
+
+The database filename and schema version are tracked separately from the application patch version:
+
+**Configuration in `appsettings.json`:**
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "DataSource=Infrastructure/Data/app_v0.0.0.db;Cache=Shared"
+  },
+  "DatabaseSettings": {
+    "DatabaseFileName": "app_v0.0.0.db",
+    "PreviousDatabaseFileName": "",
+    "SchemaVersion": "0.0.0"
+  }
+}
+```
+
+**Versioning Rules:**
+
+1. **Database filename** follows pattern: `app_v{MAJOR}.{MINOR}.0.db`
+   - Tracks MAJOR and MINOR app versions only (ignores PATCH)
+   - Example: App v2.1.25 uses database `app_v2.1.0.db`
+   - Current: App v0.2.0 uses database `app_v0.0.0.db` (pre-v1.0.0)
+
+2. **Schema version** (`SchemaVersion` in settings):
+   - Matches database filename version
+   - Example: `app_v2.1.0.db` has `SchemaVersion: "2.1.0"`
+   - Current: `SchemaVersion: "0.0.0"` (active refactoring phase)
+
+3. **Version 1.0.0 milestone**:
+   - At v1.0.0, database management becomes more formal
+   - Database filename becomes: `app_v1.0.0.db` (from `app_v0.0.0.db`)
+   - `SchemaVersion` initializes to `"1.0.0"`
+   - Indicates entity models have stabilized
+
+4. **Migration triggers**:
+   - MAJOR version bump → Database schema migration required
+   - MINOR version bump → Database filename updates (new .db file)
+   - PATCH version bump → No database changes (application updates only)
+
+**Example Version Progression:**
+
+| App Version | Database File | Schema Version | Notes |
+|-------------|---------------|----------------|-------|
+| v0.1.1 | app_v0.0.0.db | 0.0.0 | Production (active refactoring) |
+| v0.2.0 | app_v0.0.0.db | 0.0.0 | Development (same schema) |
+| v1.0.0 | app_v1.0.0.db | 1.0.0 | Milestone (entities stabilized) |
+| v1.0.5 | app_v1.0.0.db | 1.0.0 | Patches (no DB change) |
+| v1.1.0 | app_v1.1.0.db | 1.1.0 | Minor (new DB file) |
+| v1.1.8 | app_v1.1.0.db | 1.1.0 | Patches (same DB) |
+| v2.0.0 | app_v2.0.0.db | 2.0.0 | Major (breaking changes, migration) |
+
+**Implementation Workflow:**
+
+1. When incrementing MAJOR or MINOR version:
+   - Update `DatabaseFileName` in `appsettings.json` to new version
+   - Update `SchemaVersion` to match
+   - Set `PreviousDatabaseFileName` to old database name (for migration reference)
+   - Create EF Core migration if schema changes required
+
+2. When incrementing PATCH version:
+   - No changes to database settings
+   - Application version increments only
+
+3. Document completed features in `/Documentation/v{MAJOR}.{MINOR}.{PATCH}/`
+
+**Pre-v1.0.0 Strategy:**
+- Database remains at `app_v0.0.0.db` until v1.0.0
+- Allows rapid iteration and entity refactoring
+- Schema migrations managed via EF Core Migrations folder
+- At v1.0.0 release, formalize database versioning with `app_v1.0.0.db`

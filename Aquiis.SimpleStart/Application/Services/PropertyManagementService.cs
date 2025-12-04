@@ -121,7 +121,10 @@ namespace Aquiis.SimpleStart.Application.Services
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
+            // Set tracking fields automatically
             property.OrganizationId = organizationId!;
+            property.CreatedBy = _userId;
+            property.CreatedOn = DateTime.UtcNow;
 
             // Set initial routine inspection due date to 30 days from creation
             property.NextRoutineInspectionDueDate = DateTime.Today.AddDays(30);
@@ -135,7 +138,7 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task UpdatePropertyAsync(Property property)
         {
-            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var _userId = await _userContext.GetUserIdAsync();
 
             if (string.IsNullOrEmpty(_userId))
             {
@@ -145,18 +148,27 @@ namespace Aquiis.SimpleStart.Application.Services
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
-            if (property.OrganizationId != organizationId)
+            // Security: Verify property belongs to active organization
+            var existing = await _dbContext.Properties
+                .FirstOrDefaultAsync(p => p.Id == property.Id && p.OrganizationId == organizationId);
+
+            if (existing == null)
             {
-                throw new UnauthorizedAccessException("You do not have permission to update this property.");
+                throw new UnauthorizedAccessException($"Property {property.Id} not found in active organization.");
             }
 
-            _dbContext.Properties.Update(property);
+            // Set tracking fields automatically
+            property.LastModifiedBy = _userId;
+            property.LastModifiedOn = DateTime.UtcNow;
+            property.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(property);
             await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeletePropertyAsync(int propertyId)
         {
-            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var _userId = await _userContext.GetUserIdAsync();
 
             if (string.IsNullOrEmpty(_userId))
             {
@@ -166,7 +178,6 @@ namespace Aquiis.SimpleStart.Application.Services
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
-            
             if (_applicationSettings.SoftDeleteEnabled)
             {
                 await SoftDeletePropertyAsync(propertyId);
@@ -351,7 +362,11 @@ namespace Aquiis.SimpleStart.Application.Services
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
+            // Set tracking fields automatically
             tenant.OrganizationId = organizationId!;
+            tenant.CreatedBy = _userId;
+            tenant.CreatedOn = DateTime.UtcNow;
+
             await _dbContext.Tenants.AddAsync(tenant);
             await _dbContext.SaveChangesAsync();
             
@@ -360,24 +375,31 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task UpdateTenantAsync(Tenant tenant)
         {
-            var _userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var _userId = await _userContext.GetUserIdAsync();
 
             if (string.IsNullOrEmpty(_userId))
             {
                 // Handle the case when the user is not authenticated
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
+            
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
-            if (tenant.OrganizationId != organizationId)
+            // Security: Verify tenant belongs to active organization
+            var existing = await _dbContext.Tenants
+                .FirstOrDefaultAsync(t => t.Id == tenant.Id && t.OrganizationId == organizationId);
+
+            if (existing == null)
             {
-                throw new UnauthorizedAccessException("You do not have permission to update this tenant.");
+                throw new UnauthorizedAccessException($"Tenant {tenant.Id} not found in active organization.");
             }
 
+            // Set tracking fields automatically
             tenant.LastModifiedOn = DateTime.UtcNow;
             tenant.LastModifiedBy = _userId;
+            tenant.OrganizationId = organizationId!; // Prevent org hijacking
 
-            _dbContext.Tenants.Update(tenant);
+            _dbContext.Entry(existing).CurrentValues.SetValues(tenant);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -541,6 +563,10 @@ namespace Aquiis.SimpleStart.Application.Services
             if(property is null || property.OrganizationId != organizationId)
                 return lease;
 
+            // Set tracking fields automatically
+            lease.CreatedBy = _userId;
+            lease.CreatedOn = DateTime.UtcNow;
+
             await _dbContext.Leases.AddAsync(lease);
 
             property.IsAvailable = false;
@@ -566,15 +592,21 @@ namespace Aquiis.SimpleStart.Application.Services
             
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
             
-            if (lease.Property.OrganizationId != organizationId)
+            // Security: Verify lease belongs to active organization
+            var existing = await _dbContext.Leases
+                .Include(l => l.Property)
+                .FirstOrDefaultAsync(l => l.Id == lease.Id && l.Property.OrganizationId == organizationId);
+            
+            if (existing == null)
             {
-                throw new UnauthorizedAccessException("User does not have access to this lease.");
+                throw new UnauthorizedAccessException($"Lease {lease.Id} not found in active organization.");
             }
             
+            // Set tracking fields automatically
             lease.LastModifiedOn = DateTime.UtcNow;
             lease.LastModifiedBy = _userId;
 
-            _dbContext.Leases.Update(lease);
+            _dbContext.Entry(existing).CurrentValues.SetValues(lease);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -688,6 +720,13 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task AddInvoiceAsync(Invoice invoice)
         {
+            var _userId = await _userContext.GetUserIdAsync();
+
+            if (string.IsNullOrEmpty(_userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
             var lease = await _dbContext.Leases
@@ -698,6 +737,11 @@ namespace Aquiis.SimpleStart.Application.Services
             {
                 throw new UnauthorizedAccessException("User does not have access to this lease.");
             }
+
+            // Set tracking fields automatically
+            invoice.OrganizationId = organizationId!;
+            invoice.CreatedBy = _userId;
+            invoice.CreatedOn = DateTime.UtcNow;
 
             await _dbContext.Invoices.AddAsync(invoice);
             await _dbContext.SaveChangesAsync();
@@ -712,19 +756,24 @@ namespace Aquiis.SimpleStart.Application.Services
             }
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
-            var lease = await _dbContext.Leases
-                .Include(l => l.Property)
-                .FirstOrDefaultAsync(l => l.Id == invoice.LeaseId && !l.IsDeleted);
+            
+            // Security: Verify invoice belongs to active organization
+            var existing = await _dbContext.Invoices
+                .Include(i => i.Lease)
+                    .ThenInclude(l => l.Property)
+                .FirstOrDefaultAsync(i => i.Id == invoice.Id && i.OrganizationId == organizationId);
 
-            if (lease == null || lease.Property.OrganizationId != organizationId)
+            if (existing == null)
             {
-                throw new UnauthorizedAccessException("User does not have access to this lease.");
+                throw new UnauthorizedAccessException($"Invoice {invoice.Id} not found in active organization.");
             }
 
+            // Set tracking fields automatically
             invoice.LastModifiedOn = DateTime.UtcNow;
             invoice.LastModifiedBy = userId;
+            invoice.OrganizationId = organizationId!; // Prevent org hijacking
 
-            _dbContext.Invoices.Update(invoice);
+            _dbContext.Entry(existing).CurrentValues.SetValues(invoice);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -807,8 +856,20 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task AddPaymentAsync(Payment payment)
         {
+            var _userId = await _userContext.GetUserIdAsync();
+
+            if (string.IsNullOrEmpty(_userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+            
+            // Set tracking fields automatically
             payment.OrganizationId = organizationId!;
+            payment.CreatedBy = _userId;
+            payment.CreatedOn = DateTime.UtcNow;
+
             await _dbContext.Payments.AddAsync(payment);
             await _dbContext.SaveChangesAsync();
             
@@ -818,10 +879,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task UpdatePaymentAsync(Payment payment)
         {
+            var _userId = await _userContext.GetUserIdAsync();
+
+            if (string.IsNullOrEmpty(_userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+            
+            // Security: Verify payment belongs to active organization
+            var existing = await _dbContext.Payments
+                .FirstOrDefaultAsync(p => p.Id == payment.Id && p.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Payment {payment.Id} not found in active organization.");
+            }
+            
+            // Set tracking fields automatically
             payment.OrganizationId = organizationId!;
             payment.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.Payments.Update(payment);
+            payment.LastModifiedBy = _userId;
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(payment);
             await _dbContext.SaveChangesAsync();
             
             // Update invoice paid amount
@@ -986,14 +1067,26 @@ namespace Aquiis.SimpleStart.Application.Services
             var _userId = await _userContext.GetUserIdAsync();
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
-            if (string.IsNullOrEmpty(_userId) || document.OrganizationId != organizationId)
+            if (string.IsNullOrEmpty(_userId))
             {
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
+            // Security: Verify document belongs to active organization
+            var existing = await _dbContext.Documents
+                .FirstOrDefaultAsync(d => d.Id == document.Id && d.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Document {document.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
             document.LastModifiedBy = _userId;
             document.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.Documents.Update(document);
+            document.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(document);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -1163,13 +1256,27 @@ namespace Aquiis.SimpleStart.Application.Services
         {
             var _userId = await _userContext.GetUserIdAsync();
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
-            if (string.IsNullOrEmpty(_userId) || inspection.OrganizationId != organizationId)
+            
+            if (string.IsNullOrEmpty(_userId))
             {
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
+
+            // Security: Verify inspection belongs to active organization
+            var existing = await _dbContext.Inspections
+                .FirstOrDefaultAsync(i => i.Id == inspection.Id && i.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Inspection {inspection.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
             inspection.LastModifiedBy = _userId;
             inspection.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.Inspections.Update(inspection);
+            inspection.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(inspection);
             await _dbContext.SaveChangesAsync();
 
             // Update calendar event
@@ -1500,15 +1607,21 @@ namespace Aquiis.SimpleStart.Application.Services
 
             var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
-            if (maintenanceRequest.OrganizationId != organizationId)
+            // Security: Verify maintenance request belongs to active organization
+            var existing = await _dbContext.MaintenanceRequests
+                .FirstOrDefaultAsync(m => m.Id == maintenanceRequest.Id && m.OrganizationId == organizationId);
+
+            if (existing == null)
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this maintenance request.");
+                throw new UnauthorizedAccessException($"Maintenance request {maintenanceRequest.Id} not found in active organization.");
             }
 
+            // Set tracking fields automatically
             maintenanceRequest.LastModifiedBy = _userId;
             maintenanceRequest.LastModifiedOn = DateTime.UtcNow;
+            maintenanceRequest.OrganizationId = organizationId!; // Prevent org hijacking
 
-            _dbContext.MaintenanceRequests.Update(maintenanceRequest);
+            _dbContext.Entry(existing).CurrentValues.SetValues(maintenanceRequest);
             await _dbContext.SaveChangesAsync();
 
             // Update calendar event
@@ -1697,13 +1810,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task<ProspectiveTenant> UpdateProspectiveTenantAsync(ProspectiveTenant prospectiveTenant)
         {
-            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
-            if (prospectiveTenant.OrganizationId != organizationId)
+            var userId = await _userContext.GetUserIdAsync();
+            
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this prospective tenant.");
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
+
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+            
+            // Security: Verify prospective tenant belongs to active organization
+            var existing = await _dbContext.ProspectiveTenants
+                .FirstOrDefaultAsync(p => p.Id == prospectiveTenant.Id && p.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Prospective tenant {prospectiveTenant.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
             prospectiveTenant.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.ProspectiveTenants.Update(prospectiveTenant);
+            prospectiveTenant.LastModifiedBy = userId;
+            prospectiveTenant.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(prospectiveTenant);
             await _dbContext.SaveChangesAsync();
             return prospectiveTenant;
         }
@@ -1841,16 +1971,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task<Tour> UpdateTourAsync(Tour tour)
         {
-            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
             var userId = await _userContext.GetUserIdAsync();
-            if (tour.OrganizationId != organizationId)
+            
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this tour.");
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            tour.LastModifiedBy = string.IsNullOrEmpty(userId) ? string.Empty : userId;
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+            
+            // Security: Verify tour belongs to active organization
+            var existing = await _dbContext.Tours
+                .FirstOrDefaultAsync(t => t.Id == tour.Id && t.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Tour {tour.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
+            tour.LastModifiedBy = userId;
             tour.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.Tours.Update(tour);
+            tour.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(tour);
             await _dbContext.SaveChangesAsync();
 
             // Update calendar event
@@ -2118,17 +2262,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task<RentalApplication> UpdateRentalApplicationAsync(RentalApplication application)
         {
-            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
             var userId = await _userContext.GetUserIdAsync();
-
-            if (application.OrganizationId != organizationId)
+            
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this rental application.");
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            application.LastModifiedBy = string.IsNullOrEmpty(userId) ? string.Empty : userId;
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify rental application belongs to active organization
+            var existing = await _dbContext.RentalApplications
+                .FirstOrDefaultAsync(r => r.Id == application.Id && r.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Rental application {application.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
+            application.LastModifiedBy = userId;
             application.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.RentalApplications.Update(application);
+            application.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(application);
             await _dbContext.SaveChangesAsync();
             return application;
         }
@@ -2203,18 +2360,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task<ApplicationScreening> UpdateScreeningAsync(ApplicationScreening screening)
         {
-            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
             var userId = await _userContext.GetUserIdAsync();
-            if (screening.OrganizationId != organizationId)
+            
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this application screening.");
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
 
+            // Security: Verify screening belongs to active organization
+            var existing = await _dbContext.ApplicationScreenings
+                .FirstOrDefaultAsync(s => s.Id == screening.Id && s.OrganizationId == organizationId);
 
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Application screening {screening.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
             screening.LastModifiedOn = DateTime.UtcNow;
-            screening.LastModifiedBy = string.IsNullOrEmpty(userId) ? string.Empty : userId;
-            _dbContext.ApplicationScreenings.Update(screening);
+            screening.LastModifiedBy = userId;
+            screening.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(screening);
             await _dbContext.SaveChangesAsync();
             return screening;
         }
@@ -2437,17 +2606,30 @@ namespace Aquiis.SimpleStart.Application.Services
 
         public async Task<LeaseOffer> UpdateLeaseOfferAsync(LeaseOffer leaseOffer)
         {
-            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
             var userId = await _userContext.GetUserIdAsync();
-
-            if (leaseOffer.OrganizationId != organizationId)
+            
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User is not authorized to update this lease offer.");
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            leaseOffer.LastModifiedBy = string.IsNullOrEmpty(userId) ? string.Empty : userId;
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            // Security: Verify lease offer belongs to active organization
+            var existing = await _dbContext.LeaseOffers
+                .FirstOrDefaultAsync(l => l.Id == leaseOffer.Id && l.OrganizationId == organizationId);
+
+            if (existing == null)
+            {
+                throw new UnauthorizedAccessException($"Lease offer {leaseOffer.Id} not found in active organization.");
+            }
+
+            // Set tracking fields automatically
+            leaseOffer.LastModifiedBy = userId;
             leaseOffer.LastModifiedOn = DateTime.UtcNow;
-            _dbContext.LeaseOffers.Update(leaseOffer);
+            leaseOffer.OrganizationId = organizationId!; // Prevent org hijacking
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(leaseOffer);
             await _dbContext.SaveChangesAsync();
             return leaseOffer;
         }

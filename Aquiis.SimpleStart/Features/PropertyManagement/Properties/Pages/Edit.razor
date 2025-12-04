@@ -287,16 +287,6 @@ else
     {
         if (property != null)
         {
-            var authState = await AuthenticationStateTask;
-            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                errorMessage = "User not authenticated.";
-                return;
-            }
-            property.LastModifiedOn = DateTime.UtcNow;
-            property.LastModifiedBy = userId;
             await PropertyManagementService.UpdatePropertyAsync(property);
             NavigationManager.NavigateTo("/propertymanagement/properties");
         }
@@ -306,15 +296,6 @@ else
     {
         if (property != null)
         {
-            var authState = await AuthenticationStateTask;
-            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                errorMessage = "User not authenticated.";
-                return;
-            }
-
             await PropertyManagementService.DeletePropertyAsync(property.Id);
             NavigationManager.NavigateTo("/propertymanagement/properties");
         }
@@ -334,15 +315,6 @@ else
         if (property != null)
         {
             try {
-            var authState = await AuthenticationStateTask;
-            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                errorMessage = "User not authenticated.";
-                return;
-            }
-
             isSubmitting = true;
             errorMessage = string.Empty;
             successMessage = string.Empty;
@@ -361,12 +333,7 @@ else
             property.Description = propertyModel.Description;
             property.Status = propertyModel.Status;
             property.IsAvailable = propertyModel.IsAvailable;
-            property.LastModifiedOn = DateTime.UtcNow;
 
-           
-
-            property.LastModifiedOn = DateTime.UtcNow;
-            property.LastModifiedBy = userId;
             await PropertyManagementService.UpdatePropertyAsync(property);
             } catch (Exception ex)
             {

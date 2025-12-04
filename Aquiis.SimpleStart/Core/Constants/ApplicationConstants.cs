@@ -4,6 +4,26 @@ namespace Aquiis.SimpleStart.Core.Constants
 {
     public static class ApplicationConstants
     {
+        /// <summary>
+        /// System service account for background jobs and automated processes
+        /// </summary>
+        public static class SystemUser
+        {
+            /// <summary>
+            /// Well-known GUID for system service account.
+            /// Used by background jobs, scheduled tasks, and automated processes.
+            /// </summary>
+            public static readonly string Id = "00000000-0000-0000-0000-000000000001";
+
+            public const string Email = "system@aquiis.local";
+            public const string UserName = "system@aquiis.local"; // UserName = Email in this system
+            public const string DisplayName = "System";
+
+            // Service account details
+            public const string FirstName = "Service";
+            public const string LastName = "Account";
+        }
+
         // DEPRECATED: Legacy Identity roles - kept for backward compatibility but not used for authorization
         public static string DefaultSuperAdminRole { get; } = "SuperAdministrator";
         public static string DefaultAdminRole { get; } = "Administrator";

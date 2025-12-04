@@ -966,8 +966,6 @@
             application.ApplicationFeePaid = true;
             application.ApplicationFeePaidOn = feePaymentModel.PaymentDate;
             application.ApplicationFeePaymentMethod = feePaymentModel.PaymentMethod;
-            application.LastModifiedBy = userId;
-            application.LastModifiedOn = DateTime.UtcNow;
 
             await PropertyService.UpdateRentalApplicationAsync(application);
 
@@ -1018,8 +1016,6 @@
             screening.BackgroundCheckPassed = backgroundCheckDisposition;
             screening.BackgroundCheckCompletedOn = DateTime.UtcNow;
             screening.BackgroundCheckNotes = backgroundCheckModel.Notes;
-            screening.LastModifiedBy = userId;
-            screening.LastModifiedOn = DateTime.UtcNow;
 
             // Update overall result
             await UpdateOverallScreeningResult(screening);
@@ -1053,8 +1049,6 @@
             screening.CreditCheckCompletedOn = DateTime.UtcNow;
             screening.CreditScore = creditCheckModel.CreditScore;
             screening.CreditCheckNotes = creditCheckModel.Notes;
-            screening.LastModifiedBy = userId;
-            screening.LastModifiedOn = DateTime.UtcNow;
 
             // Update overall result
             await UpdateOverallScreeningResult(screening);

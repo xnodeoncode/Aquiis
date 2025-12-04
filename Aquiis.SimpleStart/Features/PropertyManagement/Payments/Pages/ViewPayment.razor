@@ -368,23 +368,12 @@ else
 
         try
         {
-            // Get current user info
-            var organizationId = await UserContextService.GetOrganizationIdAsync();
-            var userId = await UserContextService.GetUserIdAsync();
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId))
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Unable to determine current user.");
-                return;
-            }
-
             // Generate the PDF receipt
             byte[] pdfBytes = Aquiis.SimpleStart.Application.Services.PdfGenerators.PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
 
             // Create the document entity
             var document = new Document
             {
-                OrganizationId = organizationId,
                 FileName = $"Receipt_{payment!.PaidOn:yyyyMMdd}_{DateTime.Now:HHmmss}.pdf",
                 FileExtension = ".pdf",
                 FileData = pdfBytes,

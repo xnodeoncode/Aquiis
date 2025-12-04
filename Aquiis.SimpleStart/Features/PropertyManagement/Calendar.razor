@@ -802,12 +802,6 @@
     {
         try
         {
-            var userId = await UserContext.GetUserIdAsync();
-            
-            // Update last modified fields
-            newEvent.LastModifiedBy = !string.IsNullOrEmpty(userId) ? userId : string.Empty;
-            newEvent.LastModifiedOn = DateTime.UtcNow;
-
             // Calculate duration if end time is set
             if (newEvent.EndOn.HasValue)
             {

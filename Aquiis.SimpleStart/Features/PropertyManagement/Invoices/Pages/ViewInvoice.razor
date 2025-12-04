@@ -360,22 +360,12 @@ else
 
         try
         {
-           var organizationId = await UserContextService.GetActiveOrganizationIdAsync();
-           var userId = await UserContextService.GetUserIdAsync();
-
-            if (string.IsNullOrEmpty(userId) || organizationId == null)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Unable to determine current user.");
-                return;
-            }
-
             // Generate the PDF
             byte[] pdfBytes = Aquiis.SimpleStart.Application.Services.PdfGenerators.InvoicePdfGenerator.GenerateInvoicePdf(invoice!);
 
             // Create the document entity
             var document = new Document
             {
-                OrganizationId = organizationId,
                 FileName = $"Invoice_{invoice!.InvoiceNumber?.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf",
                 FileExtension = ".pdf",
                 FileData = pdfBytes,

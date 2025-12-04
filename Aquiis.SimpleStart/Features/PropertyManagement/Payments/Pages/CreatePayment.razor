@@ -246,24 +246,16 @@
 
     private async Task HandleCreatePayment()
     {
-        var authState = await AuthenticationStateTask;
-        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        if (!string.IsNullOrEmpty(userId))
+        Payment payment = new Payment
         {
-            Payment payment = new Payment
-            {
-                InvoiceId = paymentModel.InvoiceId,
-                PaidOn = paymentModel.PaidOn,
-                Amount = paymentModel.Amount,
-                PaymentMethod = paymentModel.PaymentMethod,
-                Notes = paymentModel.Notes!,
-                CreatedBy = userId,
-                CreatedOn = DateTime.UtcNow
-            };
-            await PropertyManagementService.AddPaymentAsync(payment);
-            Navigation.NavigateTo("/propertymanagement/payments");
-        }
+            InvoiceId = paymentModel.InvoiceId,
+            PaidOn = paymentModel.PaidOn,
+            Amount = paymentModel.Amount,
+            PaymentMethod = paymentModel.PaymentMethod,
+            Notes = paymentModel.Notes!
+        };
+        await PropertyManagementService.AddPaymentAsync(payment);
+        Navigation.NavigateTo("/propertymanagement/payments");
     }
 
     private void Cancel()

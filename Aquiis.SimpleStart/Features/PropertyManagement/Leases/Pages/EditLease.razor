@@ -212,22 +212,7 @@ else
 
     private async Task LoadLease()
     {
-        var userId = await UserContextService.GetUserIdAsync();
-        var organizationId = await UserContextService.GetOrganizationIdAsync();
-
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId))
-        {
-            isAuthorized = false;
-            return;
-        }
-
         lease = await PropertyManagementService.GetLeaseByIdAsync(Id);
-
-        if (lease == null || lease.OrganizationId != organizationId)
-        {
-            isAuthorized = false;
-            return;
-        }
 
         if (lease == null)
         {

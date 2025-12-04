@@ -661,8 +661,6 @@
             prospect.Notes = editModel.Notes;
             prospect.InterestedPropertyId = int.TryParse(editModel.InterestedPropertyId, out var propId) && propId > 0 ? propId : null;
             prospect.DesiredMoveInDate = editModel.DesiredMoveInDate;
-            prospect.LastModifiedBy = userId ?? "";
-            prospect.LastModifiedOn = DateTime.UtcNow;
 
             await PropertyService.UpdateProspectiveTenantAsync(prospect);
             

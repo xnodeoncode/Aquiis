@@ -359,23 +359,17 @@
             if (property != null)
             {
                 property.Status = ApplicationConstants.PropertyStatuses.LeasePending;
-                property.LastModifiedOn = DateTime.UtcNow;
-                property.LastModifiedBy = userId;
                 await PropertyService.UpdatePropertyAsync(property);
             }
 
             // Update application status
             application.Status = "LeaseOffered"; // We'll need to add this status
-            application.LastModifiedOn = DateTime.UtcNow;
-            application.LastModifiedBy = userId;
             await PropertyService.UpdateRentalApplicationAsync(application);
 
             // Update prospect status
             if (application.ProspectiveTenant != null)
             {
                 application.ProspectiveTenant.Status = "LeaseOffered"; // We'll need to add this status
-                application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
-                application.ProspectiveTenant.LastModifiedBy = userId;
                 await PropertyService.UpdateProspectiveTenantAsync(application.ProspectiveTenant);
             }
 

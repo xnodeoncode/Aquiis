@@ -7,7 +7,6 @@
 @using System.ComponentModel.DataAnnotations
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
-@inject UserContextService UserContextService
 
 @rendermode InteractiveServer
 
@@ -178,17 +177,8 @@
         isSubmitting = true;
         errorMessage = string.Empty;
 
-        var userId = await UserContextService.GetUserIdAsync();
-        var organizationId = await UserContextService.GetOrganizationIdAsync();
-
-        if(string.IsNullOrEmpty(organizationId) || string.IsNullOrEmpty(userId))
-        {
-            throw new UnauthorizedAccessException("User is not authorized to perform this action.");
-        }
-
         var property = new Property
         {
-            OrganizationId = organizationId,
             Address = propertyModel.Address,
             UnitNumber = propertyModel.UnitNumber,
             City = propertyModel.City,

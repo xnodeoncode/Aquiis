@@ -523,8 +523,6 @@
             lease.Notes += $"\n\nDeclined on: {DateTime.UtcNow:MMM dd, yyyy h:mm tt UTC}\n" +
                           $"Declined by: {userId}\n" +
                           $"Reason: {(string.IsNullOrWhiteSpace(declineReason) ? "Not specified" : declineReason)}";
-            lease.LastModifiedOn = DateTime.UtcNow;
-            lease.LastModifiedBy = userId;
             await PropertyService.UpdateLeaseAsync(lease);
 
             // Check if there are other pending applications
