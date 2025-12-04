@@ -56,7 +56,7 @@ builder.Services.AddAuthentication(options =>
 
 // Get database connection string (uses Electron user data path when running as desktop app)
 var connectionString = HybridSupport.IsElectronActive 
-    ? await ElectronPathService.GetConnectionStringAsync()
+    ? await ElectronPathService.GetConnectionStringAsync(builder.Configuration)
     : builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -150,6 +150,7 @@ builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<NoteService>();
 builder.Services.AddScoped<SecurityDepositService>();
 builder.Services.AddScoped<OrganizationService>();
+builder.Services.AddScoped<ElectronPathService>();
 builder.Services.AddSingleton<ToastService>();
 builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();
@@ -200,7 +201,8 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
-            var dbPath = await ElectronPathService.GetDatabasePathAsync();
+            var pathService = scope.ServiceProvider.GetRequiredService<ElectronPathService>();
+            var dbPath = await pathService.GetDatabasePathAsync();
             var stagedRestorePath = $"{dbPath}.restore_pending";
             
             // Check if there's a staged restore waiting

@@ -14,15 +14,18 @@ namespace Aquiis.SimpleStart.Shared.Services
         private readonly ILogger<DatabaseBackupService> _logger;
         private readonly ApplicationDbContext _dbContext;
         private readonly IConfiguration _configuration;
+        private readonly ElectronPathService _electronPathService;
 
         public DatabaseBackupService(
             ILogger<DatabaseBackupService> logger,
             ApplicationDbContext dbContext,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ElectronPathService electronPathService)
         {
             _logger = logger;
             _dbContext = dbContext;
             _configuration = configuration;
+            _electronPathService = electronPathService;
         }
 
         /// <summary>
@@ -333,7 +336,7 @@ namespace Aquiis.SimpleStart.Shared.Services
         {
             if (HybridSupport.IsElectronActive)
             {
-                return await ElectronPathService.GetDatabasePathAsync();
+                return await _electronPathService.GetDatabasePathAsync();
             }
             else
             {
