@@ -4,15 +4,19 @@
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
 @inject IJSRuntime JSRuntime
+@inject UserContextService UserContext
 
-@attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
+@attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager", "User")]
 @rendermode InteractiveServer
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><span class="bi bi-people-fill" aria-hidden="true"></span> Tenants</h1>
-    <button class="btn btn-primary" @onclick="CreateTenant">
-        <i class="bi bi-plus-lg"></i> Add Tenant
-    </button>
+    @if (!isReadOnlyUser)
+    {
+        <button class="btn btn-primary" @onclick="CreateTenant">
+            <i class="bi bi-plus-lg"></i> Add Tenant
+        </button>
+    }
 </div>
 
 @if (tenants == null)
@@ -222,12 +226,15 @@ else
                                         <button class="btn btn-outline-primary" @onclick="() => ViewTenant(tenant.Id)" title="View">
                                             <i class="bi bi-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-secondary" @onclick="() => EditTenant(tenant.Id)" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger" @onclick="() => DeleteTenant(tenant.Id)" title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        @if (!isReadOnlyUser)
+                                        {
+                                            <button class="btn btn-outline-secondary" @onclick="() => EditTenant(tenant.Id)" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" @onclick="() => DeleteTenant(tenant.Id)" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -309,8 +316,14 @@ else
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
+    private string? currentUserRole;
+    private bool isReadOnlyUser => currentUserRole == ApplicationConstants.OrganizationRoles.User;
+
     protected override async Task OnInitializedAsync()
     {
+        // Get current user's role
+        currentUserRole = await UserContext.GetCurrentOrganizationRoleAsync();
+        
         await LoadTenants();
         FilterTenants();
         CalculateMetrics();

@@ -50,7 +50,12 @@ namespace Aquiis.SimpleStart.Core.Constants
             /// <summary>
             /// PropertyManager - Full property management features (no admin/settings access)
             /// </summary>
-            public const string PropertyManager = "PropertyManager";
+            public const string PropertyManager = "Property Manager";
+
+            /// <summary>
+            /// Maintenance - Maintenance requests, work orders, and vendors
+            /// </summary>
+            public const string Maintenance = "Maintenance";
             
             /// <summary>
             /// User - Limited feature access (view-only or basic operations)
@@ -66,6 +71,38 @@ namespace Aquiis.SimpleStart.Core.Constants
             public static bool CanEditSettings(string role) => role == Owner || role == Administrator;
 
             public static bool CanManageOrganizations(string role) => role == Owner;
+
+            public static bool CanManageProperties(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageTenants(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageLeases(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageInvoices(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManagePayments(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageSecurityDeposits(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageDocuments(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageMaintenanceRequests(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageInspections(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageProspectiveTenants(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageApplications(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageTours(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+            public static bool CanManageChecklists(string role) => role == Owner || role == Administrator || role == PropertyManager;
+
+
+
+            public static bool CanViewRecords(string role) => AllRoles.Contains(role);
+
+            public static bool CanEditRecords(string role) => role == Owner || role == Administrator || role == PropertyManager;
         }
 
         public static string DefaultSuperAdminPassword { get; } = "SuperAdmin@123!";
