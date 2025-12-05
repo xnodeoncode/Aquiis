@@ -100,7 +100,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Users with Access</h5>
-                        @if (isOwner || isAdministrator)
+                        @if (isOwner || isAdministrator && isCurrentOrganization)
                         {
                             <button class="btn btn-sm btn-primary" @onclick="NavigateToManageUsers">
                                 <i class="bi bi-people"></i> Manage Users
@@ -236,6 +236,8 @@
     private bool isOwner = false;
     private bool isAdministrator = false;
 
+    private bool isCurrentOrganization = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadOrganization();
@@ -247,10 +249,15 @@
         try
         {
             var userId = await UserContext.GetUserIdAsync();
+            var currentOrganizationId = await UserContext.GetActiveOrganizationIdAsync();
             if (string.IsNullOrEmpty(userId))
             {
                 return;
             }
+
+            // if the organization being viewed is the current organization
+            // allow user management for Owner/Administrator roles
+            isCurrentOrganization = Id == currentOrganizationId;
 
             // Check if user has access to this organization
             var canAccess = await OrganizationService.CanAccessOrganizationAsync(userId, Id);

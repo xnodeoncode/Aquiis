@@ -2,16 +2,20 @@ using Aquiis.SimpleStart.Core.Entities;
 using Aquiis.SimpleStart.Core.Constants;
 using Aquiis.SimpleStart.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Aquiis.SimpleStart.Shared.Services;
+using Aquiis.SimpleStart.Shared;
 
 namespace Aquiis.SimpleStart.Application.Services
 {
     public class OrganizationService
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly UserContextService _userContext;
 
-        public OrganizationService(ApplicationDbContext dbContext)
+        public OrganizationService(ApplicationDbContext dbContext, UserContextService _userContextService)
         {
             _dbContext = dbContext;
+            _userContext = _userContextService;
         }
 
         #region CRUD Operations
@@ -73,6 +77,66 @@ namespace Aquiis.SimpleStart.Application.Services
 
             return organization;
         }
+
+        /// <summary>
+        /// Create a new organization
+        /// </summary>
+        public async Task<Organization> CreateOrganizationAsync(Organization organization)
+        {
+
+            var userId = await _userContext.GetUserIdAsync();
+
+            if(string.IsNullOrEmpty(userId))
+                throw new InvalidOperationException("Cannot create organization: User ID is not available in context.");
+
+
+            organization.Id = Guid.NewGuid().ToString();
+            organization.OwnerId = userId;
+            organization.IsActive = true;
+            organization.CreatedOn = DateTime.UtcNow;
+            organization.CreatedBy = userId;
+
+            _dbContext.Organizations.Add(organization);
+
+            // Create Owner entry in UserOrganizations
+            var userOrganization = new UserOrganization
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                OrganizationId = organization.Id,
+                Role = ApplicationConstants.OrganizationRoles.Owner,
+                GrantedBy = userId,
+                GrantedOn = DateTime.UtcNow,
+                IsActive = true,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = userId
+            };
+
+            _dbContext.UserOrganizations.Add(userOrganization);
+            await _dbContext.SaveChangesAsync();
+
+            // add organization settings record with defaults
+            var settings = new OrganizationSettings
+                {
+                    OrganizationId = organization.Id,
+                    Name = organization.Name,
+                    LateFeeEnabled = true,
+                    LateFeeAutoApply = true,
+                    LateFeeGracePeriodDays = 3,
+                    LateFeePercentage = 0.05m,
+                    MaxLateFeeAmount = 50.00m,
+                    PaymentReminderEnabled = true,
+                    PaymentReminderDaysBefore = 3,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId
+                };
+                
+                await _dbContext.OrganizationSettings.AddAsync(settings);
+                await _dbContext.SaveChangesAsync();
+
+            return organization;
+        }
+
 
         /// <summary>
         /// Get organization by ID
@@ -341,7 +405,7 @@ namespace Aquiis.SimpleStart.Application.Services
         public async Task<List<UserOrganization>> GetOrganizationUsersAsync(string organizationId)
         {
             return await _dbContext.UserOrganizations
-                .Where(uo => uo.OrganizationId == organizationId && uo.IsActive && !uo.IsDeleted)
+                .Where(uo => uo.OrganizationId == organizationId && uo.IsActive && !uo.IsDeleted && uo.UserId != ApplicationConstants.SystemUser.Id)
                 .OrderBy(uo => uo.Role)
                 .ThenBy(uo => uo.UserId)
                 .ToListAsync();
@@ -350,11 +414,15 @@ namespace Aquiis.SimpleStart.Application.Services
         /// <summary>
         /// Get all organization assignments for a user (including revoked)
         /// </summary>
-        public async Task<List<UserOrganization>> GetUserAssignmentsAsync(string userId)
+        public async Task<List<UserOrganization>> GetUserAssignmentsAsync()
         {
+            var userId = await _userContext.GetUserIdAsync();
+            if (string.IsNullOrEmpty(userId))
+                throw new InvalidOperationException("Cannot get user assignments: User ID is not available in context.");
+
             return await _dbContext.UserOrganizations
                 .Include(uo => uo.Organization)
-                .Where(uo => uo.UserId == userId && !uo.IsDeleted)
+                .Where(uo => uo.UserId == userId && !uo.IsDeleted && uo.UserId != ApplicationConstants.SystemUser.Id)
                 .OrderByDescending(uo => uo.IsActive)
                 .ThenBy(uo => uo.Organization.Name)
                 .ToListAsync();

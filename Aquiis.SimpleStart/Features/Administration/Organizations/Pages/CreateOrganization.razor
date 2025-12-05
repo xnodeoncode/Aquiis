@@ -114,6 +114,8 @@
     private bool isSubmitting = false;
     private string errorMessage = string.Empty;
 
+    private Organization? createdOrganization;
+
     private async Task HandleSubmit()
     {
         isSubmitting = true;
@@ -127,12 +129,13 @@
                 errorMessage = "User not found. Please log in again.";
                 return;
             }
-
-            var organization = await OrganizationService.CreateOrganizationAsync(
-                userId,
-                model.Name!,
-                model.State
-            );
+            createdOrganization = new Organization
+            {
+                Name = model.Name!,
+                DisplayName = model.DisplayName,
+                State = model.State
+            };
+            var organization = await OrganizationService.CreateOrganizationAsync(createdOrganization);
 
             if (organization != null)
             {
@@ -183,7 +186,7 @@
     {
         [Required(ErrorMessage = "Organization name is required")]
         [StringLength(200, ErrorMessage = "Organization name cannot exceed 200 characters")]
-        public string? Name { get; set; }
+        public string? Name { get; set; } 
 
         [StringLength(200, ErrorMessage = "Display name cannot exceed 200 characters")]
         public string? DisplayName { get; set; }

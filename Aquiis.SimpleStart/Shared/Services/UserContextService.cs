@@ -168,6 +168,18 @@ namespace Aquiis.SimpleStart.Shared.Services
         }
 
         /// <summary>
+        /// Get the organization entity by ID
+        /// </summary>
+        public async Task<Organization?> GetOrganizationByIdAsync(string organizationId)
+        {
+            if (string.IsNullOrEmpty(organizationId))
+                return null;
+
+            var organizationService = await _organizationServiceFactory();
+            return await organizationService.GetOrganizationByIdAsync(organizationId);
+        }
+
+        /// <summary>
         /// Switch the user's active organization
         /// </summary>
         public async Task<bool> SwitchOrganizationAsync(string organizationId)

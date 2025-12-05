@@ -1,12 +1,17 @@
 @page "/Administration/Users/Create"
 
 @using Aquiis.SimpleStart.Shared.Components.Account
+@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.SimpleStart.Shared.Services
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @inject NavigationManager Navigation
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<IdentityRole> RoleManager
+@inject OrganizationService OrganizationService
+@inject UserContextService UserContext
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
@@ -96,28 +101,21 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Roles *</label>
-                        @if (availableRoles == null)
+                        <label class="form-label">Organization Role *</label>
+                        @foreach (var role in ApplicationConstants.OrganizationRoles.AllRoles)
                         {
-                            <p>Loading roles...</p>
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input" id="role_@role" name="userRole"
+                                       checked="@(userModel.SelectedRole == role)"
+                                       @onchange="@(() => OnRoleChanged(role))" />
+                                <label class="form-check-label" for="role_@role">
+                                    @FormatRoleName(role)
+                                </label>
+                            </div>
                         }
-                        else
+                        @if (string.IsNullOrEmpty(userModel.SelectedRole))
                         {
-                            @foreach (var role in availableRoles)
-                            {
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="role_@role.Id" 
-                                           checked="@userModel.SelectedRoles.Contains(role.Name ?? "")"
-                                           @onchange="@((e) => OnRoleChanged(role.Name ?? "", (bool)(e.Value ?? false)))" />
-                                    <label class="form-check-label" for="role_@role.Id">
-                                        @role.Name
-                                    </label>
-                                </div>
-                            }
-                        }
-                        @if (userModel.SelectedRoles.Count == 0)
-                        {
-                            <small class="text-danger">At least one role must be selected</small>
+                            <small class="text-danger">Role selection is required</small>
                         }
                     </div>
 
@@ -153,13 +151,14 @@
 
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="mb-0">User Roles</h6>
+                <h6 class="mb-0">Organization Roles</h6>
             </div>
             <div class="card-body">
                 <ul class="small mb-0">
-                    <li><strong>Administrator:</strong> Full system access</li>
-                    <li><strong>PropertyManager:</strong> Manage properties and tenants</li>
-                    <li><strong>Tenant:</strong> View own lease and payments</li>
+                    <li><strong>Owner:</strong> Full control including organization management</li>
+                    <li><strong>Administrator:</strong> Manage users and all features except organization settings</li>
+                    <li><strong>Property Manager:</strong> Manage properties, tenants, and leases</li>
+                    <li><strong>User:</strong> Limited access to view data</li>
                 </ul>
             </div>
         </div>
@@ -171,32 +170,15 @@
     private bool isSubmitting = false;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
-    private List<IdentityRole>? availableRoles;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadRoles();
-    }
-
-    private async Task LoadRoles()
-    {
-        availableRoles = RoleManager.Roles.ToList();
         await Task.CompletedTask;
     }
 
-    private void OnRoleChanged(string roleName, bool isChecked)
+    private void OnRoleChanged(string roleName)
     {
-        if (isChecked)
-        {
-            if (!userModel.SelectedRoles.Contains(roleName))
-            {
-                userModel.SelectedRoles.Add(roleName);
-            }
-        }
-        else
-        {
-            userModel.SelectedRoles.Remove(roleName);
-        }
+        userModel.SelectedRole = roleName;
     }
 
     private async Task CreateUser()
@@ -207,27 +189,20 @@
             errorMessage = string.Empty;
             successMessage = string.Empty;
 
-            // Validate roles
-            if (userModel.SelectedRoles.Count == 0)
+            // Validate role - user must have exactly one role
+            if (string.IsNullOrEmpty(userModel.SelectedRole))
             {
-                errorMessage = "Please select at least one role for the user.";
+                errorMessage = "Please select a role for the user.";
                 return;
             }
 
-            // Get current user's OrganizationId
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            // Get current user's context
+            var currentUserId = await UserContext.GetUserIdAsync();
+            var currentOrganizationId = await UserContext.GetActiveOrganizationIdAsync();
             
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(currentUserId) || string.IsNullOrEmpty(currentOrganizationId))
             {
-                errorMessage = "User not authenticated.";
-                return;
-            }
-
-            var currentUser = await UserManager.FindByIdAsync(userId);
-            if (currentUser == null)
-            {
-                errorMessage = "Current user not found.";
+                errorMessage = "User not authenticated or no active organization.";
                 return;
             }
 
@@ -248,8 +223,8 @@
                 PhoneNumber = userModel.PhoneNumber,
                 FirstName = userModel.FirstName,
                 LastName = userModel.LastName,
-                OrganizationId = currentUser.ActiveOrganizationId,
-                ActiveOrganizationId = currentUser.ActiveOrganizationId
+                OrganizationId = currentOrganizationId,
+                ActiveOrganizationId = currentOrganizationId
             };
 
             var createResult = await UserManager.CreateAsync(newUser, userModel.Password);
@@ -260,17 +235,21 @@
                 return;
             }
 
-            // Add roles to user
-            foreach (var roleName in userModel.SelectedRoles)
+            // Grant organization access with the selected role
+            var grantResult = await OrganizationService.GrantOrganizationAccessAsync(
+                newUser.Id, 
+                currentOrganizationId, 
+                userModel.SelectedRole, 
+                currentUserId);
+
+            if (!grantResult)
             {
-                var roleExists = await RoleManager.RoleExistsAsync(roleName);
-                if (roleExists)
-                {
-                    await UserManager.AddToRoleAsync(newUser, roleName);
-                }
+                errorMessage = "User created but failed to assign organization role.";
+                // Consider whether to delete the user here or leave it
+                return;
             }
 
-            successMessage = $"User account created successfully! Username: {userModel.Email}";
+            successMessage = $"User account created successfully! Username: {userModel.Email}, Role: {userModel.SelectedRole}";
             
             // Reset form
             userModel = new UserModel();
@@ -292,6 +271,12 @@
     private void Cancel()
     {
         Navigation.NavigateTo("/administration/users/manage");
+    }
+
+    private string FormatRoleName(string role)
+    {
+        // Add spaces before capital letters (e.g., PropertyManager -> Property Manager)
+        return System.Text.RegularExpressions.Regex.Replace(role, "([a-z])([A-Z])", "$1 $2");
     }
 
     public class UserModel
@@ -321,6 +306,6 @@
 
         public bool EmailConfirmed { get; set; } = true;
 
-        public List<string> SelectedRoles { get; set; } = new List<string>();
+        public string SelectedRole { get; set; } = ApplicationConstants.OrganizationRoles.User;
     }
 }

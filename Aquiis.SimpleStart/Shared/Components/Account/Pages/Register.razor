@@ -101,6 +101,7 @@ else
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
+
     protected override async Task OnInitializedAsync()
     {
         // Check if this is the first user (excluding system user)
@@ -149,6 +150,13 @@ else
             try
             {
                 Logger.LogInformation("Creating organization for first user: {Email}", Input.Email);
+
+                @* var newOrganization = new Organization()
+                {
+                    Name = Input.OrganizationName!,
+                    DisplayName = Input.OrganizationName!,
+                    OwnerId = userId
+                }; *@
 
                 // Create organization
                 var organization = await OrganizationService.CreateOrganizationAsync(
@@ -252,4 +260,5 @@ else
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
     }
+
 }

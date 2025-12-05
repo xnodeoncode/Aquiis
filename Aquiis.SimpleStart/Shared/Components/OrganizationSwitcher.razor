@@ -4,6 +4,7 @@
 @inject OrganizationService OrganizationService
 @inject UserContextService UserContext
 @inject NavigationManager Navigation
+@implements IDisposable
 @rendermode InteractiveServer
 
 @if (isLoading)
@@ -15,7 +16,7 @@
 else if (accessibleOrganizations.Count > 0)
 {
     <div class="dropdown org-switcher">
-        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="orgSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" @onclick="ToggleDropdown">
             <i class="bi bi-building me-2"></i>
             <span class="org-name">@(currentOrg?.DisplayName ?? currentOrg?.Name ?? "No Organization")</span>
             @if (!string.IsNullOrEmpty(currentRole))
@@ -23,14 +24,13 @@ else if (accessibleOrganizations.Count > 0)
                 <span class="badge @GetRoleBadgeClass(currentRole) ms-2">@currentRole</span>
             }
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="orgSwitcherDropdown">
+        <ul class="dropdown-menu dropdown-menu-end @(isDropdownOpen ? "show" : "")" @onclick:stopPropagation="true">
             <li class="dropdown-header">Switch Organization</li>
             @foreach (var orgAssignment in accessibleOrganizations)
             {
                 <li>
                     <a class="dropdown-item @(orgAssignment.Organization.Id == currentOrg?.Id ? "active" : "")" 
-                       @onclick="() => SwitchOrganizationAsync(orgAssignment.Organization.Id)"
-                       @onclick:preventDefault="true"
+                       @onclick="async () => await SwitchOrganizationAsync(orgAssignment.Organization.Id)"
                        style="cursor: pointer;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -76,10 +76,33 @@ else if (accessibleOrganizations.Count > 0)
     private string? currentRole;
     private bool isAccountOwner;
     private bool isLoading = true;
+    private bool isDropdownOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
+        // Subscribe to location changes
+        Navigation.LocationChanged += OnLocationChanged;
         await LoadOrganizationContextAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // Refresh the user context cache first to get the latest organization
+        await UserContext.RefreshAsync();
+        
+        // Then refresh the organization context when navigation occurs
+        await LoadOrganizationContextAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    private void ToggleDropdown()
+    {
+        isDropdownOpen = !isDropdownOpen;
     }
 
     private async Task LoadOrganizationContextAsync()
@@ -91,11 +114,11 @@ else if (accessibleOrganizations.Count > 0)
             var userId = await UserContext.GetUserIdAsync();
             if (string.IsNullOrEmpty(userId))
             {
-                return;
+                throw new InvalidOperationException("Cannot load organizations: User ID is not available in context.");
             }
 
             // Get all organizations user has access to
-            accessibleOrganizations = await OrganizationService.GetUserAssignmentsAsync(userId);
+            accessibleOrganizations = await OrganizationService.GetUserAssignmentsAsync();
             
             // Only try to get active organization if user has access to organizations
             if (accessibleOrganizations.Any())
@@ -128,6 +151,8 @@ else if (accessibleOrganizations.Count > 0)
 
     private async Task SwitchOrganizationAsync(string organizationId)
     {
+        isDropdownOpen = false; // Close dropdown
+        
         try
         {
             // Don't switch if already on this organization
