@@ -20,7 +20,7 @@ namespace Aquiis.SimpleStart.Core.Constants
             public const string DisplayName = "System";
 
             // Service account details
-            public const string FirstName = "Service";
+            public const string FirstName = "System User";
             public const string LastName = "Account";
         }
 

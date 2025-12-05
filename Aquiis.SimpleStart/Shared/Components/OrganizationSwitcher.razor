@@ -118,7 +118,7 @@ else if (accessibleOrganizations.Count > 0)
             }
 
             // Get all organizations user has access to
-            accessibleOrganizations = await OrganizationService.GetUserAssignmentsAsync();
+            accessibleOrganizations = await OrganizationService.GetActiveUserAssignmentsAsync();
             
             // Only try to get active organization if user has access to organizations
             if (accessibleOrganizations.Any())

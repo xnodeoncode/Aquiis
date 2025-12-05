@@ -198,6 +198,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <div>
+                        <button type="button" class="btn btn-outline-primary" @onclick="AddApplicationUser">
+                            <i class="bi bi-people-plus"></i> Add Application User
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-secondary" @onclick="HideAddUserModal">Cancel</button>
                     <button type="button" class="btn btn-primary" @onclick="AddUser" disabled="@string.IsNullOrEmpty(selectedUserId)">
                         <i class="bi bi-person-plus"></i> Add User
@@ -293,9 +298,10 @@
 
         // Get all users who are NOT already assigned to this organization
         var allUsers = await UserManager.Users.ToListAsync();
+        var nonSystemUsers = allUsers.Where(u => u.Id != ApplicationConstants.SystemUser.Id).ToList();
         var assignedUserIds = organizationUsers.Select(u => u.UserId).ToHashSet();
         
-        availableUsers = allUsers.Where(u => !assignedUserIds.Contains(u.Id)).ToList();
+        availableUsers = nonSystemUsers.Where(u => !assignedUserIds.Contains(u.Id)).ToList();
     }
 
     private string GetUserEmail(string userId)
@@ -393,6 +399,10 @@
         showAddUserModal = false;
     }
 
+    private void AddApplicationUser()
+    {
+        Navigation.NavigateTo("/administration/users/create?returnUrl=" + Uri.EscapeDataString($"/administration/organizations/{Id}/users"));
+    }
     private async Task AddUser()
     {
         addUserError = string.Empty;

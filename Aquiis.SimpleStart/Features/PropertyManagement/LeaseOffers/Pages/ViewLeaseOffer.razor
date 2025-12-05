@@ -448,6 +448,7 @@
             var lease = new Lease
             {
                 PropertyId = leaseOffer.PropertyId,
+                OrganizationId = createdTenant.OrganizationId,
                 TenantId = createdTenant.Id,
                 LeaseOfferId = leaseOffer.Id,
                 StartDate = leaseOffer.StartDate,

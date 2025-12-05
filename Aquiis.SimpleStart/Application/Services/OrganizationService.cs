@@ -428,6 +428,23 @@ namespace Aquiis.SimpleStart.Application.Services
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Get all organization assignments for a user (including revoked)
+        /// </summary>
+        public async Task<List<UserOrganization>> GetActiveUserAssignmentsAsync()
+        {
+            var userId = await _userContext.GetUserIdAsync();
+            if (string.IsNullOrEmpty(userId))
+                throw new InvalidOperationException("Cannot get user assignments: User ID is not available in context.");
+
+            return await _dbContext.UserOrganizations
+                .Include(uo => uo.Organization)
+                .Where(uo => uo.UserId == userId && !uo.IsDeleted && uo.IsActive && uo.UserId != ApplicationConstants.SystemUser.Id)
+                .OrderByDescending(uo => uo.IsActive)
+                .ThenBy(uo => uo.Organization.Name)
+                .ToListAsync();
+        }
+
         #endregion
     }
 }

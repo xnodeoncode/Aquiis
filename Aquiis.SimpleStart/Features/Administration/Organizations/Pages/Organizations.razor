@@ -148,7 +148,7 @@
             var userId = await UserContext.GetUserIdAsync();
             if (!string.IsNullOrEmpty(userId))
             {
-                organizations = await OrganizationService.GetUserAssignmentsAsync();
+                organizations = await OrganizationService.GetActiveUserAssignmentsAsync();
                 filteredOrganizations = organizations;
             }
         }

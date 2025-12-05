@@ -365,7 +365,7 @@
     private async Task LoadDashboardData()
     {
         var userId = await UserContextService.GetUserIdAsync();
-        var organizationId = await UserContextService.GetOrganizationIdAsync();
+        var organizationId = await UserContextService.GetActiveOrganizationIdAsync();
         
         if(string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(organizationId))
             return;
