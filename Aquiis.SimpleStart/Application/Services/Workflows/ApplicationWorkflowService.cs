@@ -323,6 +323,186 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             });
         }
 
+        /// <summary>
+        /// Approves an application after screening review.
+        /// Requires screening to be completed with passing result.
+        /// </summary>
+        public async Task<WorkflowResult> ApproveApplicationAsync(int applicationId)
+        {
+            return await ExecuteWorkflowAsync(async () =>
+            {
+                var application = await GetApplicationAsync(applicationId);
+                if (application == null)
+                    return WorkflowResult.Fail("Application not found");
+
+                // Validate state
+                if (application.Status != ApplicationConstants.ApplicationStatuses.Screening)
+                    return WorkflowResult.Fail(
+                        $"Application must be in Screening status to approve. Current status: {application.Status}");
+
+                // Validate screening completed
+                if (application.Screening == null)
+                    return WorkflowResult.Fail("Screening record not found");
+
+                if (application.Screening.OverallResult != "Passed" && 
+                    application.Screening.OverallResult != "ConditionalPass")
+                    return WorkflowResult.Fail(
+                        $"Cannot approve application with screening result: {application.Screening.OverallResult}");
+
+                var userId = await GetCurrentUserIdAsync();
+                var oldStatus = application.Status;
+
+                // Update application
+                application.Status = ApplicationConstants.ApplicationStatuses.Approved;
+                application.DecidedOn = DateTime.UtcNow;
+                application.DecisionBy = userId;
+                application.LastModifiedBy = userId;
+                application.LastModifiedOn = DateTime.UtcNow;
+
+                // Update prospect
+                if (application.ProspectiveTenant != null)
+                {
+                    application.ProspectiveTenant.Status = ApplicationConstants.ProspectiveStatuses.Approved;
+                    application.ProspectiveTenant.LastModifiedBy = userId;
+                    application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
+                }
+
+                await LogTransitionAsync(
+                    "RentalApplication",
+                    applicationId,
+                    oldStatus,
+                    application.Status,
+                    "ApproveApplication");
+
+                return WorkflowResult.Ok("Application approved successfully");
+
+            });
+        }
+
+        /// <summary>
+        /// Denies an application with a required reason.
+        /// Rolls back property status if no other pending applications exist.
+        /// </summary>
+        public async Task<WorkflowResult> DenyApplicationAsync(int applicationId, string denialReason)
+        {
+            return await ExecuteWorkflowAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(denialReason))
+                    return WorkflowResult.Fail("Denial reason is required");
+
+                var application = await GetApplicationAsync(applicationId);
+                if (application == null)
+                    return WorkflowResult.Fail("Application not found");
+
+                // Validate not already in terminal state
+                var terminalStates = new[] {
+                    ApplicationConstants.ApplicationStatuses.Denied,
+                    ApplicationConstants.ApplicationStatuses.LeaseAccepted,
+                    ApplicationConstants.ApplicationStatuses.Withdrawn
+                };
+
+                if (terminalStates.Contains(application.Status))
+                    return WorkflowResult.Fail(
+                        $"Cannot deny application in {application.Status} status");
+
+                var userId = await GetCurrentUserIdAsync();
+                var oldStatus = application.Status;
+
+                // Update application
+                application.Status = ApplicationConstants.ApplicationStatuses.Denied;
+                application.DenialReason = denialReason;
+                application.DecidedOn = DateTime.UtcNow;
+                application.DecisionBy = userId;
+                application.LastModifiedBy = userId;
+                application.LastModifiedOn = DateTime.UtcNow;
+
+                // Update prospect
+                if (application.ProspectiveTenant != null)
+                {
+                    application.ProspectiveTenant.Status = ApplicationConstants.ProspectiveStatuses.Denied;
+                    application.ProspectiveTenant.LastModifiedBy = userId;
+                    application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
+                }
+
+                // Check if property status should roll back
+                await RollbackPropertyStatusIfNeededAsync(application.PropertyId);
+
+                await LogTransitionAsync(
+                    "RentalApplication",
+                    applicationId,
+                    oldStatus,
+                    application.Status,
+                    "DenyApplication",
+                    denialReason);
+
+                return WorkflowResult.Ok("Application denied");
+
+            });
+        }
+
+        /// <summary>
+        /// Withdraws an application (initiated by prospect).
+        /// Rolls back property status if no other pending applications exist.
+        /// </summary>
+        public async Task<WorkflowResult> WithdrawApplicationAsync(int applicationId, string withdrawalReason)
+        {
+            return await ExecuteWorkflowAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(withdrawalReason))
+                    return WorkflowResult.Fail("Withdrawal reason is required");
+
+                var application = await GetApplicationAsync(applicationId);
+                if (application == null)
+                    return WorkflowResult.Fail("Application not found");
+
+                // Validate in active state
+                var activeStates = new[] {
+                    ApplicationConstants.ApplicationStatuses.Submitted,
+                    ApplicationConstants.ApplicationStatuses.UnderReview,
+                    ApplicationConstants.ApplicationStatuses.Screening,
+                    ApplicationConstants.ApplicationStatuses.Approved,
+                    ApplicationConstants.ApplicationStatuses.LeaseOffered
+                };
+
+                if (!activeStates.Contains(application.Status))
+                    return WorkflowResult.Fail(
+                        $"Cannot withdraw application in {application.Status} status");
+
+                var userId = await GetCurrentUserIdAsync();
+                var oldStatus = application.Status;
+
+                // Update application
+                application.Status = ApplicationConstants.ApplicationStatuses.Withdrawn;
+                application.DenialReason = withdrawalReason; // Reuse field
+                application.DecidedOn = DateTime.UtcNow;
+                application.DecisionBy = userId;
+                application.LastModifiedBy = userId;
+                application.LastModifiedOn = DateTime.UtcNow;
+
+                // Update prospect
+                if (application.ProspectiveTenant != null)
+                {
+                    application.ProspectiveTenant.Status = ApplicationConstants.ProspectiveStatuses.Withdrawn;
+                    application.ProspectiveTenant.LastModifiedBy = userId;
+                    application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
+                }
+
+                // Check if property status should roll back
+                await RollbackPropertyStatusIfNeededAsync(application.PropertyId);
+
+                await LogTransitionAsync(
+                    "RentalApplication",
+                    applicationId,
+                    oldStatus,
+                    application.Status,
+                    "WithdrawApplication",
+                    withdrawalReason);
+
+                return WorkflowResult.Ok("Application withdrawn");
+
+            });
+        }
+
         #endregion
 
         #region Helper Methods
@@ -385,6 +565,46 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             return errors.Any()
                 ? WorkflowResult.Fail(errors)
                 : WorkflowResult.Ok();
+        }
+
+        /// <summary>
+        /// Checks if property status should roll back when an application is denied/withdrawn.
+        /// Rolls back to Available if no active applications remain.
+        /// </summary>
+        private async Task RollbackPropertyStatusIfNeededAsync(int propertyId)
+        {
+            var orgId = await GetActiveOrganizationIdAsync();
+            var userId = await GetCurrentUserIdAsync();
+
+            // Get all active applications for this property
+            var activeStates = new[] {
+                ApplicationConstants.ApplicationStatuses.Submitted,
+                ApplicationConstants.ApplicationStatuses.UnderReview,
+                ApplicationConstants.ApplicationStatuses.Screening,
+                ApplicationConstants.ApplicationStatuses.Approved,
+                ApplicationConstants.ApplicationStatuses.LeaseOffered
+            };
+
+            var hasActiveApplications = await _context.RentalApplications
+                .AnyAsync(a =>
+                    a.PropertyId == propertyId &&
+                    a.OrganizationId == orgId.ToString() &&
+                    activeStates.Contains(a.Status) &&
+                    !a.IsDeleted);
+
+            // If no active applications remain, roll back property to Available
+            if (!hasActiveApplications)
+            {
+                var property = await _context.Properties
+                    .FirstOrDefaultAsync(p => p.Id == propertyId && p.OrganizationId == orgId.ToString());
+
+                if (property != null && property.Status == ApplicationConstants.PropertyStatuses.ApplicationPending)
+                {
+                    property.Status = ApplicationConstants.PropertyStatuses.Available;
+                    property.LastModifiedBy = userId;
+                    property.LastModifiedOn = DateTime.UtcNow;
+                }
+            }
         }
 
         #endregion
