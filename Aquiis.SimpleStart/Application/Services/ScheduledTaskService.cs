@@ -486,12 +486,17 @@ namespace Aquiis.SimpleStart.Application.Services
 
                     // Check for tours that should be marked as no-show
                     var cutoffTime = DateTime.Now.AddHours(-gracePeriodHours);
-                    var potentialNoShowTours = await propertyManagementService.GetAllToursAsync();
+                    
+                    // Query tours directly for this organization (bypass user context)
+                    var potentialNoShowTours = await dbContext.Tours
+                        .Where(t => t.OrganizationId == organizationId && !t.IsDeleted)
+                        .Include(t => t.ProspectiveTenant)
+                        .Include(t => t.Property)
+                        .ToListAsync();
                     
                     var noShowTours = potentialNoShowTours
                         .Where(t => t.Status == ApplicationConstants.TourStatuses.Scheduled &&
-                                   t.ScheduledOn < cutoffTime &&
-                                   !t.IsDeleted)
+                                   t.ScheduledOn < cutoffTime)
                         .ToList();
 
                     foreach (var tour in noShowTours)
