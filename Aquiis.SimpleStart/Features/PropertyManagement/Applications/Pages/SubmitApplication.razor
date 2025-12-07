@@ -79,8 +79,9 @@
                             </div>
                         }
 
-                        <EditForm Model="applicationModel" OnValidSubmit="HandleSubmitApplication" FormName="submit-application">
+                        <EditForm Model="applicationModel" OnValidSubmit="HandleSubmitApplication">
                             <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger" />
 
                             <div class="mb-4">
                                 <h5 class="border-bottom pb-2">Applicant Information</h5>
@@ -104,7 +105,7 @@
                                 <h5 class="border-bottom pb-2">Property Selection</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Property *</label>
-                                    <InputSelect @bind-Value="applicationModel.PropertyId" class="form-select" @onchange="OnPropertyChanged">
+                                    <InputSelect @bind-Value="applicationModel.PropertyId" @bind-Value:after="UpdateSelectedProperty" class="form-select">
                                         <option value="0">Select a property...</option>
                                         @foreach (var property in availableProperties)
                                         {
@@ -428,30 +429,52 @@
         }
     }
 
-    private async Task OnPropertyChanged(ChangeEventArgs e)
+    private void UpdateSelectedProperty()
     {
-        if (int.TryParse(e.Value?.ToString(), out int propertyId) && propertyId > 0)
+        if (applicationModel.PropertyId > 0)
         {
-            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == propertyId);
+            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == applicationModel.PropertyId);
         }
         else
         {
             selectedProperty = null;
         }
+    }
+
+    private async Task OnPropertyChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int propertyId) && propertyId > 0)
+        {
+            applicationModel.PropertyId = propertyId;
+            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == propertyId);
+        }
+        else
+        {
+            applicationModel.PropertyId = 0;
+            selectedProperty = null;
+        }
         StateHasChanged();
         await Task.CompletedTask;
-
     }
 
     private async Task HandleSubmitApplication()
     {
-        if (prospect == null || selectedProperty == null) return;
+        Console.WriteLine("HandleSubmitApplication called");
+        
+        if (prospect == null || selectedProperty == null)
+        {
+            errorMessage = prospect == null ? "Prospect not found" : "Please select a property";
+            Console.WriteLine($"Validation failed: {errorMessage}");
+            return;
+        }
 
         isSubmitting = true;
         errorMessage = string.Empty;
 
         try
         {
+            Console.WriteLine($"Submitting application for prospect {ProspectId}, property {applicationModel.PropertyId}");
+            
             // Use ApplicationWorkflowService to submit application
             var submissionModel = new Aquiis.SimpleStart.Application.Services.Workflows.ApplicationSubmissionModel
             {
@@ -488,6 +511,8 @@
                 applicationModel.PropertyId, 
                 submissionModel);
 
+            Console.WriteLine($"Workflow result: Success={result.Success}, Errors={string.Join(", ", result.Errors)}");
+
             if (result.Success)
             {
                 ToastService.ShowSuccess("Application submitted successfully! You will be notified once reviewed.");
@@ -501,6 +526,7 @@
         catch (Exception ex)
         {
             errorMessage = $"Error submitting application: {ex.Message}";
+            Console.WriteLine($"Exception in HandleSubmitApplication: {ex}");
         }
         finally
         {

@@ -18,7 +18,7 @@ window.themeManager = {
 
   getTheme: function () {
     const theme = localStorage.getItem("theme") || "light";
-    console.log("Getting theme from localStorage:", theme);
+    //console.log("Getting theme from localStorage:", theme);
     return theme;
   },
 
@@ -44,7 +44,7 @@ if (typeof localStorage !== "undefined") {
       document.documentElement.style.display = "none";
       void document.documentElement.offsetHeight;
       document.documentElement.style.display = "";
-      console.log("Theme re-applied after DOM mutation:", currentTheme);
+      //console.log("Theme re-applied after DOM mutation:", currentTheme);
     }
   });
 

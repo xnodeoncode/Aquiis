@@ -258,10 +258,29 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 if (application == null)
                     return WorkflowResult<ApplicationScreening>.Fail("Application not found");
 
+                var userId = await GetCurrentUserIdAsync();
+                var orgId = await GetActiveOrganizationIdAsync();
+
+                // Auto-transition from Submitted to UnderReview if needed
+                if (application.Status == ApplicationConstants.ApplicationStatuses.Submitted)
+                {
+                    application.Status = ApplicationConstants.ApplicationStatuses.UnderReview;
+                    application.DecisionBy = userId;
+                    application.LastModifiedBy = userId;
+                    application.LastModifiedOn = DateTime.UtcNow;
+
+                    await LogTransitionAsync(
+                        "RentalApplication",
+                        applicationId,
+                        ApplicationConstants.ApplicationStatuses.Submitted,
+                        ApplicationConstants.ApplicationStatuses.UnderReview,
+                        "AutoTransition-InitiateScreening");
+                }
+
                 // Validate state
                 if (application.Status != ApplicationConstants.ApplicationStatuses.UnderReview)
                     return WorkflowResult<ApplicationScreening>.Fail(
-                        $"Application must be Under Review to initiate screening. Current status: {application.Status}");
+                        $"Application must be Submitted or Under Review to initiate screening. Current status: {application.Status}");
 
                 // Validate application fee paid
                 if (!application.ApplicationFeePaid)
@@ -275,9 +294,6 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 if (existingScreening != null)
                     return WorkflowResult<ApplicationScreening>.Fail(
                         "Screening already exists for this application");
-
-                var userId = await GetCurrentUserIdAsync();
-                var orgId = await GetActiveOrganizationIdAsync();
 
                 // Create screening record
                 var screening = new ApplicationScreening
