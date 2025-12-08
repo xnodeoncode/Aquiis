@@ -43,6 +43,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 else
                 {
                     await transaction.RollbackAsync();
+                    // Clear the ChangeTracker to discard all tracked changes
+                    _context.ChangeTracker.Clear();
                 }
 
                 return result;
@@ -50,7 +52,21 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return WorkflowResult<T>.Fail($"Workflow operation failed: {ex.Message}");
+                // Clear the ChangeTracker to discard all tracked changes
+                _context.ChangeTracker.Clear();
+                
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $" | Inner: {ex.InnerException.Message}";
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage += $" | Inner(2): {ex.InnerException.InnerException.Message}";
+                    }
+                }
+                Console.WriteLine($"Workflow Error: {errorMessage}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return WorkflowResult<T>.Fail($"Workflow operation failed: {errorMessage}");
             }
         }
 
@@ -74,6 +90,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 else
                 {
                     await transaction.RollbackAsync();
+                    // Clear the ChangeTracker to discard all tracked changes
+                    _context.ChangeTracker.Clear();
                 }
 
                 return result;
@@ -81,7 +99,21 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return WorkflowResult.Fail($"Workflow operation failed: {ex.Message}");
+                // Clear the ChangeTracker to discard all tracked changes
+                _context.ChangeTracker.Clear();
+                
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $" | Inner: {ex.InnerException.Message}";
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage += $" | Inner(2): {ex.InnerException.InnerException.Message}";
+                    }
+                }
+                Console.WriteLine($"Workflow Error: {errorMessage}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return WorkflowResult.Fail($"Workflow operation failed: {errorMessage}");
             }
         }
 

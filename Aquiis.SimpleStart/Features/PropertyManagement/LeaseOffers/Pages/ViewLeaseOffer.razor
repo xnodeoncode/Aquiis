@@ -10,6 +10,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
 
 @inject PropertyManagementService PropertyService
 @inject ApplicationWorkflowService WorkflowService
@@ -254,33 +255,70 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Accept Lease Offer</h5>
+                    <h5 class="modal-title">Accept Lease Offer & Collect Security Deposit</h5>
                     <button type="button" class="btn-close btn-close-white" @onclick="() => showAcceptModal = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Are you sure you want to accept this lease offer?</strong></p>
-                    <p>This will:</p>
-                    <ul>
-                        <li>Convert the prospective tenant to an official tenant</li>
-                        <li>Create an active lease agreement</li>
-                        <li>Update the property status to "Occupied"</li>
-                        <li>Close the rental application</li>
-                    </ul>
-                    
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <small>After acceptance, you can collect the security deposit and generate move-in documents.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => showAcceptModal = false">Cancel</button>
-                    <button type="button" class="btn btn-success" @onclick="AcceptOffer" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        <i class="bi bi-check-circle me-2"></i>Accept & Convert to Lease
-                    </button>
+                    <EditForm Model="depositPaymentModel" OnValidSubmit="AcceptOffer">
+                        <DataAnnotationsValidator />
+                        
+                        <p><strong>This will:</strong></p>
+                        <ul>
+                            <li>Convert the prospective tenant to an official tenant</li>
+                            <li>Create an active lease agreement</li>
+                            <li>Record the security deposit payment</li>
+                            <li>Update the property status to "Occupied"</li>
+                            <li>Close the rental application</li>
+                        </ul>
+
+                        <div class="mb-3">
+                            <p><strong>Security Deposit Amount:</strong> @leaseOffer?.SecurityDeposit.ToString("C")</p>
+                            <p><strong>Tenant:</strong> @leaseOffer?.ProspectiveTenant?.FullName</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select" @bind-Value="depositPaymentModel.PaymentMethod">
+                                <option value="">Select payment method...</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Check">Check</option>
+                                <option value="Cashier's Check">Cashier's Check</option>
+                                <option value="Money Order">Money Order</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Wire Transfer">Wire Transfer</option>
+                                <option value="Online Payment">Online Payment</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => depositPaymentModel.PaymentMethod)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Reference Number (Check #, Confirmation, etc.)</label>
+                            <InputText class="form-control" @bind-Value="depositPaymentModel.ReferenceNumber" placeholder="Optional" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Date</label>
+                            <InputDate class="form-control" @bind-Value="depositPaymentModel.PaymentDate" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <InputTextArea class="form-control" rows="2" @bind-Value="depositPaymentModel.Notes" placeholder="Optional notes about the deposit payment" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="() => showAcceptModal = false">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                <i class="bi bi-check-circle me-2"></i>Accept & Create Lease
+                            </button>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
         </div>
@@ -372,6 +410,7 @@
     private string declineReason = string.Empty;
     private string userId = string.Empty;
     private string organizationId = string.Empty;
+    private DepositPaymentModel depositPaymentModel = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -429,12 +468,18 @@
 
         try
         {
-            var result = await WorkflowService.AcceptLeaseOfferAsync(leaseOffer.Id);
+            var result = await WorkflowService.AcceptLeaseOfferAsync(
+                leaseOffer.Id,
+                depositPaymentModel.PaymentMethod,
+                depositPaymentModel.PaymentDate,
+                depositPaymentModel.ReferenceNumber,
+                depositPaymentModel.Notes);
             
             if (result.Success)
             {
-                ToastService.ShowSuccess("Lease offer accepted! Tenant and lease created successfully.");
+                ToastService.ShowSuccess($"Lease offer accepted! Security deposit of {leaseOffer.SecurityDeposit:C} collected via {depositPaymentModel.PaymentMethod}.");
                 showAcceptModal = false;
+                depositPaymentModel = new();
                 
                 // Navigate to the newly created lease
                 if (result.Data != null)
@@ -513,5 +558,17 @@
         {
             Navigation.NavigateTo("/propertymanagement/applications");
         }
+    }
+
+    public class DepositPaymentModel
+    {
+        [Required(ErrorMessage = "Payment method is required")]
+        public string PaymentMethod { get; set; } = string.Empty;
+
+        public string? ReferenceNumber { get; set; }
+
+        public DateTime PaymentDate { get; set; } = DateTime.Today;
+
+        public string? Notes { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 window.themeManager = {
   setTheme: function (theme) {
-    console.log("Setting theme to:", theme);
+    //console.log("Setting theme to:", theme);
     document.documentElement.setAttribute("data-bs-theme", theme);
     localStorage.setItem("theme", theme);
 
@@ -10,10 +10,10 @@ window.themeManager = {
     void document.documentElement.offsetHeight; // Trigger reflow
     document.documentElement.style.display = "";
 
-    console.log(
-      "Theme set. Current attribute:",
-      document.documentElement.getAttribute("data-bs-theme")
-    );
+    // console.log(
+    //   "Theme set. Current attribute:",
+    //   document.documentElement.getAttribute("data-bs-theme")
+    // );
   },
 
   getTheme: function () {

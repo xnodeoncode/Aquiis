@@ -237,8 +237,20 @@ namespace Aquiis.SimpleStart.Core.Constants
             public const string Pending = "Pending";
             public const string Active = "Active";
             public const string Declined = "Declined";
+            public const string Renewed = "Renewed";
+            public const string Interrupted = "Interrupted";
             public const string Terminated = "Terminated";
             public const string Expired = "Expired";
+
+            public static IReadOnlyList<string> RenewalStatuses { get; } = new List<string>
+            {
+                "NotRequired",
+                "Pending",
+                "Offered",
+                "Accepted",
+                "Declined",
+                "Expired"
+            };
 
             public static IReadOnlyList<string> AllLeaseStatuses { get; } = new List<string>
             {
@@ -246,6 +258,8 @@ namespace Aquiis.SimpleStart.Core.Constants
                 Pending,
                 Active,
                 Declined,
+                Renewed,
+                Interrupted,
                 Terminated,
                 Expired
             };
@@ -281,11 +295,11 @@ namespace Aquiis.SimpleStart.Core.Constants
         public static class PropertyStatuses
         {
             public const string Available = "Available";
-            public const string ApplicationPending = "ApplicationPending";
-            public const string LeasePending = "LeasePending";
+            public const string ApplicationPending = "Application Pending";
+            public const string LeasePending = "Lease Pending";
             public const string Occupied = "Occupied";
-            public const string UnderRenovation = "UnderRenovation";
-            public const string OffMarket = "OffMarket";
+            public const string UnderRenovation = "Under Renovation";
+            public const string OffMarket = "Off Market";
             
             public static IReadOnlyList<string> AllPropertyStatuses { get; } = new List<string>
             {
@@ -432,15 +446,15 @@ namespace Aquiis.SimpleStart.Core.Constants
         public static class ProspectiveStatuses
         {
             public const string Lead = "Lead";
-            public const string TourScheduled = "TourScheduled";
+            public const string TourScheduled = "Tour Scheduled";
             public const string Applied = "Applied";
             public const string Screening = "Screening";
             public const string Approved = "Approved";
             public const string Denied = "Denied";
             public const string Withdrawn = "Withdrawn";
-            public const string LeaseOffered = "LeaseOffered";
-            public const string LeaseDeclined = "LeaseDeclined";
-            public const string ConvertedToTenant = "ConvertedToTenant";
+            public const string LeaseOffered = "Lease Offered";
+            public const string LeaseDeclined = "Lease Declined";
+            public const string ConvertedToTenant = "Converted To Tenant";
 
             public static IReadOnlyList<string> AllProspectiveStatuses { get; } = new List<string>
             {
@@ -499,10 +513,10 @@ namespace Aquiis.SimpleStart.Core.Constants
 
         public static class TourInterestLevels
         {
-            public const string VeryInterested = "VeryInterested";
+            public const string VeryInterested = "Very Interested";
             public const string Interested = "Interested";
             public const string Neutral = "Neutral";
-            public const string NotInterested = "NotInterested";
+            public const string NotInterested = "Not Interested";
 
             public static IReadOnlyList<string> AllTourInterestLevels { get; } = new List<string>
             {
@@ -516,15 +530,15 @@ namespace Aquiis.SimpleStart.Core.Constants
         public static class ApplicationStatuses
         {
             public const string Submitted = "Submitted";
-            public const string UnderReview = "UnderReview";
+            public const string UnderReview = "Under Review";
             public const string Screening = "Screening";
             public const string Approved = "Approved";
             public const string Denied = "Denied";
             public const string Expired = "Expired";
             public const string Withdrawn = "Withdrawn";
-            public const string LeaseOffered = "LeaseOffered";
-            public const string LeaseAccepted = "LeaseAccepted";
-            public const string LeaseDeclined = "LeaseDeclined";
+            public const string LeaseOffered = "Lease Offered";
+            public const string LeaseAccepted = "Lease Accepted";
+            public const string LeaseDeclined = "Lease Declined";
 
             public static IReadOnlyList<string> AllApplicationStatuses { get; } = new List<string>
             {
@@ -546,7 +560,7 @@ namespace Aquiis.SimpleStart.Core.Constants
             public const string Pending = "Pending";
             public const string Passed = "Passed";
             public const string Failed = "Failed";
-            public const string ConditionalPass = "ConditionalPass";
+            public const string ConditionalPass = "Conditional Pass";
 
             public static IReadOnlyList<string> AllScreeningResults { get; } = new List<string>
             {
@@ -563,7 +577,7 @@ namespace Aquiis.SimpleStart.Core.Constants
             public const string Released = "Released";
             public const string Refunded = "Refunded";
             public const string Forfeited = "Forfeited";
-            public const string PartiallyRefunded = "PartiallyRefunded";
+            public const string PartiallyRefunded = "Partially Refunded";
 
             public static IReadOnlyList<string> AllSecurityDepositStatuses { get; } = new List<string>
             {
@@ -594,7 +608,7 @@ namespace Aquiis.SimpleStart.Core.Constants
         public static class DividendPaymentMethods
         {
             public const string Pending = "Pending";
-            public const string LeaseCredit = "LeaseCredit";
+            public const string LeaseCredit = "Lease Credit";
             public const string Check = "Check";
 
             public static IReadOnlyList<string> AllDividendPaymentMethods { get; } = new List<string>
@@ -608,7 +622,7 @@ namespace Aquiis.SimpleStart.Core.Constants
         public static class DividendStatuses
         {
             public const string Pending = "Pending";
-            public const string ChoiceMade = "ChoiceMade";
+            public const string ChoiceMade = "Choice Made";
             public const string Applied = "Applied";
             public const string Paid = "Paid";
 

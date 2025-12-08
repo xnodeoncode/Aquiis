@@ -504,6 +504,27 @@ namespace Aquiis.SimpleStart.Application.Services
                 .ToList();
         }
 
+        public async Task<List<Lease>> GetCurrentAndUpcomingLeasesByPropertyIdAsync(int propertyId)
+        {
+            var _userId = await _userContext.GetUserIdAsync();
+
+            if (string.IsNullOrEmpty(_userId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+            
+            var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+            return await _dbContext.Leases
+                .Include(l => l.Property)
+                .Include(l => l.Tenant)
+                .Where(l => l.PropertyId == propertyId 
+                    && !l.IsDeleted 
+                    && l.Property.OrganizationId == organizationId
+                    && (l.Status == "Active" || l.Status == "Pending"))
+                .ToListAsync();
+        }
+
         public async Task<List<Lease>> GetActiveLeasesByPropertyIdAsync(int propertyId)
         {
             var _userId = await _userContext.GetUserIdAsync();

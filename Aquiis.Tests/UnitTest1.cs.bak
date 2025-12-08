@@ -9,7 +9,7 @@ namespace Aquiis.Tests;
 /// </summary>
 [Parallelizable(ParallelScope.Self)]
 [TestFixture]
-public class PropertyManagementTests : PageTest
+public class PropertyManagementTestExamples : PageTest
 {
     private const string BaseUrl = "http://localhost:5197";
     private const int KeepBrowserOpenSeconds = 30; // Set to 0 to close immediately

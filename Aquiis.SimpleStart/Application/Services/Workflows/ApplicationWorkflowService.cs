@@ -722,8 +722,14 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
         /// <summary>
         /// Accepts a lease offer and converts prospect to tenant.
         /// Creates Tenant and Lease entities, updates property to Occupied.
+        /// Records security deposit payment.
         /// </summary>
-        public async Task<WorkflowResult<Lease>> AcceptLeaseOfferAsync(int leaseOfferId)
+        public async Task<WorkflowResult<Lease>> AcceptLeaseOfferAsync(
+            int leaseOfferId,
+            string depositPaymentMethod,
+            DateTime depositPaymentDate,
+            string? depositReferenceNumber = null,
+            string? depositNotes = null)
         {
             return await ExecuteWorkflowAsync<Lease>(async () =>
             {
@@ -775,19 +781,41 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 {
                     OrganizationId = orgId,
                     PropertyId = leaseOffer.PropertyId,
-                    TenantId = tenant.Id,
+                    Tenant = tenant, // Use navigation property instead of TenantId
+                    LeaseOfferId = leaseOffer.Id,
                     StartDate = leaseOffer.StartDate,
                     EndDate = leaseOffer.EndDate,
                     MonthlyRent = leaseOffer.MonthlyRent,
                     SecurityDeposit = leaseOffer.SecurityDeposit,
                     Terms = leaseOffer.Terms,
                     Status = "Active",
+                    SignedOn = DateTime.UtcNow,
                     CreatedBy = userId,
                     CreatedOn = DateTime.UtcNow
                 };
 
                 _context.Leases.Add(lease);
                 // Note: EF Core will assign ID when transaction commits
+
+                // Create security deposit record
+                var securityDeposit = new SecurityDeposit
+                {
+                    OrganizationId = orgId,
+                    Lease = lease, // Use navigation property
+                    Tenant = tenant, // Use navigation property
+                    Amount = leaseOffer.SecurityDeposit,
+                    DateReceived = depositPaymentDate,
+                    PaymentMethod = depositPaymentMethod,
+                    TransactionReference = depositReferenceNumber,
+                    Status = "Held",
+                    InInvestmentPool = true,
+                    PoolEntryDate = leaseOffer.StartDate,
+                    Notes = depositNotes,
+                    CreatedBy = userId,
+                    CreatedOn = DateTime.UtcNow
+                };
+
+                _context.SecurityDeposits.Add(securityDeposit);
 
                 // Update lease offer
                 leaseOffer.Status = "Accepted";
