@@ -31,7 +31,7 @@ else if (!tenants.Any())
 {
     <div class="alert alert-info">
         <h4>No Tenants Found</h4>
-        <p>Get started by adding your first tenant to the system.</p>
+        <p>Get started by converting a Prospective Tenant to your first tenant in the system.</p>
         <button class="btn btn-primary" @onclick="CreateTenant">Add First Tenant</button>
     </div>
 }
@@ -345,20 +345,20 @@ else
 
     private void CreateTenant()
     {
-        Navigation.NavigateTo("/propertymanagement/tenants/create");
+        Navigation.NavigateTo("/propertymanagement/prospectivetenants");
     }
 
-    private void ViewTenant(int id)
+    private void ViewTenant(Guid id)
     {
         Navigation.NavigateTo($"/propertymanagement/tenants/view/{id}");
     }
 
-    private void EditTenant(int id)
+    private void EditTenant(Guid id)
     {
         Navigation.NavigateTo($"/propertymanagement/tenants/edit/{id}");
     }
 
-    private async Task DeleteTenant(int id)
+    private async Task DeleteTenant(Guid id)
     {
         var authState = await AuthenticationStateTask;
         var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

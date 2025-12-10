@@ -1,16 +1,19 @@
-@page "/propertymanagement/leaseoffers/view/{Id:int}"
+@page "/propertymanagement/leaseoffers/view/{Id:guid}"
 
 @using Aquiis.SimpleStart.Core.Entities
 @using Aquiis.SimpleStart.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
 @using Aquiis.SimpleStart.Application.Services.PdfGenerators
+@using Aquiis.SimpleStart.Application.Services.Workflows
 @using Aquiis.SimpleStart.Infrastructure.Data
 @using Aquiis.SimpleStart.Core.Constants
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
 
 @inject PropertyManagementService PropertyService
+@inject ApplicationWorkflowService WorkflowService
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
@@ -252,33 +255,70 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Accept Lease Offer</h5>
+                    <h5 class="modal-title">Accept Lease Offer & Collect Security Deposit</h5>
                     <button type="button" class="btn-close btn-close-white" @onclick="() => showAcceptModal = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Are you sure you want to accept this lease offer?</strong></p>
-                    <p>This will:</p>
-                    <ul>
-                        <li>Convert the prospective tenant to an official tenant</li>
-                        <li>Create an active lease agreement</li>
-                        <li>Update the property status to "Occupied"</li>
-                        <li>Close the rental application</li>
-                    </ul>
-                    
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <small>After acceptance, you can collect the security deposit and generate move-in documents.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => showAcceptModal = false">Cancel</button>
-                    <button type="button" class="btn btn-success" @onclick="AcceptOffer" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        <i class="bi bi-check-circle me-2"></i>Accept & Convert to Lease
-                    </button>
+                    <EditForm Model="depositPaymentModel" OnValidSubmit="AcceptOffer">
+                        <DataAnnotationsValidator />
+                        
+                        <p><strong>This will:</strong></p>
+                        <ul>
+                            <li>Convert the prospective tenant to an official tenant</li>
+                            <li>Create an active lease agreement</li>
+                            <li>Record the security deposit payment</li>
+                            <li>Update the property status to "Occupied"</li>
+                            <li>Close the rental application</li>
+                        </ul>
+
+                        <div class="mb-3">
+                            <p><strong>Security Deposit Amount:</strong> @leaseOffer?.SecurityDeposit.ToString("C")</p>
+                            <p><strong>Tenant:</strong> @leaseOffer?.ProspectiveTenant?.FullName</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select" @bind-Value="depositPaymentModel.PaymentMethod">
+                                <option value="">Select payment method...</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Check">Check</option>
+                                <option value="Cashier's Check">Cashier's Check</option>
+                                <option value="Money Order">Money Order</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Wire Transfer">Wire Transfer</option>
+                                <option value="Online Payment">Online Payment</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => depositPaymentModel.PaymentMethod)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Reference Number (Check #, Confirmation, etc.)</label>
+                            <InputText class="form-control" @bind-Value="depositPaymentModel.ReferenceNumber" placeholder="Optional" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Date</label>
+                            <InputDate class="form-control" @bind-Value="depositPaymentModel.PaymentDate" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <InputTextArea class="form-control" rows="2" @bind-Value="depositPaymentModel.Notes" placeholder="Optional notes about the deposit payment" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="() => showAcceptModal = false">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                <i class="bi bi-check-circle me-2"></i>Accept & Create Lease
+                            </button>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
         </div>
@@ -359,7 +399,7 @@
 
 @code {
     [Parameter]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     private LeaseOffer? leaseOffer;
     private bool isLoading = true;
@@ -369,7 +409,8 @@
     private string errorMessage = string.Empty;
     private string declineReason = string.Empty;
     private string userId = string.Empty;
-    private string organizationId = string.Empty;
+    private Guid organizationId = Guid.Empty;
+    private DepositPaymentModel depositPaymentModel = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -377,7 +418,7 @@
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? string.Empty;
+            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? Guid.Empty;
 
             await LoadLeaseOffer();
         }
@@ -420,137 +461,36 @@
 
     private async Task AcceptOffer()
     {
-        if (leaseOffer == null || leaseOffer.ProspectiveTenant == null || leaseOffer.Property == null) return;
+        if (leaseOffer == null) return;
 
         isSubmitting = true;
         errorMessage = string.Empty;
 
         try
         {
-            // 1. Create Tenant from ProspectiveTenant
-            var tenant = new Tenant
-            {
-                FirstName = leaseOffer.ProspectiveTenant.FirstName,
-                LastName = leaseOffer.ProspectiveTenant.LastName,
-                Email = leaseOffer.ProspectiveTenant.Email,
-                PhoneNumber = leaseOffer.ProspectiveTenant.Phone,
-                DateOfBirth = leaseOffer.ProspectiveTenant.DateOfBirth,
-                IdentificationNumber = leaseOffer.ProspectiveTenant.IdentificationNumber ?? string.Empty,
-                ProspectiveTenantId = leaseOffer.ProspectiveTenantId,
-                EmergencyContactName = string.Empty,
-                EmergencyContactPhone = null,
-                
-            };
-
-            var createdTenant = await PropertyService.AddTenantAsync(tenant);
-
-            // 2. Create Lease with reference to LeaseOffer and Tenant
-            var lease = new Lease
-            {
-                PropertyId = leaseOffer.PropertyId,
-                OrganizationId = createdTenant.OrganizationId,
-                TenantId = createdTenant.Id,
-                LeaseOfferId = leaseOffer.Id,
-                StartDate = leaseOffer.StartDate,
-                EndDate = leaseOffer.EndDate,
-                MonthlyRent = leaseOffer.MonthlyRent,
-                SecurityDeposit = leaseOffer.SecurityDeposit,
-                Terms = leaseOffer.Terms ?? string.Empty,
-                Status = ApplicationConstants.LeaseStatuses.Active,
-                SignedOn = DateTime.UtcNow,
-               
-            };
-
-            var createdLease = await PropertyService.AddLeaseAsync(lease);
-
-            // 3. Update LeaseOffer status to Accepted
-            leaseOffer.Status = "Accepted";
-            leaseOffer.RespondedOn = DateTime.UtcNow;
-            leaseOffer.ResponseNotes = "Lease offer accepted and converted to active lease";
-            leaseOffer.ConvertedLeaseId = createdLease?.Id;
+            var result = await WorkflowService.AcceptLeaseOfferAsync(
+                leaseOffer.Id,
+                depositPaymentModel.PaymentMethod,
+                depositPaymentModel.PaymentDate,
+                depositPaymentModel.ReferenceNumber,
+                depositPaymentModel.Notes);
             
-
-            await PropertyService.UpdateLeaseOfferAsync(leaseOffer);
-
-            // 4. Update RentalApplication status
-            var application = await PropertyService.GetRentalApplicationByIdAsync(leaseOffer.RentalApplicationId);
-            if (application != null)
+            if (result.Success)
             {
-                application.Status = ApplicationConstants.ApplicationStatuses.LeaseAccepted;
-               
-                await PropertyService.UpdateRentalApplicationAsync(application);
-            }
-
-            // 5. Update Property status to Occupied
-            var property = await PropertyService.GetPropertyByIdAsync(leaseOffer.PropertyId);
-            if (property != null)
-            {
-                property.Status = ApplicationConstants.PropertyStatuses.Occupied;
+                ToastService.ShowSuccess($"Lease offer accepted! Security deposit of {leaseOffer.SecurityDeposit:C} collected via {depositPaymentModel.PaymentMethod}.");
+                showAcceptModal = false;
+                depositPaymentModel = new();
                 
-                await PropertyService.UpdatePropertyAsync(property);
-            }
-
-            // 6. Update ProspectiveTenant status
-            var prospective = leaseOffer.ProspectiveTenant;
-            if (prospective != null)
-            {
-                prospective.Status = ApplicationConstants.ProspectiveStatuses.ConvertedToTenant;
-                
-                await PropertyService.UpdateProspectiveTenantAsync(prospective);
-            }
-
-            // 7. Add Security Deposit to Investment Pool
-             // CRITICAL: Collect security deposit - this MUST succeed before proceeding
-            SecurityDeposit securityDeposit = new();
-            try
-            {
-                securityDeposit = await SecurityDepositService.CollectSecurityDepositAsync(
-                    lease.Id,
-                    lease.SecurityDeposit,
-                    "Online Payment",
-                    "Security deposit collected upon lease acceptance",
-                    tenant.Id); // Pass the newly created tenant ID
-            }
-            catch (Exception depositEx)
-            {
-                var message = depositEx.Message + (depositEx.InnerException != null ? $" - {depositEx.InnerException}" : string.Empty);
-                errorMessage = $"CRITICAL ERROR: Failed to collect security deposit. Lease acceptance aborted. Error: {message}";
-                isSubmitting = false;
-                ToastService.ShowError(errorMessage);
-                Console.WriteLine(errorMessage);
-                //return;
-            }
-
-            if(securityDeposit == null || securityDeposit.Id == 0)
-            {
-                errorMessage = "CRITICAL ERROR: Security deposit record not created. Lease acceptance aborted.";
-                isSubmitting = false;
-                ToastService.ShowError(errorMessage);
-                Console.WriteLine(errorMessage);
-            } else {
-                // Add deposit to investment pool (will start earning dividends)
-                try
+                // Navigate to the newly created lease
+                if (result.Data != null)
                 {
-                    await SecurityDepositService.AddToInvestmentPoolAsync(securityDeposit.Id);
-                }
-                catch (Exception poolEx)
-                {
-                    // Non-critical: deposit collected but not added to pool yet
-                    // Can be added manually later from Security Deposits page
-                    var message = poolEx.Message + (poolEx.InnerException != null ? $" - {poolEx.InnerException}" : string.Empty);
-                    ToastService.ShowWarning($"Security deposit collected but not added to investment pool: {message}");
-                    //return;
-                    Console.WriteLine($"Warning: Security deposit collected but not added to investment pool: {message}");
+                    Navigation.NavigateTo($"/propertymanagement/leases/view/{result.Data.Id}");
                 }
             }
-
-            ToastService.ShowSuccess("Lease offer accepted! Tenant and lease created successfully.");
-            showAcceptModal = false;
-            
-            // Navigate to the newly created lease
-            if (createdLease != null)
+            else
             {
-                Navigation.NavigateTo($"/propertymanagement/leases/view/{createdLease.Id}");
+                errorMessage = string.Join(", ", result.Errors);
+                ToastService.ShowError($"Failed to accept lease offer: {errorMessage}");
             }
         }
         catch (Exception ex)
@@ -577,15 +517,18 @@
 
         try
         {
-            leaseOffer.Status = "Declined";
-            leaseOffer.RespondedOn = DateTime.UtcNow;
-            leaseOffer.ResponseNotes = declineReason;
+            var result = await WorkflowService.DeclineLeaseOfferAsync(leaseOffer.Id, declineReason ?? "Declined by applicant");
 
-            await PropertyService.UpdateLeaseOfferAsync(leaseOffer);
-
-            ToastService.ShowSuccess("Lease offer declined.");
-            showDeclineModal = false;
-            await LoadLeaseOffer();
+            if (result.Success)
+            {
+                ToastService.ShowSuccess("Lease offer declined.");
+                showDeclineModal = false;
+                await LoadLeaseOffer();
+            }
+            else
+            {
+                errorMessage = string.Join(", ", result.Errors);
+            }
         }
         catch (Exception ex)
         {
@@ -615,5 +558,17 @@
         {
             Navigation.NavigateTo("/propertymanagement/applications");
         }
+    }
+
+    public class DepositPaymentModel
+    {
+        [Required(ErrorMessage = "Payment method is required")]
+        public string PaymentMethod { get; set; } = string.Empty;
+
+        public string? ReferenceNumber { get; set; }
+
+        public DateTime PaymentDate { get; set; } = DateTime.Today;
+
+        public string? Notes { get; set; }
     }
 }

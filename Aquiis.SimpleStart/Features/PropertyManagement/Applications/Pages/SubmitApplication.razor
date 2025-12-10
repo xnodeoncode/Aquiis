@@ -1,14 +1,17 @@
-@page "/propertymanagement/prospects/{ProspectId:int}/submit-application"
+@page "/propertymanagement/prospects/{ProspectId:guid}/submit-application"
 
 @using Aquiis.SimpleStart.Core.Entities
+@using Aquiis.SimpleStart.Core.Validation
 @using Aquiis.SimpleStart.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
 @using Aquiis.SimpleStart.Application.Services.PdfGenerators
+@using Aquiis.SimpleStart.Application.Services.Workflows
 @using Aquiis.SimpleStart.Core.Constants
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 
 @inject PropertyManagementService PropertyService
+@inject ApplicationWorkflowService WorkflowService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserContextService UserContext
@@ -77,8 +80,9 @@
                             </div>
                         }
 
-                        <EditForm Model="applicationModel" OnValidSubmit="HandleSubmitApplication" FormName="submit-application">
+                        <EditForm Model="applicationModel" OnValidSubmit="HandleSubmitApplication">
                             <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger" />
 
                             <div class="mb-4">
                                 <h5 class="border-bottom pb-2">Applicant Information</h5>
@@ -102,7 +106,7 @@
                                 <h5 class="border-bottom pb-2">Property Selection</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Property *</label>
-                                    <InputSelect @bind-Value="applicationModel.PropertyId" class="form-select" @onchange="OnPropertyChanged">
+                                    <InputSelect @bind-Value="applicationModel.PropertyId" @bind-Value:after="UpdateSelectedProperty" class="form-select">
                                         <option value="0">Select a property...</option>
                                         @foreach (var property in availableProperties)
                                         {
@@ -359,7 +363,7 @@
 
 @code {
     [Parameter]
-    public int ProspectId { get; set; }
+    public Guid ProspectId { get; set; }
 
     private ProspectiveTenant? prospect;
     private RentalApplication? existingApplication;
@@ -372,7 +376,7 @@
     private decimal applicationFee = 50.00m;
     private string errorMessage = string.Empty;
     private string userId = string.Empty;
-    private string organizationId = string.Empty;
+    private Guid organizationId = Guid.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -380,7 +384,7 @@
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? string.Empty;
+            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? Guid.Empty;
 
             await LoadData();
         }
@@ -426,37 +430,55 @@
         }
     }
 
-    private async Task OnPropertyChanged(ChangeEventArgs e)
+    private void UpdateSelectedProperty()
     {
-        if (int.TryParse(e.Value?.ToString(), out int propertyId) && propertyId > 0)
+        if (applicationModel.PropertyId != Guid.Empty)
         {
-            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == propertyId);
+            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == applicationModel.PropertyId);
         }
         else
         {
             selectedProperty = null;
         }
+    }
+
+    private async Task OnPropertyChanged(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out Guid propertyId) && propertyId != Guid.Empty)
+        {
+            applicationModel.PropertyId = propertyId;
+            selectedProperty = availableProperties.FirstOrDefault(p => p.Id == propertyId);
+        }
+        else
+        {
+            applicationModel.PropertyId = Guid.Empty;
+            selectedProperty = null;
+        }
         StateHasChanged();
         await Task.CompletedTask;
-
     }
 
     private async Task HandleSubmitApplication()
     {
-        if (prospect == null || selectedProperty == null) return;
+        Console.WriteLine("HandleSubmitApplication called");
+        
+        if (prospect == null || selectedProperty == null)
+        {
+            errorMessage = prospect == null ? "Prospect not found" : "Please select a property";
+            Console.WriteLine($"Validation failed: {errorMessage}");
+            return;
+        }
 
         isSubmitting = true;
         errorMessage = string.Empty;
 
         try
         {
-            var application = new RentalApplication
+            Console.WriteLine($"Submitting application for prospect {ProspectId}, property {applicationModel.PropertyId}");
+            
+            // Use ApplicationWorkflowService to submit application
+            var submissionModel = new Aquiis.SimpleStart.Application.Services.Workflows.ApplicationSubmissionModel
             {
-                ProspectiveTenantId = ProspectId,
-                PropertyId = applicationModel.PropertyId,
-                AppliedOn = DateTime.UtcNow,
-                Status = ApplicationConstants.ApplicationStatuses.Submitted,
-                
                 // Current Address
                 CurrentAddress = applicationModel.CurrentAddress,
                 CurrentCity = applicationModel.CurrentCity,
@@ -482,20 +504,30 @@
                 
                 // Fees
                 ApplicationFee = applicationFee,
-                ApplicationFeePaid = false, // Will be paid separately
-                
-                OrganizationId = organizationId
-                
+                ApplicationFeePaid = false // Will be paid separately
             };
 
-            var createdApplication = await PropertyService.CreateRentalApplicationAsync(application);
+            var result = await WorkflowService.SubmitApplicationAsync(
+                ProspectId, 
+                applicationModel.PropertyId, 
+                submissionModel);
 
-            ToastService.ShowSuccess("Application submitted successfully! You will be notified once reviewed.");
-            Navigation.NavigateTo($"/PropertyManagement/ProspectiveTenants/{ProspectId}");
+            Console.WriteLine($"Workflow result: Success={result.Success}, Errors={string.Join(", ", result.Errors)}");
+
+            if (result.Success)
+            {
+                ToastService.ShowSuccess("Application submitted successfully! You will be notified once reviewed.");
+                Navigation.NavigateTo($"/PropertyManagement/ProspectiveTenants/{ProspectId}");
+            }
+            else
+            {
+                errorMessage = string.Join(", ", result.Errors);
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error submitting application: {ex.Message}";
+            Console.WriteLine($"Exception in HandleSubmitApplication: {ex}");
         }
         finally
         {
@@ -510,9 +542,8 @@
 
     public class ApplicationSubmissionModel
     {
-        [Required(ErrorMessage = "Please select a property")]
-        [Range(1, int.MaxValue, ErrorMessage = "Please select a property")]
-        public int PropertyId { get; set; }
+        [RequiredGuid(ErrorMessage = "Please select a property")]
+        public Guid PropertyId { get; set; }
 
         [Required]
         [StringLength(200)]

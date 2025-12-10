@@ -43,6 +43,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 else
                 {
                     await transaction.RollbackAsync();
+                    // Clear the ChangeTracker to discard all tracked changes
+                    _context.ChangeTracker.Clear();
                 }
 
                 return result;
@@ -50,7 +52,21 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return WorkflowResult<T>.Fail($"Workflow operation failed: {ex.Message}");
+                // Clear the ChangeTracker to discard all tracked changes
+                _context.ChangeTracker.Clear();
+                
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $" | Inner: {ex.InnerException.Message}";
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage += $" | Inner(2): {ex.InnerException.InnerException.Message}";
+                    }
+                }
+                Console.WriteLine($"Workflow Error: {errorMessage}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return WorkflowResult<T>.Fail($"Workflow operation failed: {errorMessage}");
             }
         }
 
@@ -74,6 +90,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 else
                 {
                     await transaction.RollbackAsync();
+                    // Clear the ChangeTracker to discard all tracked changes
+                    _context.ChangeTracker.Clear();
                 }
 
                 return result;
@@ -81,7 +99,21 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return WorkflowResult.Fail($"Workflow operation failed: {ex.Message}");
+                // Clear the ChangeTracker to discard all tracked changes
+                _context.ChangeTracker.Clear();
+                
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $" | Inner: {ex.InnerException.Message}";
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage += $" | Inner(2): {ex.InnerException.InnerException.Message}";
+                    }
+                }
+                Console.WriteLine($"Workflow Error: {errorMessage}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return WorkflowResult.Fail($"Workflow operation failed: {errorMessage}");
             }
         }
 
@@ -90,7 +122,7 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
         /// </summary>
         protected async Task LogTransitionAsync(
             string entityType,
-            int entityId,
+            Guid entityId,
             string? fromStatus,
             string toStatus,
             string action,
@@ -102,6 +134,7 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             
             var auditLog = new WorkflowAuditLog
             {
+                Id = Guid.NewGuid(),
                 EntityType = entityType,
                 EntityId = entityId,
                 FromStatus = fromStatus,
@@ -110,7 +143,7 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 Reason = reason,
                 PerformedBy = userId,
                 PerformedOn = DateTime.UtcNow,
-                OrganizationId = int.Parse(activeOrgId ?? "0"),
+                OrganizationId = activeOrgId.HasValue ? activeOrgId.Value : Guid.Empty,
                 Metadata = metadata != null ? JsonSerializer.Serialize(metadata) : null,
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = userId
@@ -125,13 +158,13 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
         /// </summary>
         public async Task<List<WorkflowAuditLog>> GetAuditHistoryAsync(
             string entityType,
-            int entityId)
+            Guid entityId)
         {
             var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
             
             return await _context.WorkflowAuditLogs
                 .Where(w => w.EntityType == entityType && w.EntityId == entityId)
-                .Where(w => w.OrganizationId == int.Parse(activeOrgId ?? "0"))
+                .Where(w => w.OrganizationId == activeOrgId)
                 .OrderBy(w => w.PerformedOn)
                 .ToListAsync();
         }
@@ -141,15 +174,15 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
         /// </summary>
         protected async Task<bool> ValidateOrganizationOwnershipAsync<TEntity>(
             IQueryable<TEntity> query,
-            int entityId) where TEntity : class
+            Guid entityId) where TEntity : class
         {
             var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
             
             // This assumes entities have OrganizationId property
             // Override in derived classes if different validation needed
             var entity = await query
-                .Where(e => EF.Property<int>(e, "Id") == entityId)
-                .Where(e => EF.Property<int>(e, "OrganizationId") == int.Parse(activeOrgId ?? "0"))
+                .Where(e => EF.Property<Guid>(e, "Id") == entityId)
+                .Where(e => EF.Property<Guid>(e, "OrganizationId") == activeOrgId)
                 .Where(e => EF.Property<bool>(e, "IsDeleted") == false)
                 .FirstOrDefaultAsync();
 
@@ -167,10 +200,9 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
         /// <summary>
         /// Gets the active organization ID from the user context.
         /// </summary>
-        protected async Task<int> GetActiveOrganizationIdAsync()
+        protected async Task<Guid> GetActiveOrganizationIdAsync()
         {
-            var activeOrgId = await _userContext.GetActiveOrganizationIdAsync();
-            return int.Parse(activeOrgId ?? "0");
+            return await _userContext.GetActiveOrganizationIdAsync() ?? Guid.Empty;
         }
     }
 }

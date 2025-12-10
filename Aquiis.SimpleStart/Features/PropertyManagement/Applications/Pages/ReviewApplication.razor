@@ -1,14 +1,16 @@
-@page "/propertymanagement/applications/{ApplicationId:int}/review"
+@page "/propertymanagement/applications/{ApplicationId:guid}/review"
 
 @using Aquiis.SimpleStart.Core.Entities
 @using Aquiis.SimpleStart.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
 @using Aquiis.SimpleStart.Application.Services.PdfGenerators
+@using Aquiis.SimpleStart.Application.Services.Workflows
 @using Aquiis.SimpleStart.Core.Constants
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 
 @inject PropertyManagementService PropertyService
+@inject ApplicationWorkflowService WorkflowService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserContextService UserContext
@@ -399,7 +401,9 @@
                                 <i class="bi bi-arrow-left me-2"></i>Back
                             </button>
                             <div>
-                                @if (application.Status == ApplicationConstants.ApplicationStatuses.Submitted && screening == null)
+                                @if ((application.Status == ApplicationConstants.ApplicationStatuses.Submitted || 
+                                      application.Status == ApplicationConstants.ApplicationStatuses.UnderReview) && 
+                                     screening == null && application.ApplicationFeePaid)
                                 {
                                     <button type="button" class="btn btn-info me-2" @onclick="InitiateScreening">
                                         <i class="bi bi-search me-2"></i>Initiate Screening
@@ -762,7 +766,7 @@
 
 @code {
     [Parameter]
-    public int ApplicationId { get; set; }
+    public Guid ApplicationId { get; set; }
 
     private RentalApplication? application;
     private ApplicationScreening? screening;
@@ -782,7 +786,7 @@
     private string denyReason = string.Empty;
     private string withdrawReason = string.Empty;
     private string userId = string.Empty;
-    private string organizationId = string.Empty;
+    private Guid organizationId = Guid.Empty;
     private FeePaymentModel feePaymentModel = new();
     private ScreeningDispositionModel backgroundCheckModel = new();
     private ScreeningDispositionModel creditCheckModel = new();
@@ -793,7 +797,7 @@
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? string.Empty;
+            organizationId = await UserContext.GetActiveOrganizationIdAsync() ?? Guid.Empty;
 
             await LoadApplication();
         }
@@ -830,23 +834,19 @@
 
         try
         {
-            var newScreening = new ApplicationScreening
-            {
-                RentalApplicationId = ApplicationId,
-                BackgroundCheckRequested = true,
-                BackgroundCheckRequestedOn = DateTime.UtcNow,
-                CreditCheckRequested = true,
-                CreditCheckRequestedOn = DateTime.UtcNow,
-                OverallResult = ApplicationConstants.ScreeningResults.Pending,
-                OrganizationId = organizationId,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = userId
-            };
-
-            screening = await PropertyService.CreateScreeningAsync(newScreening);
-            successMessage = "Screening initiated successfully! Background and credit checks have been requested.";
+            // Request both background and credit checks by default
+            var result = await WorkflowService.InitiateScreeningAsync(ApplicationId, true, true);
             
-            await LoadApplication();
+            if (result.Success)
+            {
+                screening = result.Data;
+                successMessage = "Screening initiated successfully! Background and credit checks have been requested.";
+                await LoadApplication();
+            }
+            else
+            {
+                errorMessage = string.Join(", ", result.Errors);
+            }
         }
         catch (Exception ex)
         {
@@ -867,16 +867,16 @@
 
         try
         {
-            var result = await PropertyService.ApproveApplicationAsync(ApplicationId);
+            var result = await WorkflowService.ApproveApplicationAsync(ApplicationId);
             
-            if (result)
+            if (result.Success)
             {
                 ToastService.ShowSuccess("Application approved! You can now generate a lease offer.");
                 Navigation.NavigateTo($"/propertymanagement/applications/{ApplicationId}/generate-lease-offer");
             }
             else
             {
-                errorMessage = "Failed to approve application.";
+                errorMessage = string.Join(", ", result.Errors);
             }
         }
         catch (Exception ex)
@@ -898,9 +898,9 @@
 
         try
         {
-            var result = await PropertyService.DenyApplicationAsync(ApplicationId, denyReason);
+            var result = await WorkflowService.DenyApplicationAsync(ApplicationId, denyReason);
             
-            if (result)
+            if (result.Success)
             {
                 ToastService.ShowInfo("Application denied.");
                 showDenyModal = false;
@@ -908,7 +908,7 @@
             }
             else
             {
-                errorMessage = "Failed to deny application.";
+                errorMessage = string.Join(", ", result.Errors);
             }
         }
         catch (Exception ex)
@@ -930,9 +930,9 @@
 
         try
         {
-            var result = await PropertyService.WithdrawApplicationAsync(ApplicationId, withdrawReason);
+            var result = await WorkflowService.WithdrawApplicationAsync(ApplicationId, withdrawReason ?? "Withdrawn by applicant");
             
-            if (result)
+            if (result.Success)
             {
                 ToastService.ShowInfo("Application withdrawn.");
                 showWithdrawModal = false;
@@ -940,7 +940,7 @@
             }
             else
             {
-                errorMessage = "Failed to withdraw application.";
+                errorMessage = string.Join(", ", result.Errors);
             }
         }
         catch (Exception ex)
@@ -966,6 +966,12 @@
             application.ApplicationFeePaid = true;
             application.ApplicationFeePaidOn = feePaymentModel.PaymentDate;
             application.ApplicationFeePaymentMethod = feePaymentModel.PaymentMethod;
+            
+            // Transition to UnderReview status once fee is paid
+            if (application.Status == ApplicationConstants.ApplicationStatuses.Submitted)
+            {
+                application.Status = ApplicationConstants.ApplicationStatuses.UnderReview;
+            }
 
             await PropertyService.UpdateRentalApplicationAsync(application);
 

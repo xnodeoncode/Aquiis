@@ -1,5 +1,43 @@
 # Aquiis Property Management System - AI Agent Instructions
 
+## Development Workflow
+
+### Feature Branch Strategy
+
+**CRITICAL: Always develop new features on feature branches, never directly on main**
+
+1. **Create Feature Branch**: Before starting any new phase or major feature:
+   ```bash
+   git checkout -b Phase-X-Feature-Name
+   ```
+   - Use descriptive names: `Phase-6-Workflow-Services-and-Automation`
+   - Branch from `main` to ensure clean starting point
+
+2. **Development on Feature Branch**:
+   - All commits for the feature go to the feature branch
+   - Build and test frequently to ensure no breaking changes
+   - Keep commits focused and atomic
+
+3. **Merge to Main** (only when complete and error-free):
+   ```bash
+   # Ensure build succeeds with 0 errors
+   dotnet build Aquiis.sln
+   
+   # Switch to main and merge
+   git checkout main
+   git merge Phase-X-Feature-Name
+   
+   # Push to remote
+   git push origin main
+   ```
+
+4. **Protection**: Main branch should always be production-ready
+   - Never commit directly to main during active development
+   - Only merge tested, working code
+   - If build fails, fix on feature branch before merging
+
+---
+
 ## Project Overview
 
 Aquiis is a multi-tenant property management system built with **ASP.NET Core 9.0 + Blazor Server**. It manages properties, tenants, leases, invoices, payments, documents, inspections, and maintenance requests with role-based access control.
