@@ -501,9 +501,7 @@ namespace Aquiis.SimpleStart.Application.Services
             .Where(l => l.PropertyId == propertyId && !l.IsDeleted && l.Property.OrganizationId == organizationId)
             .ToListAsync();
             
-            return leases
-                .Where(l => l.IsActive)
-                .ToList();
+            return leases;
         }
 
         public async Task<List<Lease>> GetCurrentAndUpcomingLeasesByPropertyIdAsync(Guid propertyId)

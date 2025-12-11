@@ -461,7 +461,7 @@ else
     {
         if (selectedPropertyId != Guid.Empty)
         {
-            leases = await PropertyManagementService.GetActiveLeasesByPropertyIdAsync(selectedPropertyId);
+            leases = await PropertyManagementService.GetCurrentAndUpcomingLeasesByPropertyIdAsync(selectedPropertyId);
         }
         else
         {

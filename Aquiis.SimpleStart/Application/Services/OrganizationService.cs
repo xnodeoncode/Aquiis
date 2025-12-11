@@ -118,6 +118,7 @@ namespace Aquiis.SimpleStart.Application.Services
             // add organization settings record with defaults
             var settings = new OrganizationSettings
                 {
+                    Id = Guid.NewGuid(),
                     OrganizationId = organization.Id,
                     Name = organization.Name,
                     LateFeeEnabled = true,

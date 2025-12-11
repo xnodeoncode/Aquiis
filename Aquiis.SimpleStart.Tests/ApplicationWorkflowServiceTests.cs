@@ -107,10 +107,15 @@ public class ApplicationWorkflowServiceTests
 
         // Assert
         Assert.NotNull(state.Application);
+        Assert.NotEqual(Guid.Empty, state.Application.Id);
         Assert.NotNull(state.Prospect);
+        Assert.NotEqual(Guid.Empty, state.Prospect.Id);
         Assert.NotNull(state.Property);
+        Assert.NotEqual(Guid.Empty, state.Property.Id);
         Assert.NotNull(state.Screening);
+        Assert.NotEqual(Guid.Empty, state.Screening.Id);
         Assert.NotEmpty(state.AuditHistory);
+        Assert.All(state.AuditHistory, item => Assert.NotEqual(Guid.Empty, item.Id));
 
     }
 }

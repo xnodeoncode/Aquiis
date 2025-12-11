@@ -303,6 +303,7 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                 // Create screening record
                 var screening = new ApplicationScreening
                 {
+                    Id = Guid.NewGuid(),
                     OrganizationId = orgId,
                     RentalApplicationId = applicationId,
                     BackgroundCheckRequested = requestBackgroundCheck,

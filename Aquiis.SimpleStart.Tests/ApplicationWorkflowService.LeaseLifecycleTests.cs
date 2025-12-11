@@ -91,11 +91,13 @@ public class ApplicationWorkflowServiceLeaseLifecycleTests
 
         var submitResult = await workflowService.SubmitApplicationAsync(prospect.Id, property.Id, submissionModel);
         Assert.True(submitResult.Success, string.Join(";", submitResult.Errors));
+        Assert.NotEqual(Guid.Empty, submitResult.Data!.Id);
         var application = submitResult.Data!;
 
         // Initiate screening and complete it as Passed
         var screeningResult = await workflowService.InitiateScreeningAsync(application.Id, true, true);
         Assert.True(screeningResult.Success, string.Join(";", screeningResult.Errors));
+        Assert.NotEqual(Guid.Empty, screeningResult.Data!.Id);
 
         var completeScreeningResult = await workflowService.CompleteScreeningAsync(application.Id, new ScreeningResultModel
         {
@@ -125,6 +127,7 @@ public class ApplicationWorkflowServiceLeaseLifecycleTests
         var generateResult = await workflowService.GenerateLeaseOfferAsync(application.Id, offerModel);
         Assert.True(generateResult.Success, string.Join(";", generateResult.Errors));
         var leaseOffer = generateResult.Data!;
+        Assert.NotEqual(Guid.Empty, leaseOffer.Id);
 
         // Accept lease offer
         var acceptResult = await workflowService.AcceptLeaseOfferAsync(leaseOffer.Id, "Card", DateTime.UtcNow);
@@ -134,10 +137,12 @@ public class ApplicationWorkflowServiceLeaseLifecycleTests
         // Assert: Lease exists in DB, Tenant created, Property status Occupied
         var dbLease = await context.Leases.Include(l => l.Tenant).FirstOrDefaultAsync(l => l.Id == lease.Id);
         Assert.NotNull(dbLease);
+        Assert.NotEqual(Guid.Empty, dbLease.Id);
         Assert.NotNull(dbLease!.Tenant);
 
         var dbProperty = await context.Properties.FirstOrDefaultAsync(p => p.Id == property.Id);
         Assert.NotNull(dbProperty);
+        Assert.NotEqual(Guid.Empty, dbProperty.Id);
         Assert.Equal(ApplicationConstants.PropertyStatuses.Occupied, dbProperty!.Status);
 
         // Audit logs should contain LeaseOffer Accept entry
