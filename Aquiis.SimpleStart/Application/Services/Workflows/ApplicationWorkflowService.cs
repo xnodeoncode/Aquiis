@@ -446,8 +446,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                     application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
                 }
 
-                // Check if property status should roll back
-                await RollbackPropertyStatusIfNeededAsync(application.PropertyId);
+                // Check if property status should roll back (exclude this application which is being denied)
+                await RollbackPropertyStatusIfNeededAsync(application.PropertyId, excludeApplicationId: applicationId);
 
                 await LogTransitionAsync(
                     "RentalApplication",
@@ -509,8 +509,8 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                     application.ProspectiveTenant.LastModifiedOn = DateTime.UtcNow;
                 }
 
-                // Check if property status should roll back
-                await RollbackPropertyStatusIfNeededAsync(application.PropertyId);
+                // Check if property status should roll back (exclude this application which is being withdrawn)
+                await RollbackPropertyStatusIfNeededAsync(application.PropertyId, excludeApplicationId: applicationId);
 
                 await LogTransitionAsync(
                     "RentalApplication",
@@ -935,8 +935,11 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                     }
                 }
 
-                // Rollback property status
-                await RollbackPropertyStatusIfNeededAsync(leaseOffer.PropertyId);
+                // Rollback property status (exclude this lease offer which is being declined and the application being updated)
+                await RollbackPropertyStatusIfNeededAsync(
+                    leaseOffer.PropertyId, 
+                    excludeApplicationId: application?.Id,
+                    excludeLeaseOfferId: leaseOfferId);
 
                 await LogTransitionAsync(
                     "LeaseOffer",
@@ -1002,8 +1005,11 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                     }
                 }
 
-                // Rollback property status
-                await RollbackPropertyStatusIfNeededAsync(leaseOffer.PropertyId);
+                // Rollback property status (exclude this lease offer which is expiring and the application being updated)
+                await RollbackPropertyStatusIfNeededAsync(
+                    leaseOffer.PropertyId, 
+                    excludeApplicationId: application?.Id,
+                    excludeLeaseOfferId: leaseOfferId);
 
                 await LogTransitionAsync(
                     "LeaseOffer",
@@ -1060,21 +1066,32 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
             else if (property.Status == ApplicationConstants.PropertyStatuses.Occupied)
                 errors.Add("Property is currently occupied");
 
-            // Check for existing active application
-            if (prospect != null)
+            // Check for existing active application by identification number and state
+            // A prospect can have multiple applications over time, but only one "active" (non-disposed) application
+            if (prospect != null && !string.IsNullOrEmpty(prospect.IdentificationNumber) && !string.IsNullOrEmpty(prospect.IdentificationState))
             {
-                var existingApp = await _context.RentalApplications
+                // Terminal/disposed statuses - application is no longer active
+                var disposedStatuses = new[] {
+                    ApplicationConstants.ApplicationStatuses.Approved,
+                    ApplicationConstants.ApplicationStatuses.Denied,
+                    ApplicationConstants.ApplicationStatuses.Withdrawn,
+                    ApplicationConstants.ApplicationStatuses.Expired,
+                    ApplicationConstants.ApplicationStatuses.LeaseDeclined,
+                    ApplicationConstants.ApplicationStatuses.LeaseAccepted
+                };
+
+                var existingActiveApp = await _context.RentalApplications
+                    .Include(a => a.ProspectiveTenant)
                     .AnyAsync(a =>
-                        a.ProspectiveTenantId == prospectId &&
+                        a.ProspectiveTenant != null &&
+                        a.ProspectiveTenant.IdentificationNumber == prospect.IdentificationNumber &&
+                        a.ProspectiveTenant.IdentificationState == prospect.IdentificationState &&
                         a.OrganizationId == orgId &&
-                        a.Status != ApplicationConstants.ApplicationStatuses.Denied &&
-                        a.Status != ApplicationConstants.ApplicationStatuses.Withdrawn &&
-                        a.Status != ApplicationConstants.ApplicationStatuses.Expired &&
-                        a.Status != ApplicationConstants.ApplicationStatuses.LeaseDeclined &&
+                        !disposedStatuses.Contains(a.Status) &&
                         !a.IsDeleted);
 
-                if (existingApp)
-                    errors.Add("Prospect already has an active application");
+                if (existingActiveApp)
+                    errors.Add("An active application already exists for this identification");
             }
 
             return errors.Any()
@@ -1084,9 +1101,15 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
 
         /// <summary>
         /// Checks if property status should roll back when an application is denied/withdrawn.
-        /// Rolls back to Available if no active applications remain.
+        /// Rolls back to Available if no active applications or pending lease offers remain.
         /// </summary>
-        private async Task RollbackPropertyStatusIfNeededAsync(Guid propertyId)
+        /// <param name="propertyId">The property to check</param>
+        /// <param name="excludeApplicationId">Optional application ID to exclude from the active apps check (for the app being denied/withdrawn)</param>
+        /// <param name="excludeLeaseOfferId">Optional lease offer ID to exclude from the pending offers check (for the offer being declined)</param>
+        private async Task RollbackPropertyStatusIfNeededAsync(
+            Guid propertyId, 
+            Guid? excludeApplicationId = null,
+            Guid? excludeLeaseOfferId = null)
         {
             var orgId = await GetActiveOrganizationIdAsync();
             var userId = await GetCurrentUserIdAsync();
@@ -1105,15 +1128,27 @@ namespace Aquiis.SimpleStart.Application.Services.Workflows
                     a.PropertyId == propertyId &&
                     a.OrganizationId == orgId &&
                     activeStates.Contains(a.Status) &&
+                    (excludeApplicationId == null || a.Id != excludeApplicationId) &&
                     !a.IsDeleted);
 
-            // If no active applications remain, roll back property to Available
-            if (!hasActiveApplications)
+            // Also check for pending lease offers
+            var hasPendingLeaseOffers = await _context.LeaseOffers
+                .AnyAsync(lo =>
+                    lo.PropertyId == propertyId &&
+                    lo.OrganizationId == orgId &&
+                    lo.Status == "Pending" &&
+                    (excludeLeaseOfferId == null || lo.Id != excludeLeaseOfferId) &&
+                    !lo.IsDeleted);
+
+            // If no active applications or pending lease offers remain, roll back property to Available
+            if (!hasActiveApplications && !hasPendingLeaseOffers)
             {
                 var property = await _context.Properties
                     .FirstOrDefaultAsync(p => p.Id == propertyId && p.OrganizationId == orgId);
 
-                if (property != null && property.Status == ApplicationConstants.PropertyStatuses.ApplicationPending)
+                if (property != null && 
+                    (property.Status == ApplicationConstants.PropertyStatuses.ApplicationPending ||
+                     property.Status == ApplicationConstants.PropertyStatuses.LeasePending))
                 {
                     property.Status = ApplicationConstants.PropertyStatuses.Available;
                     property.LastModifiedBy = userId;

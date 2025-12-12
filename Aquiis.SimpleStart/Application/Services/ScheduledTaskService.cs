@@ -2,6 +2,7 @@ using Aquiis.SimpleStart.Core.Constants;
 using Aquiis.SimpleStart.Infrastructure.Data;
 using Aquiis.SimpleStart.Core.Entities;
 using Aquiis.SimpleStart.Shared.Services;
+using Aquiis.SimpleStart.Application.Services.Workflows;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquiis.SimpleStart.Application.Services
@@ -113,6 +114,15 @@ namespace Aquiis.SimpleStart.Application.Services
 
                         // Task 4: Check for expiring leases and send renewal notifications
                         await CheckLeaseRenewals(dbContext, organizationId, stoppingToken);
+
+                        // Task 5: Expire overdue leases using workflow service (with audit logging)
+                        var expiredLeaseCount = await ExpireOverdueLeases(scope, organizationId);
+                        if (expiredLeaseCount > 0)
+                        {
+                            _logger.LogInformation(
+                                "Expired {Count} overdue lease(s) for organization {OrganizationId}",
+                                expiredLeaseCount, organizationId);
+                        }
                     }
                 }
             }
@@ -351,42 +361,22 @@ namespace Aquiis.SimpleStart.Application.Services
                         lease.EndDate.ToString("MMM dd, yyyy"));
                 }
 
-                // Update status for expired leases
-                var expiredLeases = await dbContext.Leases
-                    .Where(l => !l.IsDeleted &&
-                               l.OrganizationId == organizationId &&
-                               l.Status == "Active" &&
-                               l.EndDate < today &&
-                               (l.RenewalStatus == null || l.RenewalStatus == "Pending"))
-                    .ToListAsync(stoppingToken);
-
-                foreach (var lease in expiredLeases)
-                {
-                    lease.Status = "Expired";
-                    lease.RenewalStatus = "Expired";
-                    lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
-
-                    _logger.LogInformation(
-                        "Lease expired: Lease ID {LeaseId}, End Date: {EndDate}",
-                        lease.Id,
-                        lease.EndDate.ToString("MMM dd, yyyy"));
-                }
+                // Note: Lease expiration is now handled by ExpireOverdueLeases() 
+                // which uses LeaseWorkflowService for proper audit logging
 
                 var totalUpdated = leasesExpiring90Days.Count + leasesExpiring60Days.Count + 
-                                  leasesExpiring30Days.Count + expiredLeases.Count;
+                                  leasesExpiring30Days.Count;
 
                 if (totalUpdated > 0)
                 {
                     await dbContext.SaveChangesAsync(stoppingToken);
                     _logger.LogInformation(
-                        "Processed {Count} lease renewals for organization {OrganizationId}: {Initial} initial notifications, {Reminder60} 60-day reminders, {Reminder30} 30-day reminders, {Expired} expired",
+                        "Processed {Count} lease renewal notifications for organization {OrganizationId}: {Initial} initial, {Reminder60} 60-day, {Reminder30} 30-day reminders",
                         totalUpdated,
                         organizationId,
                         leasesExpiring90Days.Count,
                         leasesExpiring60Days.Count,
-                        leasesExpiring30Days.Count,
-                        expiredLeases.Count);
+                        leasesExpiring30Days.Count);
                 }
             }
             catch (Exception ex)
@@ -449,7 +439,21 @@ namespace Aquiis.SimpleStart.Application.Services
                         expiredApplicationsCount);
                 }
 
-                // You can add more daily tasks here:
+                // Check for expired lease offers (uses workflow service for audit logging)
+                var expiredLeaseOffersCount = await ExpireOldLeaseOffers(scope);
+                if (expiredLeaseOffersCount > 0)
+                {
+                    _logger.LogInformation("Expired {Count} lease offer(s) that passed their expiration date", 
+                        expiredLeaseOffersCount);
+                }
+
+                // Check for year-end dividend calculation (runs in first week of January)
+                if (today.Month == 1 && today.Day <= 7)
+                {
+                    await ProcessYearEndDividends(scope, today.Year - 1);
+                }
+
+                // Additional daily tasks:
                 // - Generate daily reports
                 // - Send payment reminders
                 // - Check for overdue invoices
@@ -596,6 +600,182 @@ namespace Aquiis.SimpleStart.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error expiring old applications");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Expires lease offers that have passed their expiration date.
+        /// Uses ApplicationWorkflowService for proper audit logging.
+        /// </summary>
+        private async Task<int> ExpireOldLeaseOffers(IServiceScope scope)
+        {
+            try
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var workflowService = scope.ServiceProvider.GetRequiredService<ApplicationWorkflowService>();
+
+                // Find all pending lease offers that have expired
+                var expiredOffers = await dbContext.LeaseOffers
+                    .Where(lo => !lo.IsDeleted &&
+                                lo.Status == "Pending" &&
+                                lo.ExpiresOn < DateTime.UtcNow)
+                    .ToListAsync();
+
+                var expiredCount = 0;
+
+                foreach (var offer in expiredOffers)
+                {
+                    try
+                    {
+                        var result = await workflowService.ExpireLeaseOfferAsync(offer.Id);
+                        
+                        if (result.Success)
+                        {
+                            expiredCount++;
+                            _logger.LogInformation(
+                                "Expired lease offer {LeaseOfferId} for property {PropertyId} (Expired on: {ExpirationDate})",
+                                offer.Id,
+                                offer.PropertyId,
+                                offer.ExpiresOn.ToString("yyyy-MM-dd"));
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "Failed to expire lease offer {LeaseOfferId}: {Errors}",
+                                offer.Id,
+                                string.Join(", ", result.Errors));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error expiring lease offer {LeaseOfferId}", offer.Id);
+                    }
+                }
+
+                return expiredCount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error expiring old lease offers");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Processes year-end security deposit dividend calculations.
+        /// Runs in the first week of January for the previous year.
+        /// </summary>
+        private async Task ProcessYearEndDividends(IServiceScope scope, int year)
+        {
+            try
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var securityDepositService = scope.ServiceProvider.GetRequiredService<SecurityDepositService>();
+
+                // Get all organizations that have security deposit investment enabled
+                var organizations = await dbContext.OrganizationSettings
+                    .Where(s => !s.IsDeleted && s.SecurityDepositInvestmentEnabled)
+                    .Select(s => s.OrganizationId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var organizationId in organizations)
+                {
+                    try
+                    {
+                        // Check if pool exists and has performance recorded
+                        var pool = await dbContext.SecurityDepositInvestmentPools
+                            .FirstOrDefaultAsync(p => p.OrganizationId == organizationId &&
+                                                     p.Year == year &&
+                                                     !p.IsDeleted);
+
+                        if (pool == null)
+                        {
+                            _logger.LogInformation(
+                                "No investment pool found for organization {OrganizationId} for year {Year}",
+                                organizationId, year);
+                            continue;
+                        }
+
+                        if (pool.Status == "Distributed" || pool.Status == "Closed")
+                        {
+                            _logger.LogInformation(
+                                "Dividends already processed for organization {OrganizationId} for year {Year}",
+                                organizationId, year);
+                            continue;
+                        }
+
+                        if (pool.TotalEarnings == 0)
+                        {
+                            _logger.LogInformation(
+                                "No earnings recorded for organization {OrganizationId} for year {Year}. " +
+                                "Please record investment performance before dividend calculation.",
+                                organizationId, year);
+                            continue;
+                        }
+
+                        // Calculate dividends
+                        var dividends = await securityDepositService.CalculateDividendsAsync(year);
+
+                        if (dividends.Any())
+                        {
+                            _logger.LogInformation(
+                                "Calculated {Count} dividend(s) for organization {OrganizationId} for year {Year}. " +
+                                "Total tenant share: ${TenantShare:N2}",
+                                dividends.Count,
+                                organizationId,
+                                year,
+                                dividends.Sum(d => d.DividendAmount));
+                        }
+                        else
+                        {
+                            _logger.LogInformation(
+                                "No dividends to calculate for organization {OrganizationId} for year {Year}",
+                                organizationId, year);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "Error processing dividends for organization {OrganizationId} for year {Year}",
+                            organizationId, year);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing year-end dividends for year {Year}", year);
+            }
+        }
+
+        /// <summary>
+        /// Expires leases that have passed their end date using LeaseWorkflowService.
+        /// This provides proper audit logging for lease expiration.
+        /// </summary>
+        private async Task<int> ExpireOverdueLeases(IServiceScope scope, Guid organizationId)
+        {
+            try
+            {
+                var leaseWorkflowService = scope.ServiceProvider.GetRequiredService<LeaseWorkflowService>();
+                var result = await leaseWorkflowService.ExpireOverdueLeaseAsync();
+
+                if (result.Success)
+                {
+                    return result.Data;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to expire overdue leases for organization {OrganizationId}: {Errors}",
+                        organizationId,
+                        string.Join(", ", result.Errors));
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error expiring overdue leases for organization {OrganizationId}", organizationId);
                 return 0;
             }
         }

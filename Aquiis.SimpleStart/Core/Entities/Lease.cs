@@ -75,6 +75,18 @@ namespace Aquiis.SimpleStart.Core.Entities
 
         // Lease Chain Tracking
         public Guid? PreviousLeaseId { get; set; }
+        
+        public int RenewalNumber { get; set; } = 0; // 0 for original, 1 for first renewal, etc.
+
+        // Termination Tracking
+        public DateTime? TerminationNoticedOn { get; set; }
+        
+        public DateTime? ExpectedMoveOutDate { get; set; }
+        
+        public DateTime? ActualMoveOutDate { get; set; }
+        
+        [StringLength(500)]
+        public string? TerminationReason { get; set; }
 
         // Document Tracking
         public Guid? DocumentId { get; set; }

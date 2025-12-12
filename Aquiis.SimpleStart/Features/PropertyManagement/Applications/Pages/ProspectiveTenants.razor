@@ -168,7 +168,8 @@
                     <li class="nav-item">
                         <a class="nav-link @(filterStatus == ApplicationConstants.ProspectiveStatuses.Approved ? "active" : "")" 
                            @onclick='() => SetFilter(ApplicationConstants.ProspectiveStatuses.Approved)' style="cursor: pointer;">
-                            Approved (@prospects.Count(p => p.Status == ApplicationConstants.ProspectiveStatuses.Approved))
+                            Approved (@prospects.Count(p => p.Status == ApplicationConstants.ProspectiveStatuses.Approved || 
+                                                            p.Status == ApplicationConstants.ProspectiveStatuses.ConvertedToTenant))
                         </a>
                     </li>
                 </ul>

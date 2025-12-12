@@ -9,12 +9,13 @@
 @using Aquiis.SimpleStart.Features.PropertyManagement
 @using System.ComponentModel.DataAnnotations
 @using Aquiis.SimpleStart.Application.Services
+@using Aquiis.SimpleStart.Application.Services.Workflows
 @using Aquiis.SimpleStart.Shared.Services
 @using Aquiis.SimpleStart.Application.Services.PdfGenerators
 
 @inject NavigationManager Navigation
 @inject PropertyManagementService PropertyManagementService
-
+@inject LeaseWorkflowService LeaseWorkflowService
 @inject UserContextService UserContextService
 @inject LeaseRenewalPdfGenerator RenewalPdfGenerator
 @inject ToastService ToastService
@@ -329,6 +330,47 @@ else
                     }
                 </div>
             </div>
+
+            @* Lease Lifecycle Management Card *@
+            @if (lease.Status == "Active" || lease.Status == "MonthToMonth" || lease.Status == "NoticeGiven")
+            {
+                <div class="card mt-3 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Lease Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            @if (lease.Status == "Active" || lease.Status == "MonthToMonth")
+                            {
+                                <button class="btn btn-outline-warning" @onclick="() => showTerminationNoticeModal = true">
+                                    <i class="bi bi-calendar-x"></i> Record Termination Notice
+                                </button>
+                                <button class="btn btn-outline-danger" @onclick="() => showEarlyTerminationModal = true">
+                                    <i class="bi bi-x-octagon"></i> Early Termination
+                                </button>
+                                <button class="btn btn-outline-secondary" @onclick="() => showConvertMTMModal = true">
+                                    <i class="bi bi-arrow-repeat"></i> Convert to Month-to-Month
+                                </button>
+                            }
+                            @if (lease.Status == "NoticeGiven")
+                            {
+                                <div class="alert alert-info mb-2">
+                                    <small>
+                                        <strong>Notice Given:</strong> @lease.TerminationNoticedOn?.ToString("MMM dd, yyyy")<br/>
+                                        <strong>Expected Move-Out:</strong> @lease.ExpectedMoveOutDate?.ToString("MMM dd, yyyy")
+                                    </small>
+                                </div>
+                                <button class="btn btn-primary" @onclick="() => showMoveOutModal = true">
+                                    <i class="bi bi-box-seam"></i> Complete Move-Out
+                                </button>
+                                <button class="btn btn-outline-danger" @onclick="() => showEarlyTerminationModal = true">
+                                    <i class="bi bi-x-octagon"></i> Early Termination
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
     <div class="row">
@@ -398,6 +440,216 @@ else
             </div>
         </div>
     }
+
+    @* Termination Notice Modal *@
+    @if (showTerminationNoticeModal && lease != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title"><i class="bi bi-calendar-x"></i> Record Termination Notice</h5>
+                        <button type="button" class="btn-close" @onclick="() => showTerminationNoticeModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Notice Type <span class="text-danger">*</span></label>
+                            <select class="form-select" @bind="terminationNoticeType">
+                                <option value="">Select type...</option>
+                                <option value="Tenant">Tenant Notice (Tenant initiated)</option>
+                                <option value="Landlord">Landlord Notice (Property manager initiated)</option>
+                                <option value="Mutual">Mutual Agreement</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notice Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" @bind="terminationNoticeDate" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Expected Move-Out Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" @bind="terminationExpectedMoveOutDate" />
+                            <small class="text-muted">Must be in the future</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason <span class="text-danger">*</span></label>
+                            <textarea class="form-control" rows="3" @bind="terminationReason"
+                                      placeholder="Provide the reason for termination..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="() => showTerminationNoticeModal = false">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-warning" @onclick="RecordTerminationNotice" 
+                                disabled="@(string.IsNullOrWhiteSpace(terminationNoticeType) || string.IsNullOrWhiteSpace(terminationReason) || isSubmitting)">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Record Notice
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Early Termination Modal *@
+    @if (showEarlyTerminationModal && lease != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-x-octagon"></i> Early Termination</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="() => showEarlyTerminationModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <strong>Warning:</strong> This action will immediately terminate the lease and cannot be undone.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Termination Type <span class="text-danger">*</span></label>
+                            <select class="form-select" @bind="earlyTerminationType">
+                                <option value="">Select type...</option>
+                                <option value="Eviction">Eviction</option>
+                                <option value="Breach">Lease Breach</option>
+                                <option value="Mutual">Mutual Agreement</option>
+                                <option value="Emergency">Emergency</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Effective Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" @bind="earlyTerminationDate" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason <span class="text-danger">*</span></label>
+                            <textarea class="form-control" rows="3" @bind="earlyTerminationReason"
+                                      placeholder="Provide detailed reason for early termination..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="() => showEarlyTerminationModal = false">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="EarlyTerminateLease"
+                                disabled="@(string.IsNullOrWhiteSpace(earlyTerminationType) || string.IsNullOrWhiteSpace(earlyTerminationReason) || isSubmitting)">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Terminate Lease
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Move-Out Completion Modal *@
+    @if (showMoveOutModal && lease != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="bi bi-box-seam"></i> Complete Move-Out</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="() => showMoveOutModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Actual Move-Out Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" @bind="actualMoveOutDate" />
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="moveOutFinalInspection" id="finalInspection" />
+                                <label class="form-check-label" for="finalInspection">
+                                    Final inspection completed
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="moveOutKeysReturned" id="keysReturned" />
+                                <label class="form-check-label" for="keysReturned">
+                                    Keys returned
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" rows="3" @bind="moveOutNotes"
+                                      placeholder="Any notes about the move-out condition..."></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="bi bi-info-circle"></i> This will:
+                                <ul class="mb-0 mt-1">
+                                    <li>Mark the lease as Terminated</li>
+                                    <li>Update property status to Available</li>
+                                    <li>Update tenant active status</li>
+                                </ul>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="() => showMoveOutModal = false">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" @onclick="CompleteMoveOut" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Complete Move-Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Convert to Month-to-Month Modal *@
+    @if (showConvertMTMModal && lease != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-arrow-repeat"></i> Convert to Month-to-Month</h5>
+                        <button type="button" class="btn-close" @onclick="() => showConvertMTMModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>This will convert the lease to a month-to-month arrangement.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Current Monthly Rent</label>
+                            <input type="text" class="form-control" value="@lease.MonthlyRent.ToString("C")" disabled />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Monthly Rent (Optional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" @bind="mtmNewRent" step="0.01" placeholder="Leave empty to keep current rent" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="() => showConvertMTMModal = false">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" @onclick="ConvertToMonthToMonth" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Convert
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -415,10 +667,35 @@ else
     private bool isAuthorized = true;
     private bool isGenerating = false;
     private bool isGeneratingPdf = false;
+    private bool isSubmitting = false;
     private bool showRenewalModal = false;
     private decimal proposedRent = 0;
     private string renewalNotes = "";
     private Document? document = null;
+
+    // Termination Notice state
+    private bool showTerminationNoticeModal = false;
+    private string terminationNoticeType = "";
+    private DateTime terminationNoticeDate = DateTime.Today;
+    private DateTime terminationExpectedMoveOutDate = DateTime.Today.AddDays(30);
+    private string terminationReason = "";
+
+    // Early Termination state
+    private bool showEarlyTerminationModal = false;
+    private string earlyTerminationType = "";
+    private DateTime earlyTerminationDate = DateTime.Today;
+    private string earlyTerminationReason = "";
+
+    // Move-Out state
+    private bool showMoveOutModal = false;
+    private DateTime actualMoveOutDate = DateTime.Today;
+    private bool moveOutFinalInspection = false;
+    private bool moveOutKeysReturned = false;
+    private string moveOutNotes = "";
+
+    // Month-to-Month conversion state
+    private bool showConvertMTMModal = false;
+    private decimal? mtmNewRent = null;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
@@ -593,37 +870,29 @@ else
 
         try
         {
-            // Update current lease status
-            lease.RenewalStatus = "Accepted";
-            lease.RenewalResponseOn = DateTime.UtcNow;
-            lease.Status = "Expired"; // Mark current lease as expired since it's being renewed
-
-            await PropertyManagementService.UpdateLeaseAsync(lease);
-
-            // Create new lease starting from acceptance date
-            var newLeaseStartDate = DateTime.Today; // Start immediately
-            var newLeaseEndDate = newLeaseStartDate.AddYears(1); // 12 months lease
-
-            var newLease = new Lease
+            // Create renewal model with proposed terms
+            var renewalModel = new LeaseRenewalModel
             {
-                PropertyId = lease.PropertyId,
-                TenantId = lease.TenantId,
-                StartDate = newLeaseStartDate,
-                EndDate = newLeaseEndDate,
-                MonthlyRent = lease.ProposedRenewalRent ?? lease.MonthlyRent,
-                SecurityDeposit = lease.SecurityDeposit,
-                Status = "Active",
-                Terms = lease.Terms,
-                Notes = $"Renewed lease from previous lease ID {lease.Id}. Renewal accepted on {DateTime.Now:MMM dd, yyyy}.",
-                PreviousLeaseId = lease.Id
+                NewStartDate = DateTime.Today,
+                NewEndDate = DateTime.Today.AddYears(1),
+                NewMonthlyRent = lease.ProposedRenewalRent ?? lease.MonthlyRent,
+                UpdatedSecurityDeposit = lease.SecurityDeposit,
+                NewTerms = lease.Terms
             };
 
-            await PropertyManagementService.AddLeaseAsync(newLease);
+            var result = await LeaseWorkflowService.RenewLeaseAsync(lease.Id, renewalModel);
 
-            await LoadLease();
-            StateHasChanged();
+            if (result.Success && result.Data != null)
+            {
+                await LoadLease();
+                StateHasChanged();
 
-            ToastService.ShowSuccess($"Renewal accepted! New lease created (ID: {newLease.Id}) from {newLeaseStartDate:MMM dd, yyyy} to {newLeaseEndDate:MMM dd, yyyy}.");
+                ToastService.ShowSuccess($"Renewal accepted! New lease created from {result.Data.StartDate:MMM dd, yyyy} to {result.Data.EndDate:MMM dd, yyyy}.");
+            }
+            else
+            {
+                ToastService.ShowError($"Error accepting renewal: {string.Join(", ", result.Errors)}");
+            }
         }
         catch (Exception ex)
         {
@@ -650,6 +919,192 @@ else
             ToastService.ShowError($"Error updating renewal status: {ex.Message}");
         }
     }
+
+    #region Lease Workflow Methods
+
+    private async Task RecordTerminationNotice()
+    {
+        if (lease == null || string.IsNullOrWhiteSpace(terminationNoticeType) || string.IsNullOrWhiteSpace(terminationReason)) 
+            return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await LeaseWorkflowService.RecordTerminationNoticeAsync(
+                lease.Id,
+                terminationNoticeDate,
+                terminationExpectedMoveOutDate,
+                terminationNoticeType,
+                terminationReason);
+
+            if (result.Success)
+            {
+                showTerminationNoticeModal = false;
+                ResetTerminationNoticeForm();
+                await LoadLease();
+                ToastService.ShowSuccess(result.Message);
+            }
+            else
+            {
+                ToastService.ShowError(string.Join(", ", result.Errors));
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error recording termination notice: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task EarlyTerminateLease()
+    {
+        if (lease == null || string.IsNullOrWhiteSpace(earlyTerminationType) || string.IsNullOrWhiteSpace(earlyTerminationReason))
+            return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await LeaseWorkflowService.EarlyTerminateAsync(
+                lease.Id,
+                earlyTerminationType,
+                earlyTerminationReason,
+                earlyTerminationDate);
+
+            if (result.Success)
+            {
+                showEarlyTerminationModal = false;
+                ResetEarlyTerminationForm();
+                await LoadLease();
+                ToastService.ShowSuccess(result.Message);
+            }
+            else
+            {
+                ToastService.ShowError(string.Join(", ", result.Errors));
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error terminating lease: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompleteMoveOut()
+    {
+        if (lease == null) return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var moveOutModel = new MoveOutModel
+            {
+                FinalInspectionCompleted = moveOutFinalInspection,
+                KeysReturned = moveOutKeysReturned,
+                Notes = moveOutNotes
+            };
+
+            var result = await LeaseWorkflowService.CompleteMoveOutAsync(
+                lease.Id,
+                actualMoveOutDate,
+                moveOutModel);
+
+            if (result.Success)
+            {
+                showMoveOutModal = false;
+                ResetMoveOutForm();
+                await LoadLease();
+                ToastService.ShowSuccess(result.Message);
+            }
+            else
+            {
+                ToastService.ShowError(string.Join(", ", result.Errors));
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error completing move-out: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConvertToMonthToMonth()
+    {
+        if (lease == null) return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await LeaseWorkflowService.ConvertToMonthToMonthAsync(
+                lease.Id,
+                mtmNewRent);
+
+            if (result.Success)
+            {
+                showConvertMTMModal = false;
+                mtmNewRent = null;
+                await LoadLease();
+                ToastService.ShowSuccess(result.Message);
+            }
+            else
+            {
+                ToastService.ShowError(string.Join(", ", result.Errors));
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error converting to month-to-month: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetTerminationNoticeForm()
+    {
+        terminationNoticeType = "";
+        terminationNoticeDate = DateTime.Today;
+        terminationExpectedMoveOutDate = DateTime.Today.AddDays(30);
+        terminationReason = "";
+    }
+
+    private void ResetEarlyTerminationForm()
+    {
+        earlyTerminationType = "";
+        earlyTerminationDate = DateTime.Today;
+        earlyTerminationReason = "";
+    }
+
+    private void ResetMoveOutForm()
+    {
+        actualMoveOutDate = DateTime.Today;
+        moveOutFinalInspection = false;
+        moveOutKeysReturned = false;
+        moveOutNotes = "";
+    }
+
+    #endregion
 
     private async Task OnPropertyChanged()
     {

@@ -78,6 +78,10 @@ namespace Aquiis.SimpleStart.Core.Entities
 
         public virtual ICollection<Tour> Tours { get; set; } = new List<Tour>();
 
-        public virtual RentalApplication? Application { get; set; }
+        /// <summary>
+        /// Collection of all applications submitted by this prospect.
+        /// A prospect may have multiple applications over time, but only one "active" (non-disposed) application.
+        /// </summary>
+        public virtual ICollection<RentalApplication> Applications { get; set; } = new List<RentalApplication>();
     }
 }

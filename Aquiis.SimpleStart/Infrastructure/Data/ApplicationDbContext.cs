@@ -335,11 +335,13 @@ namespace Aquiis.SimpleStart.Infrastructure.Data
             });
 
             // Configure RentalApplication entity
+            // A prospect may have multiple applications over time, but only one "active" application at a time.
+            // Active = not yet disposed (not approved/denied/withdrawn/expired/lease-declined)
             modelBuilder.Entity<RentalApplication>(entity =>
             {
                 entity.HasOne(ra => ra.ProspectiveTenant)
-                    .WithOne(pt => pt.Application)
-                    .HasForeignKey<RentalApplication>(ra => ra.ProspectiveTenantId)
+                    .WithMany(pt => pt.Applications)
+                    .HasForeignKey(ra => ra.ProspectiveTenantId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(ra => ra.Property)
@@ -609,8 +611,8 @@ namespace Aquiis.SimpleStart.Infrastructure.Data
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000013"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Showed laundry facilities", ItemOrder = 13, CategorySection = "Storage & Amenities", SectionOrder = 5, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000014"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Showed outdoor space (yard, patio, balcony)", ItemOrder = 14, CategorySection = "Storage & Amenities", SectionOrder = 5, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 // Lease Terms (Section 6)
-                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000015"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Discussed monthly rent amount", ItemOrder = 15, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = true, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
-                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000016"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Explained security deposit and move-in costs", ItemOrder = 16, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = true, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
+                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000015"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Discussed monthly rent amount", ItemOrder = 15, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
+                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000016"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Explained security deposit and move-in costs", ItemOrder = 16, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000017"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Reviewed lease term length and start date", ItemOrder = 17, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000018"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Explained pet policy", ItemOrder = 18, CategorySection = "Lease Terms", SectionOrder = 6, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
 
@@ -621,7 +623,7 @@ namespace Aquiis.SimpleStart.Infrastructure.Data
 
                 // Assessment (Section 8)
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000022"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Prospect Interest Level", ItemOrder = 22, CategorySection = "Assessment", SectionOrder = 8, IsRequired = true, RequiresValue = true, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
-                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000023"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Overall showing feedback and notes", ItemOrder = 23, CategorySection = "Assessment", SectionOrder = 8, IsRequired = true, RequiresValue = true, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
+                new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000023"), ChecklistTemplateId = propertyTourTemplateId, ItemText = "Overall showing feedback and notes", ItemOrder = 23, CategorySection = "Assessment", SectionOrder = 8, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 // Move-In Checklist Items (Placeholders)
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000024"), ChecklistTemplateId = moveInTemplateId, ItemText = "Document property condition", ItemOrder = 1, CategorySection = "General", SectionOrder = 1, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },
                 new ChecklistTemplateItem { Id = Guid.Parse("00000000-0000-0000-0002-000000000025"), ChecklistTemplateId = moveInTemplateId, ItemText = "Collect keys and access codes", ItemOrder = 2, CategorySection = "General", SectionOrder = 1, IsRequired = true, RequiresValue = false, AllowsNotes = true, OrganizationId = Guid.Empty, CreatedOn = systemTimestamp, CreatedBy = string.Empty, IsDeleted = false },

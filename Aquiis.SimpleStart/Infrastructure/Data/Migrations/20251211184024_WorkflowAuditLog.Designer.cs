@@ -3,6 +3,7 @@ using System;
 using Aquiis.SimpleStart.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquiis.SimpleStart.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251211184024_WorkflowAuditLog")]
+    partial class WorkflowAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -898,7 +901,7 @@ namespace Aquiis.SimpleStart.Migrations
                             ItemText = "Discussed monthly rent amount",
                             LastModifiedBy = "",
                             OrganizationId = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RequiresValue = false,
+                            RequiresValue = true,
                             SectionOrder = 6
                         },
                         new
@@ -915,7 +918,7 @@ namespace Aquiis.SimpleStart.Migrations
                             ItemText = "Explained security deposit and move-in costs",
                             LastModifiedBy = "",
                             OrganizationId = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RequiresValue = false,
+                            RequiresValue = true,
                             SectionOrder = 6
                         },
                         new
@@ -1034,7 +1037,7 @@ namespace Aquiis.SimpleStart.Migrations
                             ItemText = "Overall showing feedback and notes",
                             LastModifiedBy = "",
                             OrganizationId = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RequiresValue = false,
+                            RequiresValue = true,
                             SectionOrder = 8
                         },
                         new

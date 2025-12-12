@@ -1808,7 +1808,7 @@ namespace Aquiis.SimpleStart.Application.Services
                 .Where(pt => pt.OrganizationId == organizationId && !pt.IsDeleted)
                 .Include(pt => pt.InterestedProperty)
                 .Include(pt => pt.Tours)
-                .Include(pt => pt.Application)
+                .Include(pt => pt.Applications)
                 .OrderByDescending(pt => pt.CreatedOn)
                 .ToListAsync();
         }
@@ -1820,7 +1820,7 @@ namespace Aquiis.SimpleStart.Application.Services
                 .Where(pt => pt.Id == id && pt.OrganizationId == organizationId && !pt.IsDeleted)
                 .Include(pt => pt.InterestedProperty)
                 .Include(pt => pt.Tours)
-                .Include(pt => pt.Application)
+                .Include(pt => pt.Applications)
                 .FirstOrDefaultAsync();
         }
 

@@ -121,7 +121,7 @@ namespace Aquiis.SimpleStart.Application.Services
 
             return await _context.ProspectiveTenants
                 .Include(p => p.InterestedProperty)
-                .Include(p => p.Application)
+                .Include(p => p.Applications)
                 .Include(p => p.Tours)
                 .FirstOrDefaultAsync(p => p.Id == tenant.ProspectiveTenantId.Value);
         }

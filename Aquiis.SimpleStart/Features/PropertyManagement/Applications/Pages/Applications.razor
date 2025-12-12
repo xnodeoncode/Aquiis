@@ -219,10 +219,12 @@
         
         approvedApplications = applications.Where(a => 
             a.Status == ApplicationConstants.ApplicationStatuses.Approved ||
-            a.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered).ToList();
+            a.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered ||
+            a.Status == ApplicationConstants.ApplicationStatuses.LeaseAccepted).ToList();
         
         deniedApplications = applications.Where(a => 
-            a.Status == ApplicationConstants.ApplicationStatuses.Denied).ToList();
+            a.Status == ApplicationConstants.ApplicationStatuses.Denied ||
+            a.Status == ApplicationConstants.ApplicationStatuses.Withdrawn).ToList();
 
         SetFilter(currentFilter);
     }

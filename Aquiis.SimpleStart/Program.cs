@@ -12,6 +12,7 @@ using Aquiis.SimpleStart.Shared.Services;
 using Aquiis.SimpleStart.Shared.Authorization;
 using ElectronNET.API;
 using Microsoft.Extensions.Options;
+using Aquiis.SimpleStart.Application.Services.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -162,6 +163,7 @@ builder.Services.AddScoped<FinancialReportPdfGenerator>();
 builder.Services.AddScoped<ChecklistPdfGenerator>();
 builder.Services.AddScoped<DatabaseBackupService>();
 builder.Services.AddScoped<SchemaValidationService>();
+builder.Services.AddScoped<LeaseWorkflowService>();
 
 // Configure and register session timeout service
 builder.Services.AddScoped<SessionTimeoutService>(sp =>

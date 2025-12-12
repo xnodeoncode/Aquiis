@@ -240,6 +240,8 @@ namespace Aquiis.SimpleStart.Core.Constants
             public const string Active = "Active";
             public const string Declined = "Declined";
             public const string Renewed = "Renewed";
+            public const string MonthToMonth = "Month-to-Month";
+            public const string NoticeGiven = "Notice Given";
             public const string Interrupted = "Interrupted";
             public const string Terminated = "Terminated";
             public const string Expired = "Expired";
@@ -263,6 +265,8 @@ namespace Aquiis.SimpleStart.Core.Constants
                 Active,
                 Declined,
                 Renewed,
+                MonthToMonth,
+                NoticeGiven,
                 Interrupted,
                 Terminated,
                 Expired

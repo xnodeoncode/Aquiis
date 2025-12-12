@@ -411,6 +411,7 @@
                                 }
                                 @if (screening != null && screening.OverallResult == ApplicationConstants.ScreeningResults.Passed && 
                                     application.Status != ApplicationConstants.ApplicationStatuses.Approved &&
+                                    application.Status != ApplicationConstants.ApplicationStatuses.LeaseAccepted &&
                                     application.Status != ApplicationConstants.ApplicationStatuses.LeaseOffered &&
                                     application.Status != ApplicationConstants.ApplicationStatuses.Denied)
                                 {
@@ -437,8 +438,9 @@
                                         <i class="bi bi-arrow-return-left me-2"></i>Withdraw Application
                                     </button>
                                 }
-                                else if (application.Status != ApplicationConstants.ApplicationStatuses.Denied && 
-                                         application.Status != ApplicationConstants.ApplicationStatuses.Withdrawn)
+                                else if (application.Status != ApplicationConstants.ApplicationStatuses.Denied &&
+                                         application.Status != ApplicationConstants.ApplicationStatuses.Withdrawn &&
+                                         application.Status != ApplicationConstants.ApplicationStatuses.LeaseAccepted)
                                 {
                                     <button type="button" class="btn btn-danger" @onclick="() => showDenyModal = true">
                                         <i class="bi bi-x-circle me-2"></i>Deny Application
@@ -477,8 +479,8 @@
                                 <i class="bi bi-@(screening?.CreditCheckPassed == true ? "check-circle-fill text-success" : "circle text-muted")"></i>
                                 <span>Credit Check</span>
                             </div>
-                            <div class="timeline-item @(application.Status == ApplicationConstants.ApplicationStatuses.Approved || application.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered || application.Status == ApplicationConstants.ApplicationStatuses.Withdrawn ? "completed" : "")">
-                                <i class="bi bi-@(application.Status == ApplicationConstants.ApplicationStatuses.Approved || application.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered || application.Status == ApplicationConstants.ApplicationStatuses.Withdrawn ? "check-circle-fill text-success" : "circle text-muted")"></i>
+                            <div class="timeline-item @(application.Status == ApplicationConstants.ApplicationStatuses.Approved || application.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered || application.Status == ApplicationConstants.ApplicationStatuses.LeaseAccepted || application.Status == ApplicationConstants.ApplicationStatuses.Withdrawn ? "completed" : "")">
+                                <i class="bi bi-@(application.Status == ApplicationConstants.ApplicationStatuses.Approved || application.Status == ApplicationConstants.ApplicationStatuses.LeaseOffered || application.Status == ApplicationConstants.ApplicationStatuses.LeaseAccepted || application.Status == ApplicationConstants.ApplicationStatuses.Withdrawn ? "check-circle-fill text-success" : "circle text-muted")"></i>
                                 <span>Approved</span>
                             </div>
                             @if (application.Status == ApplicationConstants.ApplicationStatuses.Withdrawn)
