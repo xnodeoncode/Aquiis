@@ -1,0 +1,18 @@
+name: Auto-merge on approval
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  automerge:
+    if: ${{ github.event.review.state == 'approved' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      checks: read
+    steps:
+      - name: Attempt merge when approved
+        run: |
+          echo "Auto-merge on approval disabled."
+          echo "Please merge the PR manually after required checks and approvals pass."
