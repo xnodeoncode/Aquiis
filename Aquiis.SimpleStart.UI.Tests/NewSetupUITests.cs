@@ -1,15 +1,12 @@
 using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
-using NUnit.Framework;
-using System.IO;
-using System.Threading.Tasks;
 
-namespace Aquiis.Tests;
+namespace Aquiis.SimpleStart.UI.Tests;
 
 [Parallelizable(ParallelScope.Self)]
 [TestFixture]
 
-public class AccountManagementTests : PageTest
+public class NewSetupUITests : PageTest
 {
 
     private const string BaseUrl = "http://localhost:5197";
@@ -65,9 +62,7 @@ public class AccountManagementTests : PageTest
 
         await Page.GetByRole(AriaRole.Heading, new() { Name = "Property Management Dashboard", Exact= true }).ClickAsync();
         
-        //Keep browser open for review/recording
-        // if (KeepBrowserOpenSeconds > 0)
-        //     await Task.Delay(KeepBrowserOpenSeconds * 1000);
+
     }
 
     [Test, Order(2)]
@@ -221,9 +216,6 @@ public class AccountManagementTests : PageTest
 
         await Page.GetByText("Interested", new() { Exact = true }).ClickAsync();
 
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Enter value" }).Nth(1).ClickAsync();
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Enter value" }).Nth(1).FillAsync("None");
-
         await Page.GetByRole(AriaRole.Button, new() { Name = " Save Progress" }).ClickAsync();
 
         await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
@@ -235,8 +227,6 @@ public class AccountManagementTests : PageTest
         await Page.GetByRole(AriaRole.Button, new() { Name = " Generate PDF" }).ClickAsync();
 
         await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-
-        //await Task.Delay(5000); // Wait for PDF generation
 
         var page1 = await Page.RunAndWaitForPopupAsync(async () =>
         {
