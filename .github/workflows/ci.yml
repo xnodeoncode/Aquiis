@@ -26,4 +26,4 @@ jobs:
         run: dotnet build Aquiis.sln --no-restore --configuration Release
 
       - name: Run focused tests
-        run: dotnet test Aquiis.SimpleStart.Tests/Aquiis.SimpleStart.Tests.csproj --no-build --verbosity normal
+        run: dotnet test Aquiis.SimpleStart.Tests/Aquiis.SimpleStart.Tests.csproj --no-build --configuration Release --verbosity normal
