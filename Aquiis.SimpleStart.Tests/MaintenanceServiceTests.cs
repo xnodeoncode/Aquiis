@@ -385,18 +385,36 @@ namespace Aquiis.SimpleStart.Tests
                 CreatedOn = DateTime.UtcNow
             };
             _context.Organizations.Add(otherOrg);
+            
+            var otherProperty = new Property
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = otherOrg.Id,
+                Address = "999 Other St",
+                City = "Other City",
+                State = "OT",
+                ZipCode = "99999",
+                PropertyType = "Apartment",
+                Bedrooms = 2,
+                Bathrooms = 1,
+                SquareFeet = 900,
+                IsAvailable = true,
+                CreatedBy = _testUser.Id,
+                CreatedOn = DateTime.UtcNow
+            };
+            _context.Properties.Add(otherProperty);
             await _context.SaveChangesAsync();
 
             var maintenanceRequest = new MaintenanceRequest
             {
-                PropertyId = _testProperty.Id,
+                PropertyId = otherProperty.Id, // Property from different org
                 Title = "Test Request",
                 Description = "Test Description",
                 RequestType = ApplicationConstants.MaintenanceRequestTypes.Plumbing,
                 Priority = ApplicationConstants.MaintenanceRequestPriorities.Medium,
                 Status = ApplicationConstants.MaintenanceRequestStatuses.Submitted,
-                RequestedOn = DateTime.Today,
-                OrganizationId = otherOrg.Id // Different org than property
+                RequestedOn = DateTime.Today
+                // OrganizationId will be auto-set from user context, which won't match property's org
             };
 
             // Act & Assert

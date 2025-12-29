@@ -1,12 +1,13 @@
 using Aquiis.SimpleStart.Core.Validation;
+using System;
 using System.ComponentModel.DataAnnotations;
-using NUnit.Framework;
+using Xunit;
 
-namespace Aquiis.Tests.Core.Validation;
+namespace Aquiis.SimpleStart.Tests.Core.Validation;
 
 public class RequiredGuidAttributeTests
 {
-    [Test]
+    [Fact]
     public void RequiredGuid_GuidEmpty_ReturnsFalse()
     {
         // Arrange
@@ -17,10 +18,10 @@ public class RequiredGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.False(result);
     }
 
-    [Test]
+    [Fact]
     public void RequiredGuid_ValidGuid_ReturnsTrue()
     {
         // Arrange
@@ -31,10 +32,10 @@ public class RequiredGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.True);
+        Assert.True(result);
     }
 
-    [Test]
+    [Fact]
     public void RequiredGuid_Null_ReturnsFalse()
     {
         // Arrange
@@ -45,10 +46,10 @@ public class RequiredGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.False(result);
     }
 
-    [Test]
+    [Fact]
     public void RequiredGuid_WithContext_GuidEmpty_ReturnsValidationError()
     {
         // Arrange
@@ -60,11 +61,11 @@ public class RequiredGuidAttributeTests
         var result = attribute.GetValidationResult(Guid.Empty, context);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.Not.EqualTo(ValidationResult.Success));
+        Assert.NotNull(result);
+        Assert.NotEqual(ValidationResult.Success, result);
     }
 
-    [Test]
+    [Fact]
     public void RequiredGuid_WithContext_ValidGuid_ReturnsSuccess()
     {
         // Arrange
@@ -76,10 +77,10 @@ public class RequiredGuidAttributeTests
         var result = attribute.GetValidationResult(model.Id, context);
 
         // Assert
-        Assert.That(result, Is.EqualTo(ValidationResult.Success));
+        Assert.Equal(ValidationResult.Success, result);
     }
 
-    [Test]
+    [Fact]
     public void RequiredGuid_CustomErrorMessage_UsesCustomMessage()
     {
         // Arrange
@@ -92,8 +93,8 @@ public class RequiredGuidAttributeTests
         var result = attribute.GetValidationResult(Guid.Empty, context);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result!.ErrorMessage, Is.EqualTo(customMessage));
+        Assert.NotNull(result);
+        Assert.Equal(customMessage, result!.ErrorMessage);
     }
 
     private class TestModel
@@ -104,7 +105,7 @@ public class RequiredGuidAttributeTests
 
 public class OptionalGuidAttributeTests
 {
-    [Test]
+    [Fact]
     public void OptionalGuid_Null_ReturnsTrue()
     {
         // Arrange
@@ -115,10 +116,10 @@ public class OptionalGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.True);
+        Assert.True(result);
     }
 
-    [Test]
+    [Fact]
     public void OptionalGuid_GuidEmpty_ReturnsFalse()
     {
         // Arrange
@@ -129,10 +130,10 @@ public class OptionalGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.False(result);
     }
 
-    [Test]
+    [Fact]
     public void OptionalGuid_ValidGuid_ReturnsTrue()
     {
         // Arrange
@@ -143,10 +144,10 @@ public class OptionalGuidAttributeTests
         var result = attribute.IsValid(value);
 
         // Assert
-        Assert.That(result, Is.True);
+        Assert.True(result);
     }
 
-    [Test]
+    [Fact]
     public void OptionalGuid_WithContext_Null_ReturnsSuccess()
     {
         // Arrange
@@ -158,10 +159,10 @@ public class OptionalGuidAttributeTests
         var result = attribute.GetValidationResult(null, context);
 
         // Assert
-        Assert.That(result, Is.EqualTo(ValidationResult.Success));
+        Assert.Equal(ValidationResult.Success, result);
     }
 
-    [Test]
+    [Fact]
     public void OptionalGuid_WithContext_GuidEmpty_ReturnsValidationError()
     {
         // Arrange
@@ -173,11 +174,11 @@ public class OptionalGuidAttributeTests
         var result = attribute.GetValidationResult(Guid.Empty, context);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.Not.EqualTo(ValidationResult.Success));
+        Assert.NotNull(result);
+        Assert.NotEqual(ValidationResult.Success, result);
     }
 
-    [Test]
+    [Fact]
     public void OptionalGuid_WithContext_ValidGuid_ReturnsSuccess()
     {
         // Arrange
@@ -190,7 +191,7 @@ public class OptionalGuidAttributeTests
         var result = attribute.GetValidationResult(validGuid, context);
 
         // Assert
-        Assert.That(result, Is.EqualTo(ValidationResult.Success));
+        Assert.Equal(ValidationResult.Success, result);
     }
 
     private class TestModel
