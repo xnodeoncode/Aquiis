@@ -3,6 +3,7 @@ using System;
 using Aquiis.SimpleStart.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquiis.SimpleStart.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229235707_AddNotificationInfrastructure")]
+    partial class AddNotificationInfrastructure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -1978,214 +1981,6 @@ namespace Aquiis.SimpleStart.Migrations
                     b.ToTable("Notes");
                 });
 
-            modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EmailError")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EmailSent")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("EmailSentOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ReadOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RecipientUserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("RelatedEntityId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RelatedEntityType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SMSError")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("SMSSent")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("SMSSentOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("SendEmail")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("SendInApp")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("SendSMS")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("SentOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Category");
-
-                    b.HasIndex("IsRead");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("RecipientUserId");
-
-                    b.HasIndex("SentOn");
-
-                    b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.NotificationPreferences", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<TimeSpan>("DailyDigestTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EmailAddress")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EmailApplicationStatusChange")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EmailInspectionScheduled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EmailLeaseExpiring")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EmailMaintenanceUpdate")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EmailPaymentDue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EmailPaymentReceived")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableDailyDigest")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableEmailNotifications")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableInAppNotifications")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableSMSNotifications")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableWeeklyDigest")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("SMSLeaseExpiringUrgent")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("SMSMaintenanceEmergency")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("SMSPaymentDue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("WeeklyDigestDay")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "OrganizationId")
-                        .IsUnique();
-
-                    b.ToTable("NotificationPreferences");
-                });
-
             modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3985,40 +3780,6 @@ namespace Aquiis.SimpleStart.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.Notification", b =>
-                {
-                    b.HasOne("Aquiis.SimpleStart.Core.Entities.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquiis.SimpleStart.Shared.Components.Account.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("RecipientUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.NotificationPreferences", b =>
-                {
-                    b.HasOne("Aquiis.SimpleStart.Core.Entities.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquiis.SimpleStart.Shared.Components.Account.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Aquiis.SimpleStart.Core.Entities.Organization", b =>

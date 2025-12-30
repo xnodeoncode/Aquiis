@@ -165,13 +165,12 @@ builder.Services.AddScoped<ICalendarEventService>(sp => sp.GetRequiredService<Ca
 builder.Services.AddScoped<TenantConversionService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<NoteService>();
+// Add to service registration section
 builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<IEmailService, EmailService>(); // Phase 2.4.8 - Notifications & Alerts
-builder.Services.AddScoped<ISMSService, SMSService>(); // Phase 2.4.8 - Notifications & Alerts
-builder.Services.AddScoped<TwilioSMSService>();
-builder.Services.AddScoped<SMSSettingsService>();
-builder.Services.AddScoped<SendGridEmailService>();
-builder.Services.AddScoped<EmailSettingsService>();
+
+// Phase 2.4: Notification Infrastructure
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ISMSService, SMSService>();
 
 // Workflow services
 builder.Services.AddScoped<Aquiis.SimpleStart.Application.Services.Workflows.ApplicationWorkflowService>();

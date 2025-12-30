@@ -56,15 +56,10 @@ namespace Aquiis.SimpleStart.Infrastructure.Data
         // Workflow audit logging
         public DbSet<Aquiis.SimpleStart.Application.Services.Workflows.WorkflowAuditLog> WorkflowAuditLogs { get; set; }
 
+
         // Notification system
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationPreferences> NotificationPreferences { get; set; }
-
-        // Organization email settings
-        public DbSet<OrganizationEmailSettings> OrganizationEmailSettings { get; set; }
-
-        // Organization SMS settings
-        public DbSet<OrganizationSMSSettings> OrganizationSMSSettings { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -587,36 +582,6 @@ namespace Aquiis.SimpleStart.Infrastructure.Data
                 entity.HasOne<ApplicationUser>()
                     .WithMany()
                     .HasForeignKey(np => np.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Configure OrganizationEmailSettings entity
-            modelBuilder.Entity<OrganizationEmailSettings>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-
-                entity.HasIndex(e => e.OrganizationId).IsUnique();
-                entity.HasIndex(e => e.IsEmailEnabled);
-
-                // One email settings per organization
-                entity.HasOne(e => e.Organization)
-                    .WithOne()
-                    .HasForeignKey<OrganizationEmailSettings>(e => e.OrganizationId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Configure OrganizationSMSSettings entity
-            modelBuilder.Entity<OrganizationSMSSettings>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-
-                entity.HasIndex(e => e.OrganizationId).IsUnique();
-                entity.HasIndex(e => e.IsSMSEnabled);
-
-                // One SMS settings per organization
-                entity.HasOne(e => e.Organization)
-                    .WithOne()
-                    .HasForeignKey<OrganizationSMSSettings>(e => e.OrganizationId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

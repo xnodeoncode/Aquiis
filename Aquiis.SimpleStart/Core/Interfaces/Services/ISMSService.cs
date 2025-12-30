@@ -1,9 +1,7 @@
 
-namespace Aquiis.SimpleStart.Core.Interfaces.Services
+namespace Aquiis.SimpleStart.Core.Interfaces.Services;
+public interface ISMSService
 {
-    public interface ISMSService
-    {
-        Task SendSMSAsync(string phoneNumber, string message);
-        Task<bool> ValidatePhoneNumberAsync(string phoneNumber);
-    }
+    Task SendSMSAsync(string phoneNumber, string message);
+    Task<bool> ValidatePhoneNumberAsync(string phoneNumber);
 }
