@@ -1,4 +1,4 @@
-@page "/settings/email"
+@page "/administration/settings/email"
 @using Aquiis.SimpleStart.Application.Services
 @using Aquiis.SimpleStart.Infrastructure.Services
 @using SocketIOClient.Messages
@@ -8,20 +8,26 @@
 @inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 
+@inject NavigationManager Navigation
+
 @inject UserContextService _userContext
+
+@rendermode InteractiveServer
 
 <PageTitle>Email Settings - Aquiis</PageTitle>
 
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <h2>
-                <i class="bi bi-envelope-gear"></i> Email Configuration
-            </h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>
+                <i class="bi bi-inbox-fill"></i> Email Configuration
+            </h1>
             <p class="text-muted">
                 Configure SendGrid integration for automated email notifications
             </p>
         </div>
+        <button class="btn btn-secondary" @onclick="BackToDashboard">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
     </div>
 
     @if (settings == null)
@@ -230,7 +236,6 @@
             </div>
         </div>
     }
-</div>
 
 @* Configuration Modal *@
 @if (showConfigModal)
@@ -414,6 +419,11 @@
             ( < 90) => "bg-warning",
             _ => "bg-danger"
         };
+    }
+
+    private void BackToDashboard()
+    {
+        Navigation.NavigateTo("/administration/dashboard");
     }
 
     public class ConfigurationModel
