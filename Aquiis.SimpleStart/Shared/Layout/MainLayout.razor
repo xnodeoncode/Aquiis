@@ -10,10 +10,15 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="about" target="_blank">About</a>
             <AuthorizeView>
+                <NotAuthorized>
+                    <a href="about" target="_blank">About</a>
+                </NotAuthorized>
                 <Authorized>
-                    <OrganizationSwitcher />
+                    <div class="d-flex align-items-center gap-2">
+                        <NotificationBell />
+                        <OrganizationSwitcher />
+                    </div>
                 </Authorized>
             </AuthorizeView>
         </div>
