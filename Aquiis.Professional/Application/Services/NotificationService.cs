@@ -161,6 +161,34 @@ public class NotificationService : BaseService<Notification>
     }
 
     /// <summary>
+    /// Get notification preferences for current user
+    /// </summary>
+    public async Task<NotificationPreferences> GetUserPreferencesAsync()
+    {
+        var userId = await _userContext.GetUserIdAsync();
+        return await GetNotificationPreferencesAsync(userId);
+    }
+
+    /// <summary>
+    /// Update notification preferences for current user
+    /// </summary>
+    public async Task<NotificationPreferences> UpdateUserPreferencesAsync(NotificationPreferences preferences)
+    {
+        var userId = await _userContext.GetUserIdAsync();
+        var organizationId = await _userContext.GetActiveOrganizationIdAsync();
+
+        // Ensure the preferences belong to the current user and organization
+        if (preferences.UserId != userId || preferences.OrganizationId != organizationId)
+        {
+            throw new UnauthorizedAccessException("Cannot update preferences for another user");
+        }
+
+        _context.NotificationPreferences.Update(preferences);
+        await _context.SaveChangesAsync();
+        return preferences;
+    }
+
+    /// <summary>
     /// Get or create notification preferences for user
     /// </summary>
     private async Task<NotificationPreferences> GetNotificationPreferencesAsync(string userId)

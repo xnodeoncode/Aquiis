@@ -5,11 +5,19 @@ namespace Aquiis.Professional.Shared.Authorization;
 /// <summary>
 /// Authorization attribute for organization-based role checking.
 /// Replaces [Authorize(Roles = "...")] with organization-scoped roles.
+/// When used without roles, allows any authenticated organization member.
 /// </summary>
 public class OrganizationAuthorizeAttribute : AuthorizeAttribute
 {
     public OrganizationAuthorizeAttribute(params string[] roles)
     {
-        Policy = $"OrganizationRole:{string.Join(",", roles)}";
+        if (roles == null || roles.Length == 0)
+        {
+            Policy = "OrganizationMember";
+        }
+        else
+        {
+            Policy = $"OrganizationRole:{string.Join(",", roles)}";
+        }
     }
 }

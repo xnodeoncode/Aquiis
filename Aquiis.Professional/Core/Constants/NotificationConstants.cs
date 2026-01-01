@@ -10,13 +10,17 @@ public static class NotificationConstants
 
     public static class Categories
     {
-        public const string Lease = "Lease";
-        public const string Payment = "Payment";
-        public const string Maintenance = "Maintenance";
         public const string Application = "Application";
-        public const string Property = "Property";
-        public const string Inspection = "Inspection";
         public const string Document = "Document";
+        public const string Inspection = "Inspection";
+        public const string Lease = "Lease";
+        public const string Maintenance = "Maintenance";
+        public const string Message = "Message";
+        public const string Note = "Note";
+        public const string Payment = "Payment";
+        public const string Property = "Property";
+        public const string Report = "Report";
+        public const string Security = "Security";
         public const string System = "System";
     }
 

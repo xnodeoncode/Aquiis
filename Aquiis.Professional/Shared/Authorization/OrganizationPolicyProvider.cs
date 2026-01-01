@@ -29,6 +29,14 @@ public class OrganizationPolicyProvider : IAuthorizationPolicyProvider
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
+        if (policyName == "OrganizationMember")
+        {
+            var policy = new AuthorizationPolicyBuilder();
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new OrganizationRoleRequirement(Array.Empty<string>()));
+            return Task.FromResult<AuthorizationPolicy?>(policy.Build());
+        }
+        
         if (policyName.StartsWith(POLICY_PREFIX))
         {
             var roles = policyName.Substring(POLICY_PREFIX.Length).Split(',');

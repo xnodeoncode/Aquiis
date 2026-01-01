@@ -63,7 +63,8 @@ public class OrganizationRoleAuthorizationHandler : AuthorizationHandler<Organiz
         }
 
         // Check if user's role is in the allowed roles
-        if (requirement.AllowedRoles.Contains(userOrganization.Role))
+        // If no roles specified (empty array), allow any authenticated org member
+        if (requirement.AllowedRoles.Length == 0 || requirement.AllowedRoles.Contains(userOrganization.Role))
         {
             context.Succeed(requirement);
         }

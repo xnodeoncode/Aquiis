@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Aquiis.Professional.Core.Entities;
 using Aquiis.Professional.Core.Validation;
 
+namespace Aquiis.Professional.Core.Entities;
+
 public class NotificationPreferences : BaseModel
 {
     [RequiredGuid]
