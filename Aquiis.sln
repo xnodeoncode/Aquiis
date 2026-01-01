@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{C69B6EFE-BB20-41DE-8CBA-044207EBDCE1}") = "Aquiis.SimpleStart", "Aquiis.SimpleStart\Aquiis.SimpleStart.csproj", "{C69B6EFE-BB20-41DE-8CBA-044207EBDCE1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquiis.Professional", "Aquiis.Professional\Aquiis.Professional.csproj", "{F51BA704-3BAC-F36D-5724-511615D4CBE5}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquiis.SimpleStart.UI.Tests", "Aquiis.SimpleStart.UI.Tests\Aquiis.SimpleStart.UI.Tests.csproj", "{81401A51-BBA1-4B6B-8771-9C26A7B5356E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquiis.SimpleStart.Tests", "Aquiis.SimpleStart.Tests\Aquiis.SimpleStart.Tests.csproj", "{D1111111-1111-4111-8111-111111111111}"
@@ -32,6 +34,18 @@ Global
 		{C69B6EFE-BB20-41DE-8CBA-044207EBDCE1}.Release|x64.Build.0 = Release|x64
 		{C69B6EFE-BB20-41DE-8CBA-044207EBDCE1}.Release|x86.ActiveCfg = Release|x86
 		{C69B6EFE-BB20-41DE-8CBA-044207EBDCE1}.Release|x86.Build.0 = Release|x86
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|x64.ActiveCfg = Debug|x64
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|x64.Build.0 = Debug|x64
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|x86.ActiveCfg = Debug|x86
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Debug|x86.Build.0 = Debug|x86
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|x64.ActiveCfg = Release|x64
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|x64.Build.0 = Release|x64
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|x86.ActiveCfg = Release|x86
+		{F51BA704-3BAC-F36D-5724-511615D4CBE5}.Release|x86.Build.0 = Release|x86
 		{D1111111-1111-4111-8111-111111111111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D1111111-1111-4111-8111-111111111111}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1111111-1111-4111-8111-111111111111}.Debug|x64.ActiveCfg = Debug|Any CPU
