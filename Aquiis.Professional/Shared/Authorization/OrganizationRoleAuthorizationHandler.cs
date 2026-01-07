@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Aquiis.Professional.Shared.Components.Account;
-using Aquiis.Professional.Infrastructure.Data;
-using Aquiis.Professional.Core.Constants;
+using Aquiis.Infrastructure.Data;
+using Aquiis.Core.Constants;
 using System.Security.Claims;
 
 namespace Aquiis.Professional.Shared.Authorization;

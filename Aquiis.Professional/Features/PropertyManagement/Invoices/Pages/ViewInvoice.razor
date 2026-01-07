@@ -1,6 +1,6 @@
 @page "/propertymanagement/invoices/view/{Id:guid}"
 @using Aquiis.Professional.Features.PropertyManagement
-@using Aquiis.Professional.Core.Entities
+@using Aquiis.Core.Entities
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
@@ -362,7 +362,7 @@ else
         try
         {
             // Generate the PDF
-            byte[] pdfBytes = Aquiis.Professional.Application.Services.PdfGenerators.InvoicePdfGenerator.GenerateInvoicePdf(invoice!);
+            byte[] pdfBytes = Aquiis.Application.Services.PdfGenerators.InvoicePdfGenerator.GenerateInvoicePdf(invoice!);
 
             // Create the document entity
             var document = new Document

@@ -1,10 +1,9 @@
 @page "/administration/settings/email"
-@using Aquiis.Professional.Application.Services
-@using Aquiis.Professional.Infrastructure.Services
+@using Aquiis.Application.Services
 @using SocketIOClient.Messages
 @using System.ComponentModel.DataAnnotations
 @inject EmailSettingsService EmailSettingsService
-@inject SendGridEmailService EmailService
+@inject EmailService EmailService
 @inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 
@@ -320,7 +319,7 @@
 
 @code {
     private OrganizationEmailSettings? settings;
-    private SendGridStats? stats;
+    private EmailStats? stats;
     private bool showConfigModal;
     private bool isSaving;
     private bool isRefreshing;
@@ -335,10 +334,10 @@
     {
         settings = await EmailSettingsService.GetOrCreateSettingsAsync();
         // TODO Phase 2.5: Uncomment when GetSendGridStatsAsync is implemented
-        // if (settings.IsEmailEnabled)
-        // {
-        //     stats = await EmailService.GetSendGridStatsAsync();
-        // }
+        if (settings.IsEmailEnabled)
+        {
+             stats = await EmailService.GetEmailStatsAsync();
+        }
     }
 
     private async Task SaveConfiguration()

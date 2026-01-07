@@ -5,10 +5,11 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using Aquiis.SimpleStart.Infrastructure.Data
-@using Aquiis.SimpleStart.Application.Services
-@using Aquiis.SimpleStart.Core.Entities
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Infrastructure.Data
+@using Aquiis.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Constants
+@using Microsoft.EntityFrameworkCore
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -94,7 +95,7 @@ else
     private bool _allowRegistration = false;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private InputModel Input { get; set; } = default!;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -105,10 +106,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         // Check if this is the first user (excluding system user)
-        var userCount = await Task.Run(() => DbContext.Users
-            .Count(u => u.Id != ApplicationConstants.SystemUser.Id));
+        var users = await UserManager.Users
+            .Where(u => u.Id != ApplicationConstants.SystemUser.Id)
+            .ToListAsync();
+            
+        var userCount = users.Count;
+
         _isFirstUser = userCount == 0;
         _allowRegistration = _isFirstUser; // Only allow registration if this is the first user
+
+        Input = Input ?? new InputModel();
+        await base.OnInitializedAsync();
+        StateHasChanged();
     }
 
     public async Task RegisterUser(EditContext editContext)

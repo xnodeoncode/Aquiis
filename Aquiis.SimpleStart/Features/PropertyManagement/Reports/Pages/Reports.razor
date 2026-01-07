@@ -1,9 +1,9 @@
 @page "/reports"
 @using Microsoft.AspNetCore.Authorization
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Application.Services.PdfGenerators
+@using Aquiis.Core.Constants
 
 @inject ApplicationService ApplicationService
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]

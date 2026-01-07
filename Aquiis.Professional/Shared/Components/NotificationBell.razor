@@ -1,8 +1,9 @@
-@using Aquiis.Professional.Infrastructure.Services
+
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 @namespace Aquiis.Professional.Shared.Components
+@using Aquiis.Application.Services
 
 <PageTitle>Notification Bell</PageTitle>
 
@@ -179,6 +180,7 @@ else if (notifications.Count > 0)
         notificationCount = 0;
         ToggleDropdown();
         StateHasChanged();
+        await NotificationService.MarkAllAsReadAsync(notifications);
     }
 
     private void GoToNotificationCenter()

@@ -1,8 +1,8 @@
 @page "/reports/rentroll"
-@using Aquiis.Professional.Core.Entities
-@using Aquiis.Professional.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Application.Services
 @using Aquiis.Professional.Shared.Services
-@using Aquiis.Professional.Application.Services.PdfGenerators
+@using Aquiis.Application.Services.PdfGenerators
 @using Microsoft.AspNetCore.Authorization
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
 @inject FinancialReportService FinancialReportService

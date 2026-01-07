@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Aquiis.Professional.Infrastructure.Data;
+using Aquiis.Infrastructure.Data;
 
 namespace Aquiis.Professional.Shared.Components.Account;
 

@@ -1,21 +1,22 @@
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Aquiis.SimpleStart.Shared.Components.Account;
-using Aquiis.SimpleStart.Infrastructure.Data;
-using Aquiis.SimpleStart.Features.PropertyManagement;
-using Aquiis.SimpleStart.Core.Constants;
-using Aquiis.SimpleStart.Core.Interfaces;
-using Aquiis.SimpleStart.Application.Services;
-using Aquiis.SimpleStart.Application.Services.PdfGenerators;
+using Aquiis.Core.Constants;
+using Aquiis.Core.Interfaces;
+using Aquiis.Core.Interfaces.Services;
 using Aquiis.SimpleStart.Shared.Services;
 using Aquiis.SimpleStart.Shared.Authorization;
+using Aquiis.SimpleStart.Extensions;
+using Aquiis.Application.Services;
+using Aquiis.Application.Services.Workflows;
+using Aquiis.SimpleStart.Data;
+using Aquiis.SimpleStart.Entities;
 using ElectronNET.API;
 using Microsoft.Extensions.Options;
-using Aquiis.SimpleStart.Application.Services.Workflows;
-using Aquiis.SimpleStart.Core.Interfaces.Services;
-using Aquiis.SimpleStart.Infrastructure.Services;
+using Aquiis.Application.Services.PdfGenerators;
+using Aquiis.SimpleStart.Shared.Components.Account;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,38 +52,15 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
-
-// Get database connection string (uses Electron user data path when running as desktop app)
-var connectionString = HybridSupport.IsElectronActive 
-    ? await ElectronPathService.GetConnectionStringAsync(builder.Configuration)
-    : builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString), ServiceLifetime.Scoped);
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddIdentityCore<ApplicationUser>(options => {
-
-    // For desktop app, simplify registration (email confirmation can be enabled later via settings)
-    options.SignIn.RequireConfirmedAccount = !HybridSupport.IsElectronActive;
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireLowercase = true;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+// Add platform-specific infrastructure services (Database, Identity, Path services)
+if (HybridSupport.IsElectronActive)
+{
+    builder.Services.AddElectronServices(builder.Configuration);
+}
+else
+{
+    builder.Services.AddWebServices(builder.Configuration);
+}
 
 // Configure organization-based authorization
 builder.Services.AddAuthorization();
@@ -92,22 +70,9 @@ builder.Services.AddScoped<IAuthorizationHandler, OrganizationRoleAuthorizationH
 builder.Services.Configure<ApplicationSettings>(builder.Configuration.GetSection("ApplicationSettings"));
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-
-
-// Configure cookie authentication
+// Configure cookie authentication events (cookie lifetime already configured in extension methods)
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-    
-    // For Electron desktop app, we can use longer cookie lifetime
-    if (HybridSupport.IsElectronActive)
-    {
-        options.ExpireTimeSpan = TimeSpan.FromDays(30);
-        options.SlidingExpiration = true;
-    }
-    
     options.Events.OnSignedIn = async context =>
     {
         // Track user login
@@ -147,7 +112,7 @@ builder.Services.AddScoped<PropertyManagementService>();
 builder.Services.AddScoped<PropertyService>(); // New refactored service
 builder.Services.AddScoped<TenantService>(); // New refactored service
 builder.Services.AddScoped<LeaseService>(); // New refactored service
-builder.Services.AddScoped<Aquiis.SimpleStart.Application.Services.DocumentService>(); // New refactored service
+builder.Services.AddScoped<DocumentService>(); // New refactored service
 builder.Services.AddScoped<InvoiceService>(); // New refactored service
 builder.Services.AddScoped<PaymentService>(); // New refactored service
 builder.Services.AddScoped<MaintenanceService>(); // New refactored service
@@ -163,7 +128,8 @@ builder.Services.AddScoped<CalendarSettingsService>();
 builder.Services.AddScoped<CalendarEventService>(); // Concrete class for services that need it
 builder.Services.AddScoped<ICalendarEventService>(sp => sp.GetRequiredService<CalendarEventService>()); // Interface alias
 builder.Services.AddScoped<TenantConversionService>();
-builder.Services.AddScoped<UserContextService>();
+builder.Services.AddScoped<UserContextService>(); // Concrete class for components that need it
+builder.Services.AddScoped<IUserContextService>(sp => sp.GetRequiredService<UserContextService>()); // Interface alias
 builder.Services.AddScoped<NoteService>();
 // Add to service registration section
 builder.Services.AddScoped<NotificationService>();
@@ -175,14 +141,12 @@ builder.Services.AddScoped<ISMSService, SMSService>();
 // Phase 2.5: Email/SMS Integration
 builder.Services.AddScoped<EmailSettingsService>();
 builder.Services.AddScoped<SMSSettingsService>();
-builder.Services.AddScoped<SendGridEmailService>();
-builder.Services.AddScoped<TwilioSMSService>();
+// SendGridEmailService and TwilioSMSService registered in extension methods
 
 // Workflow services
-builder.Services.AddScoped<Aquiis.SimpleStart.Application.Services.Workflows.ApplicationWorkflowService>();
+builder.Services.AddScoped<ApplicationWorkflowService>();
 builder.Services.AddScoped<SecurityDepositService>();
 builder.Services.AddScoped<OrganizationService>();
-builder.Services.AddScoped<ElectronPathService>();
 builder.Services.AddSingleton<ToastService>();
 builder.Services.AddSingleton<ThemeService>();
 builder.Services.AddScoped<LeaseRenewalPdfGenerator>();
@@ -226,7 +190,9 @@ var app = builder.Build();
 // Ensure database is created and migrations are applied
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    // Get services
+    var dbService = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
+    var identityContext = scope.ServiceProvider.GetRequiredService<SimpleStartDbContext>();
     var backupService = scope.ServiceProvider.GetRequiredService<DatabaseBackupService>();
     
     // For Electron, handle database initialization and migrations
@@ -234,7 +200,7 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
-            var pathService = scope.ServiceProvider.GetRequiredService<ElectronPathService>();
+            var pathService = scope.ServiceProvider.GetRequiredService<IPathService>();
             var dbPath = await pathService.GetDatabasePathAsync();
             var stagedRestorePath = $"{dbPath}.restore_pending";
             
@@ -293,10 +259,15 @@ using (var scope = app.Services.CreateScope())
                 // Existing installation - apply any pending migrations
                 app.Logger.LogInformation("Checking for migrations on existing database at {DbPath}", dbPath);
                 
-                var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
-                if (pendingMigrations.Any())
+                // Check pending migrations for both contexts
+                var businessPendingCount = await dbService.GetPendingMigrationsCountAsync();
+                var identityPendingCount = await dbService.GetIdentityPendingMigrationsCountAsync();
+                
+                if (businessPendingCount > 0 || identityPendingCount > 0)
                 {
-                    app.Logger.LogInformation("Found {Count} pending migrations", pendingMigrations.Count());
+                    var totalCount = businessPendingCount + identityPendingCount;
+                    app.Logger.LogInformation("Found {Count} pending migrations ({BusinessCount} business, {IdentityCount} identity)", 
+                        totalCount, businessPendingCount, identityPendingCount);
                     
                     // Create backup before migration using the backup service
                     var backupPath = await backupService.CreatePreMigrationBackupAsync();
@@ -307,8 +278,9 @@ using (var scope = app.Services.CreateScope())
                     
                     try
                     {
-                        // Apply migrations
-                        await context.Database.MigrateAsync();
+                        // Apply migrations using DatabaseService
+                        await dbService.InitializeAsync();
+                        
                         app.Logger.LogInformation("Migrations applied successfully");
                         
                         // Verify database health after migration
@@ -351,7 +323,10 @@ using (var scope = app.Services.CreateScope())
             {
                 // New installation - create database with migrations
                 app.Logger.LogInformation("Creating new database for Electron app at {DbPath}", dbPath);
-                await context.Database.MigrateAsync();
+                
+                // Apply migrations using DatabaseService
+                await dbService.InitializeAsync();
+                
                 app.Logger.LogInformation("Database created successfully");
                 
                 // Create initial backup after database creation
@@ -393,9 +368,6 @@ using (var scope = app.Services.CreateScope())
                 {
                     app.Logger.LogInformation("Found staged restore file for web mode, applying it now");
                     
-                    // Close all database connections
-                    await context.Database.CloseConnectionAsync();
-                    
                     // Clear SQLite connection pool
                     Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
                     
@@ -417,12 +389,18 @@ using (var scope = app.Services.CreateScope())
                 }
             }
             
-            // Check if there are pending migrations
-            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
-            var isNewDatabase = !pendingMigrations.Any() && !(await context.Database.GetAppliedMigrationsAsync()).Any();
+            // Check if there are pending migrations for both contexts
+            var businessPendingCount = await dbService.GetPendingMigrationsCountAsync();
+            var identityPendingCount = await dbService.GetIdentityPendingMigrationsCountAsync();
             
-            if (pendingMigrations.Any())
+            var isNewDatabase = businessPendingCount == 0 && identityPendingCount == 0;
+            
+            if (businessPendingCount > 0 || identityPendingCount > 0)
             {
+                var totalCount = businessPendingCount + identityPendingCount;
+                app.Logger.LogInformation("Found {Count} pending migrations ({BusinessCount} business, {IdentityCount} identity)", 
+                    totalCount, businessPendingCount, identityPendingCount);
+                
                 // Create backup before migration
                 var backupPath = await backupService.CreatePreMigrationBackupAsync();
                 if (backupPath != null)
@@ -431,7 +409,14 @@ using (var scope = app.Services.CreateScope())
                 }
             }
             
-            await context.Database.MigrateAsync();
+            // Apply migrations to both contexts
+            if (identityPendingCount > 0 || businessPendingCount > 0)
+            {
+                app.Logger.LogInformation("Applying migrations ({Identity} identity, {Business} business)", 
+                    identityPendingCount, businessPendingCount);
+                await dbService.InitializeAsync();
+            }
+            
             app.Logger.LogInformation("Database migrations applied successfully");
             
             // Create initial backup after creating a new database
