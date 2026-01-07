@@ -1,10 +1,9 @@
 @page "/administration/settings/sms"
-@using Aquiis.SimpleStart.Application.Services
-@using Aquiis.SimpleStart.Infrastructure.Services
+@using Aquiis.Application.Services
 @using SocketIOClient.Messages
 @using System.ComponentModel.DataAnnotations
 @inject SMSSettingsService SMSSettingsService
-@inject TwilioSMSService TwilioSMSService
+@inject SMSService SMSService
 
 @inject ToastService ToastService
 @inject IJSRuntime JSRuntime
@@ -285,7 +284,7 @@
 
 @code {
     private OrganizationSMSSettings? settings;
-    private TwilioStats? stats;
+    private SMSStats? stats;
     private bool showConfigModal;
     private bool isSaving;
     private bool isRefreshing;
@@ -299,11 +298,11 @@
     private async Task LoadSettings()
     {
         settings = await SMSSettingsService.GetOrCreateSettingsAsync();
-        // TODO Phase 2.5: Uncomment when GetTwilioStatsAsync is implemented
-        // if (settings.IsSMSEnabled)
-        // {
-        //     stats = await SMSService.GetTwilioStatsAsync();
-        // }
+        // TODO Phase 2.5: Uncomment when GetSMSStatsAsync is implemented
+         if (settings.IsSMSEnabled)
+         {
+             stats = await SMSService.GetSMSStatsAsync();
+         }
     }
 
     private async Task SaveConfiguration()

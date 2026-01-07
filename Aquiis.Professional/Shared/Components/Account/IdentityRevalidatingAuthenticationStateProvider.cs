@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Aquiis.Professional.Infrastructure.Data;
+using Aquiis.Infrastructure.Data;
 
 namespace Aquiis.Professional.Shared.Components.Account;
 

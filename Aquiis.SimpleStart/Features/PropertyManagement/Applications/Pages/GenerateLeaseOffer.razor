@@ -1,11 +1,11 @@
 @page "/propertymanagement/applications/{ApplicationId:guid}/generate-lease-offer"
 
-@using Aquiis.SimpleStart.Core.Entities
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
-@using Aquiis.SimpleStart.Application.Services.Workflows
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Application.Services.PdfGenerators
+@using Aquiis.Application.Services.Workflows
+@using Aquiis.Core.Constants
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 
@@ -329,7 +329,7 @@
             }
 
             // Use workflow service to generate lease offer
-            var offerModel = new Aquiis.SimpleStart.Application.Services.Workflows.LeaseOfferModel
+            var offerModel = new Aquiis.Application.Services.Workflows.LeaseOfferModel
             {
                 StartDate = leaseModel.StartDate,
                 EndDate = leaseModel.EndDate,

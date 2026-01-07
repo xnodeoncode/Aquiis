@@ -1,7 +1,7 @@
 @page "/propertymanagement/payments/view/{PaymentId:guid}"
 
 @using Aquiis.Professional.Features.PropertyManagement
-@using Aquiis.Professional.Core.Entities
+@using Aquiis.Core.Entities
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
@@ -370,7 +370,7 @@ else
         try
         {
             // Generate the PDF receipt
-            byte[] pdfBytes = Aquiis.Professional.Application.Services.PdfGenerators.PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
+            byte[] pdfBytes = Aquiis.Application.Services.PdfGenerators.PaymentPdfGenerator.GeneratePaymentReceipt(payment!);
 
             // Create the document entity
             var document = new Document

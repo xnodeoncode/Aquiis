@@ -1,9 +1,12 @@
+using Aquiis.Professional.Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Aquiis.Professional.Shared.Components.Account;
-using Aquiis.Professional.Core.Entities;
-using Aquiis.Professional.Core.Constants;
+using Microsoft.Extensions.DependencyInjection;
+using Aquiis.Core.Entities;
 using System.Security.Claims;
+using Aquiis.Core.Constants;
+using Aquiis.Core.Interfaces.Services;
+using Aquiis.Application.Services;
 
 namespace Aquiis.Professional.Shared.Services
 {
@@ -12,11 +15,11 @@ namespace Aquiis.Professional.Shared.Services
     /// Provides cached access to the current user's context information including OrganizationId.
     /// This service is scoped per Blazor circuit, so the data is cached for the user's session.
     /// </summary>
-    public class UserContextService
+    public class UserContextService : IUserContextService
     {
         private readonly AuthenticationStateProvider _authenticationStateProvider;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly Func<Task<Application.Services.OrganizationService>> _organizationServiceFactory;
+        private readonly Func<Task<Aquiis.Application.Services.OrganizationService>> _organizationServiceFactory;
 
         // Cached values
         private string? _userId;
@@ -36,7 +39,7 @@ namespace Aquiis.Professional.Shared.Services
             _organizationServiceFactory = async () => 
             {
                 await Task.CompletedTask;
-                return serviceProvider.GetRequiredService<Application.Services.OrganizationService>();
+                return serviceProvider.GetRequiredService<OrganizationService>();
             };
         }
 
@@ -61,15 +64,23 @@ namespace Aquiis.Professional.Shared.Services
 
         /// <summary>
         /// Gets the current user's active organization ID (new multi-org support).
-        /// Throws InvalidOperationException if user has no active organization.
+        /// Returns null if user is not authenticated or has no active organization.
+        /// Callers should handle null appropriately.
         /// </summary>
         public async Task<Guid?> GetActiveOrganizationIdAsync()
         {
+            // Check if user is authenticated first
+            if (!await IsAuthenticatedAsync())
+            {
+                return null; // Not authenticated - no organization
+            }
+            
             await EnsureInitializedAsync();
             
+            // Return null if no active organization (e.g., fresh database, new user)
             if (!_activeOrganizationId.HasValue || _activeOrganizationId == Guid.Empty)
             {
-                throw new InvalidOperationException("User does not have an active organization. This is a critical security issue.");
+                return null;
             }
             
             return _activeOrganizationId;

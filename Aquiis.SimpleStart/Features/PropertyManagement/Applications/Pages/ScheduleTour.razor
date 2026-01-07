@@ -1,10 +1,10 @@
 @page "/PropertyManagement/Tours/Schedule/{ProspectId:guid}"
 
-@using Aquiis.SimpleStart.Core.Entities
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Application.Services.PdfGenerators
+@using Aquiis.Core.Constants
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
@@ -187,7 +187,7 @@
     public Guid ProspectId { get; set; }
 
     private ProspectiveTenant? prospect;
-    private List<Aquiis.SimpleStart.Core.Entities.Property> availableProperties = new();
+    private List<Aquiis.Core.Entities.Property> availableProperties = new();
     private List<Tour> upcomingTours = new();
     private List<ChecklistTemplate> tourTemplates = new();
     private TourViewModel newTour = new();

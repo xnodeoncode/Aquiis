@@ -1,9 +1,10 @@
+using Aquiis.SimpleStart.Entities;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Aquiis.SimpleStart.Infrastructure.Data;
+using Aquiis.Infrastructure.Data;
 
 namespace Aquiis.SimpleStart.Shared.Components.Account;
 

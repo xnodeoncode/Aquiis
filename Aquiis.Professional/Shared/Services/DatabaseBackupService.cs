@@ -1,4 +1,5 @@
-using Aquiis.Professional.Infrastructure.Data;
+using Aquiis.Infrastructure.Data;
+using Aquiis.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ElectronNET.API;
 
@@ -14,18 +15,18 @@ namespace Aquiis.Professional.Shared.Services
         private readonly ILogger<DatabaseBackupService> _logger;
         private readonly ApplicationDbContext _dbContext;
         private readonly IConfiguration _configuration;
-        private readonly ElectronPathService _electronPathService;
+        private readonly IPathService _pathService;
 
         public DatabaseBackupService(
             ILogger<DatabaseBackupService> logger,
             ApplicationDbContext dbContext,
             IConfiguration configuration,
-            ElectronPathService electronPathService)
+            IPathService pathService)
         {
             _logger = logger;
             _dbContext = dbContext;
             _configuration = configuration;
-            _electronPathService = electronPathService;
+            _pathService = pathService;
         }
 
         /// <summary>
@@ -336,7 +337,7 @@ namespace Aquiis.Professional.Shared.Services
         {
             if (HybridSupport.IsElectronActive)
             {
-                return await _electronPathService.GetDatabasePathAsync();
+                return await _pathService.GetDatabasePathAsync();
             }
             else
             {

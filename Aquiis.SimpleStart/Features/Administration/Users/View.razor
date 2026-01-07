@@ -1,9 +1,9 @@
 @page "/administration/users/view/{UserId}"
 
 @using Aquiis.SimpleStart.Shared.Components.Shared
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Core.Constants
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -299,10 +299,11 @@ else
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
     
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private InputModel Input { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        Input ??= new();
         await LoadUserData();
         isLoading = false;
     }

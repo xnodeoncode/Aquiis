@@ -1,13 +1,14 @@
 @page "/PropertyManagement/ProspectiveTenants/{ProspectId:guid}"
 
-@using Aquiis.Professional.Core.Entities
-@using Aquiis.Professional.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Application.Services
 @using Aquiis.Professional.Shared.Services
-@using Aquiis.Professional.Application.Services.PdfGenerators
-@using Aquiis.Professional.Core.Constants
-@using Aquiis.Professional.Utilities
+@using Aquiis.Application.Services.PdfGenerators
+@using Aquiis.Core.Constants
+@using Aquiis.Core.Utilities
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
+@using System.Runtime.Serialization
 
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
 @inject ProspectiveTenantService ProspectiveTenantService
@@ -576,7 +577,7 @@
     private ProspectiveTenant? prospect;
     private List<Tour> tours = new();
     private RentalApplication? application;
-    private List<Aquiis.Professional.Core.Entities.Property> availableProperties = new();
+    private List<Aquiis.Core.Entities.Property> availableProperties = new();
     private bool loading = true;
     private bool isEditing = false;
     private ProspectEditViewModel editModel = new();

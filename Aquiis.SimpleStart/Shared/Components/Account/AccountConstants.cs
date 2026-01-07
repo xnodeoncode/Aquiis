@@ -1,3 +1,4 @@
+using Aquiis.SimpleStart.Entities;
 namespace Aquiis.SimpleStart.Shared.Components.Account
 {
     public static class AccountConstants

@@ -1,12 +1,12 @@
 @page "/propertymanagement/prospects/{ProspectId:guid}/submit-application"
 
-@using Aquiis.SimpleStart.Core.Entities
-@using Aquiis.SimpleStart.Core.Validation
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Validation
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
-@using Aquiis.SimpleStart.Application.Services.Workflows
-@using Aquiis.SimpleStart.Core.Constants
+@using Aquiis.Application.Services.PdfGenerators
+@using Aquiis.Application.Services.Workflows
+@using Aquiis.Core.Constants
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 
@@ -480,7 +480,7 @@
             Console.WriteLine($"Submitting application for prospect {ProspectId}, property {applicationModel.PropertyId}");
             
             // Use ApplicationWorkflowService to submit application
-            var submissionModel = new Aquiis.SimpleStart.Application.Services.Workflows.ApplicationSubmissionModel
+            var submissionModel = new Aquiis.Application.Services.Workflows.ApplicationSubmissionModel
             {
                 // Current Address
                 CurrentAddress = applicationModel.CurrentAddress,

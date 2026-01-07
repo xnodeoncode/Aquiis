@@ -5,10 +5,11 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using Aquiis.Professional.Infrastructure.Data
-@using Aquiis.Professional.Application.Services
-@using Aquiis.Professional.Core.Entities
-@using Aquiis.Professional.Core.Constants
+@using Aquiis.Infrastructure.Data
+@using Aquiis.Application.Services
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Constants
+@using Microsoft.EntityFrameworkCore
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -105,8 +106,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         // Check if this is the first user (excluding system user)
-        var userCount = await Task.Run(() => DbContext.Users
-            .Count(u => u.Id != ApplicationConstants.SystemUser.Id));
+        var users = await UserManager.Users
+                .Where(u => u.Id != ApplicationConstants.SystemUser.Id)
+                .ToListAsync();
+
+        var userCount = users.Count;
+
         _isFirstUser = userCount == 0;
         _allowRegistration = _isFirstUser; // Only allow registration if this is the first user
     }

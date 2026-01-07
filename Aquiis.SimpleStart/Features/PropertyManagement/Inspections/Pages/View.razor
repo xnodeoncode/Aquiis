@@ -1,10 +1,10 @@
 @page "/propertymanagement/inspections/view/{InspectionId:guid}"
 
-@using Aquiis.SimpleStart.Core.Entities
+@using Aquiis.Core.Entities
 @using Aquiis.SimpleStart.Features.PropertyManagement
-@using Aquiis.SimpleStart.Application.Services
+@using Aquiis.Application.Services
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
+@using Aquiis.Application.Services.PdfGenerators
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
 
@@ -342,7 +342,7 @@ else
             isGenerating = true;
             errorMessage = null;
 
-            var pdfGenerator = new Aquiis.SimpleStart.Application.Services.PdfGenerators.InspectionPdfGenerator();
+            var pdfGenerator = new Aquiis.Application.Services.PdfGenerators.InspectionPdfGenerator();
             var pdfBytes = pdfGenerator.GenerateInspectionPdf(inspection!);
 
             var userId = await UserContext.GetUserIdAsync();

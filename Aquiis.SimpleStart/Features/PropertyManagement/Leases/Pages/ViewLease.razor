@@ -1,17 +1,17 @@
 @page "/propertymanagement/leases/view/{Id:guid}"
 
-@using Aquiis.SimpleStart.Core.Entities
-@using Aquiis.SimpleStart.Core.Validation
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Validation
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @using Aquiis.SimpleStart.Features.PropertyManagement
 @using System.ComponentModel.DataAnnotations
-@using Aquiis.SimpleStart.Application.Services
-@using Aquiis.SimpleStart.Application.Services.Workflows
+@using Aquiis.Application.Services
+@using Aquiis.Application.Services.Workflows
 @using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.SimpleStart.Application.Services.PdfGenerators
+@using Aquiis.Application.Services.PdfGenerators
 
 @inject NavigationManager Navigation
 @inject LeaseService LeaseService

@@ -1,3 +1,4 @@
+using Aquiis.SimpleStart.Entities;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 
