@@ -1,0 +1,139 @@
+@inject SessionTimeoutService SessionTimeoutService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@if (ShowWarning)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Session Timeout Warning
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-3">Your session is about to expire due to inactivity.</p>
+                    <div class="alert alert-warning mb-3">
+                        <h2 class="mb-0">@SecondsRemaining</h2>
+                        <small>seconds remaining</small>
+                    </div>
+                    <p class="text-muted">You will be automatically logged out unless you choose to stay logged in.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="Logout">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout Now
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="ExtendSession">
+                        <i class="bi bi-check-circle me-1"></i> Stay Logged In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowWarning { get; set; }
+    private int SecondsRemaining { get; set; }
+    private DotNetObjectReference<SessionTimeoutModal>? _dotNetRef;
+
+    protected override void OnInitialized()
+    {
+        SessionTimeoutService.OnWarningTriggered += HandleWarningTriggered;
+        SessionTimeoutService.OnWarningCountdown += HandleCountdown;
+        SessionTimeoutService.OnTimeout += HandleTimeout;
+        
+        // Start the service when modal is initialized
+        SessionTimeoutService.Start();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("sessionTimeoutManager.initialize", _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void RecordActivity()
+    {
+        SessionTimeoutService.RecordActivity();
+    }
+
+    private void HandleWarningTriggered()
+    {
+        InvokeAsync(() =>
+        {
+            ShowWarning = true;
+            SecondsRemaining = SessionTimeoutService.WarningSecondsRemaining;
+            StateHasChanged();
+        });
+    }
+
+    private void HandleCountdown(int secondsRemaining)
+    {
+        InvokeAsync(() =>
+        {
+            SecondsRemaining = secondsRemaining;
+            StateHasChanged();
+        });
+    }
+
+    private void HandleTimeout()
+    {
+        InvokeAsync(async () =>
+        {
+            ShowWarning = false;
+            SessionTimeoutService.Stop();
+            
+            // Find and submit the logout form that exists in NavMenu
+            await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('form[action=\"Account/Logout\"]')?.submit()");
+        });
+    }
+
+    private async Task ExtendSession()
+    {
+        ShowWarning = false;
+        SessionTimeoutService.ExtendSession();
+        
+        // Refresh the session cookie on server
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("fetch", "/api/session/refresh", new { method = "POST" });
+        }
+        catch
+        {
+            // If refresh fails, just continue - the activity recording should be enough
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task Logout()
+    {
+        ShowWarning = false;
+        SessionTimeoutService.Stop();
+        
+        // Find and submit the logout form that exists in NavMenu
+        await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('form[action=\"Account/Logout\"]')?.submit()");
+    }
+
+    public void Dispose()
+    {
+        SessionTimeoutService.OnWarningTriggered -= HandleWarningTriggered;
+        SessionTimeoutService.OnWarningCountdown -= HandleCountdown;
+        SessionTimeoutService.OnTimeout -= HandleTimeout;
+        SessionTimeoutService.Stop();
+        
+        if (_dotNetRef != null)
+        {
+            JSRuntime.InvokeVoidAsync("sessionTimeoutManager.dispose");
+            _dotNetRef.Dispose();
+        }
+    }
+}
