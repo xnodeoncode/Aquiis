@@ -13,9 +13,11 @@ namespace Aquiis.Application.Services
     {
         private readonly ILogger<ScheduledTaskService> _logger;
         private readonly IServiceProvider _serviceProvider;
+
         private Timer? _timer;
         private Timer? _dailyTimer;
         private Timer? _hourlyTimer;
+        private Timer? _weeklyTimer;
 
         public ScheduledTaskService(
             ILogger<ScheduledTaskService> logger,
@@ -60,7 +62,23 @@ namespace Aquiis.Application.Services
                 TimeSpan.Zero, // Start immediately
                 TimeSpan.FromHours(1));
 
-            _logger.LogInformation("Scheduled Task Service started. Daily tasks will run at midnight, hourly tasks every hour.");
+            // Calculate time until next Monday 6 AM for weekly tasks
+            var daysUntilMonday = ((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7;
+            if (daysUntilMonday == 0 && now.Hour >= 6)
+            {
+                daysUntilMonday = 7; // If it's Monday and past 6 AM, schedule for next Monday
+            }
+            var nextMonday = now.Date.AddDays(daysUntilMonday).AddHours(6);
+            var timeUntilMonday = nextMonday - now;
+
+            // Start weekly timer (executes every Monday at 6 AM)
+            _weeklyTimer = new Timer(
+                async _ => await ExecuteWeeklyTasks(),
+                null,
+                timeUntilMonday,
+                TimeSpan.FromDays(7));
+
+            _logger.LogInformation("Scheduled Task Service started. Daily tasks will run at midnight, hourly tasks every hour, weekly tasks every Monday at 6 AM.");
 
             // Keep the service running
             while (!stoppingToken.IsCancellationRequested)
@@ -79,6 +97,7 @@ namespace Aquiis.Application.Services
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     var organizationService = scope.ServiceProvider.GetRequiredService<OrganizationService>();
+                    var leaseNotificationService = scope.ServiceProvider.GetRequiredService<LeaseNotificationService>();
 
                     // Get all distinct organization IDs from OrganizationSettings
                     var organizations = await dbContext.OrganizationSettings
@@ -114,7 +133,7 @@ namespace Aquiis.Application.Services
                         }
 
                         // Task 4: Check for expiring leases and send renewal notifications
-                        await CheckLeaseRenewals(dbContext, organizationId, stoppingToken);
+                        await leaseNotificationService.SendLeaseRenewalRemindersAsync(organizationId, stoppingToken);
 
                         // Task 5: Expire overdue leases using workflow service (with audit logging)
                         var expiredLeaseCount = await ExpireOverdueLeases(scope, organizationId);
@@ -275,115 +294,7 @@ namespace Aquiis.Application.Services
             }
         }
 
-        private async Task CheckLeaseRenewals(ApplicationDbContext dbContext, Guid organizationId, CancellationToken stoppingToken)
-        {
-            try
-            {
-                var today = DateTime.Today;
-                
-                // Check for leases expiring in 90 days (initial notification)
-                var leasesExpiring90Days = await dbContext.Leases
-                    .Include(l => l.Tenant)
-                    .Include(l => l.Property)
-                    .Where(l => !l.IsDeleted &&
-                               l.OrganizationId == organizationId &&
-                               l.Status == "Active" &&
-                               l.EndDate >= today.AddDays(85) &&
-                               l.EndDate <= today.AddDays(95) &&
-                               (l.RenewalNotificationSent == null || !l.RenewalNotificationSent.Value))
-                    .ToListAsync(stoppingToken);
-
-                foreach (var lease in leasesExpiring90Days)
-                {
-                    // TODO: Send email notification when email service is integrated
-                    _logger.LogInformation(
-                        "Lease expiring in 90 days: Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
-                        lease.Id,
-                        lease.Property?.Address ?? "Unknown",
-                        lease.Tenant?.FullName ?? "Unknown",
-                        lease.EndDate.ToString("MMM dd, yyyy"));
-
-                    lease.RenewalNotificationSent = true;
-                    lease.RenewalNotificationSentOn = DateTime.UtcNow;
-                    lease.RenewalStatus = "Pending";
-                    lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
-                }
-
-                // Check for leases expiring in 60 days (reminder)
-                var leasesExpiring60Days = await dbContext.Leases
-                    .Include(l => l.Tenant)
-                    .Include(l => l.Property)
-                    .Where(l => !l.IsDeleted &&
-                               l.OrganizationId == organizationId &&
-                               l.Status == "Active" &&
-                               l.EndDate >= today.AddDays(55) &&
-                               l.EndDate <= today.AddDays(65) &&
-                               l.RenewalNotificationSent == true &&
-                               l.RenewalReminderSentOn == null)
-                    .ToListAsync(stoppingToken);
-
-                foreach (var lease in leasesExpiring60Days)
-                {
-                    // TODO: Send reminder email
-                    _logger.LogInformation(
-                        "Lease expiring in 60 days (reminder): Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
-                        lease.Id,
-                        lease.Property?.Address ?? "Unknown",
-                        lease.Tenant?.FullName ?? "Unknown",
-                        lease.EndDate.ToString("MMM dd, yyyy"));
-
-                    lease.RenewalReminderSentOn = DateTime.UtcNow;
-                    lease.LastModifiedOn = DateTime.UtcNow;
-                    lease.LastModifiedBy = ApplicationConstants.SystemUser.Id; // Automated task
-                }
-
-                // Check for leases expiring in 30 days (final reminder)
-                var leasesExpiring30Days = await dbContext.Leases
-                    .Include(l => l.Tenant)
-                    .Include(l => l.Property)
-                    .Where(l => !l.IsDeleted &&
-                               l.OrganizationId == organizationId &&
-                               l.Status == "Active" &&
-                               l.EndDate >= today.AddDays(25) &&
-                               l.EndDate <= today.AddDays(35) &&
-                               l.RenewalStatus == "Pending")
-                    .ToListAsync(stoppingToken);
-
-                foreach (var lease in leasesExpiring30Days)
-                {
-                    // TODO: Send final reminder
-                    _logger.LogInformation(
-                        "Lease expiring in 30 days (final reminder): Lease ID {LeaseId}, Property: {PropertyAddress}, Tenant: {TenantName}, End Date: {EndDate}",
-                        lease.Id,
-                        lease.Property?.Address ?? "Unknown",
-                        lease.Tenant?.FullName ?? "Unknown",
-                        lease.EndDate.ToString("MMM dd, yyyy"));
-                }
-
-                // Note: Lease expiration is now handled by ExpireOverdueLeases() 
-                // which uses LeaseWorkflowService for proper audit logging
-
-                var totalUpdated = leasesExpiring90Days.Count + leasesExpiring60Days.Count + 
-                                  leasesExpiring30Days.Count;
-
-                if (totalUpdated > 0)
-                {
-                    await dbContext.SaveChangesAsync(stoppingToken);
-                    _logger.LogInformation(
-                        "Processed {Count} lease renewal notifications for organization {OrganizationId}: {Initial} initial, {Reminder60} 60-day, {Reminder30} 30-day reminders",
-                        totalUpdated,
-                        organizationId,
-                        leasesExpiring90Days.Count,
-                        leasesExpiring60Days.Count,
-                        leasesExpiring30Days.Count);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking lease renewals for organization {OrganizationId}", organizationId);
-            }
-        }
+        // Lease renewal reminder logic moved to LeaseNotificationService
 
         private async Task ExecuteDailyTasks()
         {
@@ -411,7 +322,7 @@ namespace Aquiis.Application.Services
                 var overdueInspections = await propertyService.GetPropertiesWithOverdueInspectionsAsync();
                 if (overdueInspections.Any())
                 {
-                    _logger.LogWarning("{Count} propert(ies) have overdue routine inspections", 
+                    _logger.LogWarning("{Count} properties have overdue routine inspections", 
                         overdueInspections.Count);
                     
                     foreach (var property in overdueInspections.Take(5)) // Log first 5
@@ -454,12 +365,15 @@ namespace Aquiis.Application.Services
                     await ProcessYearEndDividends(scope, today.Year - 1);
                 }
 
+                // Send daily digest emails to users who have opted in
+                var digestService = scope.ServiceProvider.GetRequiredService<DigestService>();
+                await digestService.SendDailyDigestsAsync();
+
                 // Additional daily tasks:
                 // - Generate daily reports
                 // - Send payment reminders
                 // - Check for overdue invoices
                 // - Archive old records
-                // - Send summary emails to property managers
             }
             catch (Exception ex)
             {
@@ -467,6 +381,30 @@ namespace Aquiis.Application.Services
             }
         }
 
+        // Daily digest logic moved to DigestService
+
+        private async Task ExecuteWeeklyTasks()
+        {
+            _logger.LogInformation("Executing weekly tasks at {Time}", DateTime.Now);
+
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var digestService = scope.ServiceProvider.GetRequiredService<DigestService>();
+                var documentNotificationService = scope.ServiceProvider.GetRequiredService<DocumentNotificationService>();
+                var maintenanceNotificationService = scope.ServiceProvider.GetRequiredService<MaintenanceNotificationService>();
+
+                await digestService.SendWeeklyDigestsAsync();
+                await documentNotificationService.CheckDocumentExpirationsAsync();
+                await maintenanceNotificationService.SendMaintenanceStatusSummaryAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing weekly tasks");
+            }
+        }
+
+        // Old SendDailyDigestsAsync removed - functionality in DigestService
         private async Task ExecuteHourlyTasks()
         {
             _logger.LogInformation("Executing hourly tasks at {Time}", DateTime.Now);
@@ -788,6 +726,7 @@ namespace Aquiis.Application.Services
             _timer?.Dispose();
             _dailyTimer?.Change(Timeout.Infinite, 0);
             _hourlyTimer?.Change(Timeout.Infinite, 0);
+            _weeklyTimer?.Change(Timeout.Infinite, 0);
             return base.StopAsync(stoppingToken);
         }
 
