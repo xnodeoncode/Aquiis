@@ -1,0 +1,64 @@
+@using Aquiis.Core.Constants
+@using Aquiis.Core.Entities
+@using Aquiis.UI.Shared.Components.Entities.Properties
+@inject NavigationManager Navigation
+@inject PropertyService PropertyService
+@namespace Aquiis.UI.Shared.Features.PropertyManagement.Properties
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Add New Property</h3>
+            </div>
+            <div class="card-body">
+                <PropertyForm 
+                    Model="@propertyModel" 
+                    FormName="create-property"
+                    SubmitButtonText="Create Property"
+                    IsSubmitting="@isSubmitting"
+                    ErrorMessage="@errorMessage"
+                    OnValidSubmit="SaveProperty"
+                    OnCancel="Cancel" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private PropertyFormModel propertyModel = new();
+    private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
+
+    private async Task SaveProperty(PropertyFormModel model)
+    {
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        var property = new Property
+        {
+            Address = model.Address,
+            UnitNumber = model.UnitNumber,
+            City = model.City,
+            State = model.State,
+            ZipCode = model.ZipCode,
+            PropertyType = model.PropertyType,
+            MonthlyRent = model.MonthlyRent,
+            Bedrooms = model.Bedrooms,
+            Bathrooms = model.Bathrooms,
+            SquareFeet = model.SquareFeet,
+            Description = model.Description,
+            Status = model.Status,
+            IsAvailable = model.IsAvailable,
+        };
+
+        await PropertyService.CreateAsync(property);
+        isSubmitting = false;
+        Navigation.NavigateTo("/propertymanagement/properties");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/propertymanagement/properties");
+    }
+}
