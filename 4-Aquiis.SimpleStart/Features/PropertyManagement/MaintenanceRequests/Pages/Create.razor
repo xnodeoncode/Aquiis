@@ -1,22 +1,19 @@
-@page "/propertymanagement/maintenance/create/{PropertyId:int?}"
-@using Aquiis.Application.Services
-@using Aquiis.SimpleStart.Shared.Services
-@using Aquiis.Application.Services.PdfGenerators
-@using Microsoft.Extensions.Configuration.UserSecrets
+@page "/propertymanagement/maintenance/create/{PropertyId:guid?}"
+
 @using System.ComponentModel.DataAnnotations
 @inject MaintenanceService MaintenanceService
 @inject PropertyService PropertyService
 @inject LeaseService LeaseService
+
+@inject UserContextService UserContextService
 @inject NavigationManager NavigationManager
 
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
 @rendermode InteractiveServer
 
-<PageTitle>Create Maintenance Request</PageTitle>
-
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-tools"></i> Create Maintenance Request</h1>
+        <h1><i class="bi bi-tools"></i> Record Repair</h1>
         <button class="btn btn-outline-secondary" @onclick="Cancel">
             <i class="bi bi-x-circle"></i> Cancel
         </button>
@@ -36,7 +33,7 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
-                        <EditForm Model="maintenanceRequest" OnValidSubmit="HandleValidSubmit">
+                        <Microsoft.AspNetCore.Components.Forms.EditForm Model="maintenanceRequest" OnValidSubmit="HandleValidSubmit">
                             <DataAnnotationsValidator />
                             <ValidationSummary class="text-danger" />
 
@@ -67,21 +64,15 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="row mb-3">
+                                
+                                <div class="col-md-8">
                                 <label class="form-label">Title *</label>
                                 <InputText class="form-control" @bind-Value="maintenanceRequest.Title" placeholder="Brief description of the issue" />
                                 <ValidationMessage For="@(() => maintenanceRequest.Title)" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Description *</label>
-                                <InputTextArea class="form-control" @bind-Value="maintenanceRequest.Description" rows="4" placeholder="Detailed description of the maintenance issue" />
-                                <ValidationMessage For="@(() => maintenanceRequest.Description)" />
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Request Type *</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Repair Type *</label>
                                     <InputSelect class="form-select" @bind-Value="maintenanceRequest.RequestType">
                                         <option value="">-- Select Type --</option>
                                         @foreach (var type in ApplicationConstants.MaintenanceRequestTypes.AllMaintenanceRequestTypes)
@@ -91,53 +82,31 @@
                                     </InputSelect>
                                     <ValidationMessage For="@(() => maintenanceRequest.RequestType)" />
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Priority *</label>
-                                    <InputSelect class="form-select" @bind-Value="maintenanceRequest.Priority">
-                                        @foreach (var priority in ApplicationConstants.MaintenanceRequestPriorities.AllMaintenanceRequestPriorities)
-                                        {
-                                            <option value="@priority">@priority</option>
-                                        }
-                                    </InputSelect>
-                                    <ValidationMessage For="@(() => maintenanceRequest.Priority)" />
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Requested By</label>
-                                <InputText class="form-control" @bind-Value="maintenanceRequest.RequestedBy" placeholder="Name of person requesting" />
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <InputText type="email" class="form-control" @bind-Value="maintenanceRequest.RequestedByEmail" placeholder="email@example.com" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Phone</label>
-                                    <InputText class="form-control" @bind-Value="maintenanceRequest.RequestedByPhone" placeholder="(555) 123-4567" />
+                                <div class="col-md-12">
+                                    <label class="form-label">Description *</label>
+                                    <InputTextArea class="form-control" @bind-Value="maintenanceRequest.Description" rows="4" placeholder="Detailed description of the maintenance issue" />
+                                    <ValidationMessage For="@(() => maintenanceRequest.Description)" />
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Requested Date *</label>
-                                    <InputDate class="form-control" @bind-Value="maintenanceRequest.RequestedOn" />
-                                    <ValidationMessage For="@(() => maintenanceRequest.RequestedOn)" />
+                                    <label class="form-label">Cost</label>
+                                    <InputNumber class="form-control" @bind-Value="maintenanceRequest.ActualCost" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Scheduled Date</label>
-                                    <InputDate class="form-control" @bind-Value="maintenanceRequest.ScheduledOn" />
+                                    <label class="form-label">Completed On *</label>
+                                    <InputDate class="form-control" @bind-Value="maintenanceRequest.CompletedOn" />
+                                    <ValidationMessage For="@(() => maintenanceRequest.CompletedOn)" />
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Estimated Cost</label>
-                                    <InputNumber class="form-control" @bind-Value="maintenanceRequest.EstimatedCost" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Assigned To</label>
+                                    <label class="form-label">Completed By</label>
                                     <InputText class="form-control" @bind-Value="maintenanceRequest.AssignedTo" placeholder="Contractor or maintenance person" />
                                 </div>
                             </div>
@@ -153,11 +122,11 @@
                                     else
                                     {
                                         <i class="bi bi-check-circle me-2"></i>
-                                        <span>Create Request</span>
+                                        <span>Save</span>
                                     }
                                 </button>
                             </div>
-                        </EditForm>
+                        </Microsoft.AspNetCore.Components.Forms.EditForm>
                     </div>
                 </div>
             </div>
@@ -208,6 +177,7 @@
     [Parameter]
     [SupplyParameterFromQuery]
     public Guid? PropertyId { get; set; }
+    
 
     [Parameter]
     [SupplyParameterFromQuery]
@@ -218,9 +188,12 @@
     private bool isLoading = true;
     private bool isSaving = false;
 
+    private ApplicationUser currentUser = default!;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        currentUser = await UserContextService.GetCurrentUserAsync() ?? throw new InvalidOperationException("User context is required");
     }
 
     protected override async Task OnParametersSetAsync()
@@ -295,12 +268,13 @@
                 Description = maintenanceRequest.Description,
                 RequestType = maintenanceRequest.RequestType,
                 Priority = maintenanceRequest.Priority,
-                RequestedBy = maintenanceRequest.RequestedBy,
-                RequestedByEmail = maintenanceRequest.RequestedByEmail,
-                RequestedByPhone = maintenanceRequest.RequestedByPhone,
-                RequestedOn = maintenanceRequest.RequestedOn,
-                ScheduledOn = maintenanceRequest.ScheduledOn,
-                EstimatedCost = maintenanceRequest.EstimatedCost,
+                RequestedBy = currentUser.Id,
+                RequestedByEmail = currentUser.Email!,
+                RequestedByPhone = currentUser.PhoneNumber!,
+                RequestedOn = maintenanceRequest.CompletedOn,
+                ScheduledOn = maintenanceRequest.CompletedOn,
+                CompletedOn = maintenanceRequest.CompletedOn,
+                ActualCost = maintenanceRequest.ActualCost,
                 AssignedTo = maintenanceRequest.AssignedTo
             };
 
@@ -344,11 +318,12 @@
         public string RequestedByPhone { get; set; } = string.Empty;
 
         [Required]
-        public DateTime RequestedOn { get; set; } = DateTime.Today;
+        public DateTime CompletedOn { get; set; } = DateTime.Today;
 
         public DateTime? ScheduledOn { get; set; }
 
-        public decimal EstimatedCost { get; set; }
+        public decimal ActualCost { get; set; }
         public string AssignedTo { get; set; } = string.Empty;
     }
 }
+

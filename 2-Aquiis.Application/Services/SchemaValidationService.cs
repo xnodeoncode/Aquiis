@@ -52,7 +52,7 @@ namespace Aquiis.Application.Services
                         dbVersion);
                 }
 
-                _logger.LogInformation("Schema version validated successfully: {Version}", dbVersion);
+                _logger.LogDebug("Schema version validated successfully: {Version}", dbVersion);
                 return (true, $"Schema version {dbVersion} is valid", dbVersion);
             }
             catch (Exception ex)

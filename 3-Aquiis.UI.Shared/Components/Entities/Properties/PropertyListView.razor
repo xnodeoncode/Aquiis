@@ -1,0 +1,352 @@
+@namespace Aquiis.UI.Shared.Components.Entities.Properties
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Constants
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search properties..." 
+                   value="@SearchTerm" 
+                   @oninput="HandleSearchChanged" />
+        </div>
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" value="@StatusFilter" @onchange="HandleStatusFilterChanged">
+            <option value="">All Properties</option>
+            <option value="Available">Available</option>
+            <option value="Pending">Pending Lease</option>
+            <option value="Occupied">Occupied</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <button class="btn btn-outline-secondary" @onclick="OnClearFilters">
+            <i class="bi bi-x-circle"></i> Clear Filters
+        </button>
+    </div>
+</div>
+
+@if (ShowMetrics)
+{
+    <PropertyMetricsCard 
+        ShowAvailableProperties="true" 
+        ShowLeasePendingProperties="false" 
+        ShowOccupiedProperties="true" 
+        ShowTotalMonthlyRent="true"
+        TotalPropertiesCount="@TotalCount"
+        AvailableCount="@AvailableCount"
+        PendingCount="@PendingCount"
+        OccupiedCount="@OccupiedCount"
+        TotalMonthlyRent="@TotalMonthlyRent" />
+}
+
+@if (ViewMode == PropertyListViewMode.Grid)
+{
+    <!-- Grid View -->
+    <div class="row">
+        @foreach (var property in Properties)
+        {
+            <div class="col-md-6 col-lg-4 mb-4" id="property-@property.Id">
+                <PropertyCard 
+                    PropertyId="@property.Id"
+                    Address="@property.Address"
+                    UnitNumber="@property.UnitNumber"
+                    City="@property.City"
+                    State="@property.State"
+                    ZipCode="@property.ZipCode"
+                    Description="@property.Description"
+                    Bedrooms="@property.Bedrooms"
+                    Bathrooms="@property.Bathrooms"
+                    SquareFeet="@property.SquareFeet"
+                    MonthlyRent="@property.MonthlyRent"
+                    Status="@property.Status"
+                    ShowEditDelete="@ShowEditDelete"
+                    OnView="@OnView"
+                    OnEdit="@OnEdit"
+                    OnDelete="@OnDelete" />
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- Table View -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th @onclick="() => HandleSort(nameof(Property.Address))" style="cursor: pointer;">
+                                Address
+                                @if (SortColumn == nameof(Property.Address))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th @onclick="() => HandleSort(nameof(Property.City))" style="cursor: pointer;">
+                                City
+                                @if (SortColumn == nameof(Property.City))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th @onclick="() => HandleSort(nameof(Property.PropertyType))" style="cursor: pointer;">
+                                Type
+                                @if (SortColumn == nameof(Property.PropertyType))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th class="text-center">Beds</th>
+                            <th class="text-center">Baths</th>
+                            <th class="text-end" @onclick="() => HandleSort(nameof(Property.SquareFeet))" style="cursor: pointer;">
+                                Sq Ft
+                                @if (SortColumn == nameof(Property.SquareFeet))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th @onclick="() => HandleSort(nameof(Property.Status))" style="cursor: pointer;">
+                                Status
+                                @if (SortColumn == nameof(Property.Status))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th class="text-end" @onclick="() => HandleSort(nameof(Property.MonthlyRent))" style="cursor: pointer;">
+                                Rent
+                                @if (SortColumn == nameof(Property.MonthlyRent))
+                                {
+                                    <i class="bi bi-@(SortAscending ? "arrow-up" : "arrow-down")"></i>
+                                }
+                            </th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var property in Properties)
+                        {
+                            <tr id="property-@property.Id">
+                                <td>
+                                    <strong>@property.Address @(!string.IsNullOrWhiteSpace(property.UnitNumber) ? $", {property.UnitNumber}" : "")</strong>
+                                    <br />
+                                    <small class="text-muted">@property.State @property.ZipCode</small>
+                                </td>
+                                <td>@property.City</td>
+                                <td>@property.PropertyType</td>
+                                <td class="text-center">@property.Bedrooms</td>
+                                <td class="text-center">@property.Bathrooms</td>
+                                <td class="text-end">@property.SquareFeet.ToString("N0")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(property.Status)">
+                                        @FormatPropertyStatus(property.Status)
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-primary">@property.MonthlyRent.ToString("C")</strong>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" @onclick="() => HandleView(property.Id)" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        @if (ShowEditDelete)
+                                        {
+                                            <button class="btn btn-outline-secondary" @onclick="() => HandleEdit(property.Id)" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" 
+                                                    @onclick="() => HandleDelete(property.Id)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// List of properties to display
+    /// </summary>
+    [Parameter, EditorRequired]
+    public List<Property> Properties { get; set; } = new();
+    
+    /// <summary>
+    /// View mode (Grid or List/Table)
+    /// </summary>
+    [Parameter]
+    public PropertyListViewMode ViewMode { get; set; } = PropertyListViewMode.Grid;
+    
+    /// <summary>
+    /// Whether to show metrics cards
+    /// </summary>
+    [Parameter]
+    public bool ShowMetrics { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show edit/delete buttons
+    /// </summary>
+    [Parameter]
+    public bool ShowEditDelete { get; set; } = true;
+    
+    /// <summary>
+    /// Current search term
+    /// </summary>
+    [Parameter]
+    public string SearchTerm { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Current status filter
+    /// </summary>
+    [Parameter]
+    public string StatusFilter { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Current sort column
+    /// </summary>
+    [Parameter]
+    public string SortColumn { get; set; } = nameof(Property.Address);
+    
+    /// <summary>
+    /// Sort direction
+    /// </summary>
+    [Parameter]
+    public bool SortAscending { get; set; } = true;
+
+     /// <summary>
+    /// Total properties count (for metrics)
+    /// </summary>
+    [Parameter]
+    public int TotalCount { get; set; }
+    
+    /// <summary>
+    /// Available properties count (for metrics)
+    /// </summary>
+    [Parameter]
+    public int AvailableCount { get; set; }
+    
+    /// <summary>
+    /// Pending properties count (for metrics)
+    /// </summary>
+    [Parameter]
+    public int PendingCount { get; set; }
+    
+    /// <summary>
+    /// Occupied properties count (for metrics)
+    /// </summary>
+    [Parameter]
+    public int OccupiedCount { get; set; }
+    
+    /// <summary>
+    /// Total monthly rent (for metrics)
+    /// </summary>
+    [Parameter]
+    public decimal TotalMonthlyRent { get; set; }
+    
+    /// <summary>
+    /// Callback when search term changes
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnSearchChanged { get; set; }
+    
+    /// <summary>
+    /// Callback when status filter changes
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnStatusFilterChanged { get; set; }
+    
+    /// <summary>
+    /// Callback when filters are cleared
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClearFilters { get; set; }
+    
+    /// <summary>
+    /// Callback when sort is requested
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string Column, bool Ascending)> OnSort { get; set; }
+    
+    /// <summary>
+    /// Callback when View button is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnView { get; set; }
+    
+    /// <summary>
+    /// Callback when Edit button is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnEdit { get; set; }
+    
+    /// <summary>
+    /// Callback when Delete button is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnDelete { get; set; }
+    
+    private async Task HandleSearchChanged(ChangeEventArgs e)
+    {
+        await OnSearchChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+    }
+    
+    private async Task HandleStatusFilterChanged(ChangeEventArgs e)
+    {
+        await OnStatusFilterChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+    }
+    
+    private async Task HandleSort(string column)
+    {
+        var ascending = SortColumn == column ? !SortAscending : true;
+        await OnSort.InvokeAsync((column, ascending));
+    }
+    
+    private async Task HandleView(Guid propertyId)
+    {
+        await OnView.InvokeAsync(propertyId);
+    }
+    
+    private async Task HandleEdit(Guid propertyId)
+    {
+        await OnEdit.InvokeAsync(propertyId);
+    }
+    
+    private async Task HandleDelete(Guid propertyId)
+    {
+        await OnDelete.InvokeAsync(propertyId);
+    }
+    
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            var s when s == ApplicationConstants.PropertyStatuses.Available => "bg-success",
+            var s when s == ApplicationConstants.PropertyStatuses.ApplicationPending => "bg-info",
+            var s when s == ApplicationConstants.PropertyStatuses.LeasePending => "bg-warning",
+            var s when s == ApplicationConstants.PropertyStatuses.Occupied => "bg-danger",
+            var s when s == ApplicationConstants.PropertyStatuses.UnderRenovation => "bg-secondary",
+            var s when s == ApplicationConstants.PropertyStatuses.OffMarket => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+    
+    private string FormatPropertyStatus(string status)
+    {
+        return status switch
+        {
+            var s when s == ApplicationConstants.PropertyStatuses.ApplicationPending => "Application Pending",
+            var s when s == ApplicationConstants.PropertyStatuses.LeasePending => "Lease Pending",
+            var s when s == ApplicationConstants.PropertyStatuses.UnderRenovation => "Under Renovation",
+            var s when s == ApplicationConstants.PropertyStatuses.OffMarket => "Off Market",
+            _ => status
+        };
+    }
+}

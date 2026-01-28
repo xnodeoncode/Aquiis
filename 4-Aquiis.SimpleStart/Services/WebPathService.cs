@@ -31,16 +31,25 @@ public class WebPathService : IPathService
     public async Task<string> GetDatabasePathAsync()
     {
         var connectionString = await GetConnectionStringAsync(_configuration);
-        // Extract Data Source from connection string
-        var dataSource = connectionString.Split(';')
-            .FirstOrDefault(s => s.Trim().StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase));
+        // Extract Data Source from connection string (supports both "Data Source=" and "DataSource=")
+        var dbPath = connectionString
+            .Replace("Data Source=", "")
+            .Replace("DataSource=", "")
+            .Split(';')[0]
+            .Trim();
         
-        if (dataSource != null)
+        if (string.IsNullOrEmpty(dbPath))
         {
-            return dataSource.Split('=')[1].Trim();
+            dbPath = "aquiis.db"; // Default
         }
         
-        return "aquiis.db"; // Default
+        // Make absolute path if relative
+        if (!Path.IsPathRooted(dbPath))
+        {
+            dbPath = Path.Combine(Directory.GetCurrentDirectory(), dbPath);
+        }
+        
+        return dbPath;
     }
     
     public async Task<string> GetUserDataPathAsync()

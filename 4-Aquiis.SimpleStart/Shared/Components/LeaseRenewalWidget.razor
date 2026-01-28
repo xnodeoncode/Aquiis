@@ -39,13 +39,13 @@
                     <input type="radio" class="btn-check" name="renewalFilter" id="filter60" value="60"
                            checked="@(selectedFilter == 60)" @onchange="() => FilterLeases(60)" />
                     <label class="btn btn-outline-primary" for="filter60">
-                        60 Days <span class="badge bg-warning">@leases60Days.Count()</span>
+                        60 Days <span class="badge bg-warning">@(leases60Days.Count() - leases30Days.Count())</span>
                     </label>
 
                     <input type="radio" class="btn-check" name="renewalFilter" id="filter90" value="90"
                            checked="@(selectedFilter == 90)" @onchange="() => FilterLeases(90)" />
                     <label class="btn btn-outline-primary" for="filter90">
-                        90 Days <span class="badge bg-info">@leases90Days.Count()</span>
+                        90 Days <span class="badge bg-info">@(leases90Days.Count() - leases60Days.Count())</span>
                     </label>
                 </div>
             </div>
@@ -106,7 +106,7 @@
     private List<Lease> leases60Days = new();
     private List<Lease> leases90Days = new();
     private bool isLoading = true;
-    private int selectedFilter = 30;
+    private int selectedFilter = 60;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,7 +118,7 @@
         try
         {
             isLoading = true;
-            var allLeases = await LeaseService.GetAllAsync();
+            var allLeases = await LeaseService.GetLeasesWithRelationsAsync();
             var today = DateTime.Today;
 
             expiringLeases = allLeases
@@ -152,6 +152,7 @@
     private void FilterLeases(int days)
     {
         selectedFilter = days;
+        StateHasChanged();
     }
 
     private List<Lease> GetFilteredLeases()

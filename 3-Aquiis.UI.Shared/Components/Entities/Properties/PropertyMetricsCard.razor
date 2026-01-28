@@ -1,0 +1,119 @@
+@using Aquiis.UI.Shared.Components.Common
+<div class="row">
+     @if(ShowTotalProperties){
+    <MetricsCard Title="Total Properties" 
+                 IconCssClass="bi bi-house-fill" 
+                 ColorClass="bg-primary"
+                 Count="@TotalPropertiesCount.ToString()" />
+    }
+    @if(ShowAvailableProperties){
+    <MetricsCard Title="Available Properties" 
+                 IconCssClass="bi bi-check-circle" 
+                 ColorClass="bg-success"
+                 Count="@AvailableCount.ToString()" />
+    
+    }
+    @if(ShowOccupiedProperties){
+    <MetricsCard Title="Occupied Properties" 
+                 IconCssClass="bi bi-check-circle" 
+                 ColorClass="bg-danger"
+                 Count="@OccupiedCount.ToString()" />
+    }
+    @if(ShowLeasePendingProperties){
+    <MetricsCard Title="Pending Leases" 
+                 IconCssClass="bi bi-file-text" 
+                 ColorClass="bg-secondary"
+                 Count="@PendingCount.ToString()" />
+    }
+
+    @if(ShowActiveLeases){
+    <MetricsCard Title="Active Leases" 
+                 IconCssClass="bi bi-file-text" 
+                 ColorClass="bg-secondary"
+                 Count="@ActiveLeasesCount.ToString()" />
+    }
+
+    @if(ShowTotalTenants){
+    <MetricsCard Title="Total Tenants" 
+                 IconCssClass="bi bi-people-fill" 
+                 ColorClass="bg-info"
+                 Count="@TotalTenantCount.ToString()" />
+    }
+
+    @if(ShowActiveTenants){
+    <MetricsCard Title="Active Tenants" 
+                 IconCssClass="bi bi-people-fill" 
+                 ColorClass="bg-info"
+                 Count="@ActiveTenantsCount.ToString()" />
+    }
+    
+    @if(ShowOccupancyRate){
+    <MetricsCard Title="Occupancy Rate" 
+                 IconCssClass="bi bi-bar-chart-fill" 
+                 ColorClass="bg-info"
+                 Count="@($"{OccupancyRate:F1}%")" />
+    }
+
+    @if(ShowTotalMonthlyRent){
+    <MetricsCard Title="Total Rent/Month" 
+                 IconCssClass="bi bi-currency-dollar" 
+                 ColorClass="bg-info"
+                 Count="@TotalMonthlyRent.ToString("C")" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public bool ShowTotalProperties { get; set; } = true;
+
+    [Parameter]
+    public bool ShowAvailableProperties { get; set; } = false;
+
+    [Parameter]
+    public bool ShowLeasePendingProperties { get; set; } = false;
+
+    [Parameter]
+    public bool ShowOccupiedProperties { get; set; } = false;
+    
+    [Parameter]
+    public bool ShowTotalMonthlyRent { get; set; } = false;
+
+    [Parameter]
+    public bool ShowActiveTenants { get; set; } = false;
+
+    [Parameter]
+    public bool ShowTotalTenants { get; set; } = false;
+
+    [Parameter]
+    public bool ShowActiveLeases { get; set; } = false;
+
+    [Parameter]
+    public bool ShowOccupancyRate { get; set; } = false;
+
+    [Parameter]
+    public int TotalPropertiesCount { get; set; }
+
+    [Parameter]
+    public int ActiveTenantsCount { get; set; }
+
+    [Parameter]
+    public int TotalTenantCount { get; set; }
+
+    [Parameter]
+    public int ActiveLeasesCount { get; set; }
+
+    [Parameter]
+    public int AvailableCount { get; set; }
+
+    [Parameter]
+    public int PendingCount { get; set; }
+
+    [Parameter]
+    public int OccupiedCount { get; set; }
+
+    [Parameter]
+    public decimal TotalMonthlyRent { get; set; }
+
+    [Parameter]
+    public decimal OccupancyRate { get; set; }
+}

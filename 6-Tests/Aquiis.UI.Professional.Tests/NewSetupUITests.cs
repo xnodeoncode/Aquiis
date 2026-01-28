@@ -31,32 +31,38 @@ public class NewSetupUITests : PageTest
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Organization Name" }).ClickAsync();
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Organization Name" }).FillAsync("Aquiis");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Organization Name" }).PressAsync("Tab");
+        await Page.Locator("select[id='Input.State']").SelectOptionAsync(new[] { "TX" });
+        await Page.Locator("select[id='Input.State']").PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).FillAsync("owner1@aquiis.com");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).PressAsync("Tab");
+        await Page.GetByRole(AriaRole.Textbox, new() { Name = "First Name" }).FillAsync("Solid");
+        await Page.GetByRole(AriaRole.Textbox, new() { Name = "First Name" }).PressAsync("Tab");
+        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Last Name" }).FillAsync("One");
+        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Last Name" }).PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Password", Exact = true }).FillAsync("Today123");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Password", Exact = true }).PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "Confirm Password" }).FillAsync("Today123");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Register" }).ClickAsync();
 
-        await Page.WaitForSelectorAsync("h1:has-text('Register confirmation')");
+        // await Page.WaitForSelectorAsync("h1:has-text('Register confirmation')");
 
-        // await Page.GetByRole(AriaRole.Heading, new() { Name = "Register confirmation" }).ClickAsync();
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Click here to confirm your account" }).ClickAsync();
+        // // await Page.GetByRole(AriaRole.Heading, new() { Name = "Register confirmation" }).ClickAsync();
+        // await Page.GetByRole(AriaRole.Link, new() { Name = "Click here to confirm your account" }).ClickAsync();
 
-        await Page.WaitForSelectorAsync("h1:has-text('Confirm email')");
+        // await Page.WaitForSelectorAsync("h1:has-text('Confirm email')");
 
-        // await Page.GetByText("Thank you for confirming your").ClickAsync();
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Home" }).ClickAsync();
-        await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
+        // // await Page.GetByText("Thank you for confirming your").ClickAsync();
+        // await Page.GetByRole(AriaRole.Link, new() { Name = "Home" }).ClickAsync();
+        // await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
 
-        await Page.WaitForSelectorAsync("h1:has-text('Log in')");
+        // await Page.WaitForSelectorAsync("h1:has-text('Log in')");
 
-        // await Page.GetByRole(AriaRole.Heading, new() { Name = "Log in", Exact = true }).ClickAsync();
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).ClickAsync();
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).FillAsync("owner1@aquiis.com");
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).PressAsync("Tab");
-        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync("Today123");
-        await Page.GetByRole(AriaRole.Button, new() { Name = "Log in" }).ClickAsync();
+        // // await Page.GetByRole(AriaRole.Heading, new() { Name = "Log in", Exact = true }).ClickAsync();
+        // await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).ClickAsync();
+        // await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).FillAsync("owner1@aquiis.com");
+        // await Page.GetByRole(AriaRole.Textbox, new() { Name = "Email" }).PressAsync("Tab");
+        // await Page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync("Today123");
+        // await Page.GetByRole(AriaRole.Button, new() { Name = "Log in" }).ClickAsync();
 
         await Page.WaitForSelectorAsync("text=Dashboard");
 
@@ -88,19 +94,19 @@ public class NewSetupUITests : PageTest
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "e.g., Apt 2B, Unit" }).PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "City" }).FillAsync("New Orleans");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "City" }).PressAsync("Tab");
-        await Page.Locator("select[name=\"propertyModel.State\"]").SelectOptionAsync(new[] { "LA" });
-        await Page.Locator("select[name=\"propertyModel.State\"]").PressAsync("Tab");
+        await Page.Locator("select[name=\"Model.State\"]").SelectOptionAsync(new[] { "LA" });
+        await Page.Locator("select[name=\"Model.State\"]").PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "#####-####" }).FillAsync("70119");
-        await Page.Locator("select[name=\"propertyModel.PropertyType\"]").SelectOptionAsync(new[] { "House" });
+        await Page.Locator("select[name=\"Model.PropertyType\"]").SelectOptionAsync(new[] { "House" });
         await Page.GetByPlaceholder("0.00").ClickAsync();
         await Page.GetByPlaceholder("0.00").FillAsync("1800");
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").ClickAsync();
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").FillAsync("4");
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").PressAsync("Tab");
-        await Page.Locator("input[name=\"propertyModel.Bathrooms\"]").FillAsync("4.5");
-        await Page.Locator("input[name=\"propertyModel.Bathrooms\"]").PressAsync("Tab");
-        await Page.Locator("input[name=\"propertyModel.SquareFeet\"]").FillAsync("2500");
-        await Page.Locator("input[name=\"propertyModel.SquareFeet\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").ClickAsync();
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").FillAsync("4");
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.Bathrooms\"]").FillAsync("4.5");
+        await Page.Locator("input[name=\"Model.Bathrooms\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.SquareFeet\"]").FillAsync("2500");
+        await Page.Locator("input[name=\"Model.SquareFeet\"]").PressAsync("Tab");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Create Property" }).ClickAsync();
         
         // Verify property was created successfully
@@ -114,19 +120,19 @@ public class NewSetupUITests : PageTest
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "e.g., Apt 2B, Unit" }).PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "City" }).FillAsync("Los Angeles");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "City" }).PressAsync("Tab");
-        await Page.Locator("select[name=\"propertyModel.State\"]").SelectOptionAsync(new[] { "CA" });
-        await Page.Locator("select[name=\"propertyModel.State\"]").PressAsync("Tab");
+        await Page.Locator("select[name=\"Model.State\"]").SelectOptionAsync(new[] { "CA" });
+        await Page.Locator("select[name=\"Model.State\"]").PressAsync("Tab");
         await Page.GetByRole(AriaRole.Textbox, new() { Name = "#####-####" }).FillAsync("90210");
-        await Page.Locator("select[name=\"propertyModel.PropertyType\"]").SelectOptionAsync(new[] { "House" });
+        await Page.Locator("select[name=\"Model.PropertyType\"]").SelectOptionAsync(new[] { "House" });
         await Page.GetByPlaceholder("0.00").ClickAsync();
         await Page.GetByPlaceholder("0.00").FillAsync("4900");
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").ClickAsync();
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").FillAsync("4");
-        await Page.Locator("input[name=\"propertyModel.Bedrooms\"]").PressAsync("Tab");
-        await Page.Locator("input[name=\"propertyModel.Bathrooms\"]").FillAsync("4.5");
-        await Page.Locator("input[name=\"propertyModel.Bathrooms\"]").PressAsync("Tab");
-        await Page.Locator("input[name=\"propertyModel.SquareFeet\"]").FillAsync("3200");
-        await Page.Locator("input[name=\"propertyModel.SquareFeet\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").ClickAsync();
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").FillAsync("4");
+        await Page.Locator("input[name=\"Model.Bedrooms\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.Bathrooms\"]").FillAsync("4.5");
+        await Page.Locator("input[name=\"Model.Bathrooms\"]").PressAsync("Tab");
+        await Page.Locator("input[name=\"Model.SquareFeet\"]").FillAsync("3200");
+        await Page.Locator("input[name=\"Model.SquareFeet\"]").PressAsync("Tab");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Create Property" }).ClickAsync();
 
         // Verify property was created successfully

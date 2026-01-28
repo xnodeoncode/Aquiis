@@ -113,7 +113,7 @@
                                         </td>
                                         <td>
                                             <i class="bi @evt.Icon" style="color: @evt.Color;"></i>
-                                            <span class="badge bg-secondary ms-1">@CalendarEventTypes.GetDisplayName(evt.EventType)</span>
+                                            <span class="badge ms-1" style="background-color: @CalendarEventTypes.GetColor(evt.EventType); color: white;">@CalendarEventTypes.GetDisplayName(evt.EventType)</span>
                                         </td>
                                         <td>@evt.Title</td>
                                         <td>

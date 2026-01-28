@@ -15,7 +15,7 @@ namespace Aquiis.Infrastructure.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("Aquiis.Core.Entities.ApplicationScreening", b =>
                 {
@@ -2355,6 +2355,66 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.ToTable("OrganizationSettings");
                 });
 
+            modelBuilder.Entity("Aquiis.Core.Entities.OrganizationUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GrantedBy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("GrantedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RevokedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("Role");
+
+                    b.HasIndex("UserId", "OrganizationId")
+                        .IsUnique();
+
+                    b.ToTable("OrganizationUsers");
+                });
+
             modelBuilder.Entity("Aquiis.Core.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2401,6 +2461,11 @@ namespace Aquiis.Infrastructure.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentNumber")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
@@ -2772,6 +2837,115 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("RentalApplications");
+                });
+
+            modelBuilder.Entity("Aquiis.Core.Entities.Repair", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContactPerson")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ContractorId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContractorName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContractorPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Cost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("MaintenanceRequestId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PartsReplaced")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RepairType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("WarrantyApplies")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("WarrantyExpiresOn")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedOn");
+
+                    b.HasIndex("LeaseId");
+
+                    b.HasIndex("MaintenanceRequestId");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("RepairType");
+
+                    b.ToTable("Repairs");
                 });
 
             modelBuilder.Entity("Aquiis.Core.Entities.SchemaVersion", b =>
@@ -3260,46 +3434,48 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.ToTable("Tours");
                 });
 
-            modelBuilder.Entity("Aquiis.Core.Entities.UserOrganization", b =>
+            modelBuilder.Entity("Aquiis.Core.Entities.UserProfile", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ActiveOrganizationId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("GrantedBy")
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("GrantedOn")
+                    b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("RevokedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Role")
+                    b.Property<string>("LastName")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserId")
@@ -3308,16 +3484,18 @@ namespace Aquiis.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IsActive");
+                    b.HasIndex("ActiveOrganizationId");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("OrganizationId");
 
-                    b.HasIndex("Role");
-
-                    b.HasIndex("UserId", "OrganizationId")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserOrganizations");
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("Aquiis.Core.Entities.WorkflowAuditLog", b =>
@@ -3741,7 +3919,7 @@ namespace Aquiis.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Aquiis.Core.Entities.Property", "Property")
-                        .WithMany()
+                        .WithMany("MaintenanceRequests")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -3777,6 +3955,17 @@ namespace Aquiis.Infrastructure.Data.Migrations
                 {
                     b.HasOne("Aquiis.Core.Entities.Organization", "Organization")
                         .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Aquiis.Core.Entities.OrganizationUser", b =>
+                {
+                    b.HasOne("Aquiis.Core.Entities.Organization", "Organization")
+                        .WithMany("OrganizationUsers")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3844,6 +4033,31 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("ProspectiveTenant");
+                });
+
+            modelBuilder.Entity("Aquiis.Core.Entities.Repair", b =>
+                {
+                    b.HasOne("Aquiis.Core.Entities.Lease", "Lease")
+                        .WithMany()
+                        .HasForeignKey("LeaseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Aquiis.Core.Entities.MaintenanceRequest", "MaintenanceRequest")
+                        .WithMany("Repairs")
+                        .HasForeignKey("MaintenanceRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Aquiis.Core.Entities.Property", "Property")
+                        .WithMany("Repairs")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lease");
+
+                    b.Navigation("MaintenanceRequest");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("Aquiis.Core.Entities.SecurityDeposit", b =>
@@ -3934,17 +4148,6 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.Navigation("ProspectiveTenant");
                 });
 
-            modelBuilder.Entity("Aquiis.Core.Entities.UserOrganization", b =>
-                {
-                    b.HasOne("Aquiis.Core.Entities.Organization", "Organization")
-                        .WithMany("UserOrganizations")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-                });
-
             modelBuilder.Entity("Notification", b =>
                 {
                     b.HasOne("Aquiis.Core.Entities.Organization", "Organization")
@@ -3980,15 +4183,20 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.Navigation("Invoices");
                 });
 
+            modelBuilder.Entity("Aquiis.Core.Entities.MaintenanceRequest", b =>
+                {
+                    b.Navigation("Repairs");
+                });
+
             modelBuilder.Entity("Aquiis.Core.Entities.Organization", b =>
                 {
                     b.Navigation("Leases");
 
+                    b.Navigation("OrganizationUsers");
+
                     b.Navigation("Properties");
 
                     b.Navigation("Tenants");
-
-                    b.Navigation("UserOrganizations");
                 });
 
             modelBuilder.Entity("Aquiis.Core.Entities.Property", b =>
@@ -3996,6 +4204,10 @@ namespace Aquiis.Infrastructure.Data.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("Leases");
+
+                    b.Navigation("MaintenanceRequests");
+
+                    b.Navigation("Repairs");
                 });
 
             modelBuilder.Entity("Aquiis.Core.Entities.ProspectiveTenant", b =>

@@ -1,0 +1,167 @@
+
+@namespace Aquiis.UI.Shared.Components.Entities.Properties
+
+ <EditForm Model="Model" OnValidSubmit="() => OnValidSubmit.InvokeAsync(Model)" FormName="@FormName">
+    <DataAnnotationsValidator />
+    
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Address *</label>
+            <InputText @bind-Value="Model.Address" class="form-control" placeholder="Enter property address" />
+            <ValidationMessage For="() => Model.Address" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Unit Number</label>
+            <InputText @bind-Value="Model.UnitNumber" class="form-control" placeholder="e.g., Apt 2B, Unit 101" />
+            <ValidationMessage For="() => Model.UnitNumber" class="text-danger" />
+        </div>
+        @* <div class="col-md-4 mb-3">
+            <label class="form-label" for="@Model.ZipCode">Postal Code</label>
+            <InputText @bind-Value="Model.ZipCode" class="form-control" placeholder="#####-####" />
+            <ValidationMessage For="() => Model.ZipCode" class="text-danger" />
+        </div> *@
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">City</label>
+            <InputText @bind-Value="Model.City" class="form-control" placeholder="City" />
+            <ValidationMessage For="() => Model.City" class="text-danger" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">State</label>
+            <InputSelect @bind-Value="Model.State" class="form-select">
+                <option value="">Select State</option>
+                @foreach (var state in States.StatesArray())
+                {
+                    <option value="@state.Abbreviation">@state.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Model.State" class="text-danger" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label" for="@Model.ZipCode">Postal Code</label>
+            <InputText @bind-Value="Model.ZipCode" class="form-control" placeholder="#####-####" />
+            <ValidationMessage For="() => Model.ZipCode" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Property Type *</label>
+            <InputSelect @bind-Value="Model.PropertyType" class="form-select">
+                <option value="">Select property type</option>
+                <option value="House">House</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Condo">Condo</option>
+                <option value="Townhouse">Townhouse</option>
+                <option value="Duplex">Duplex</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Other">Other</option>
+            </InputSelect>
+            <ValidationMessage For="() => Model.PropertyType" class="text-danger" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Monthly Rent *</label>
+            <InputNumber @bind-Value="Model.MonthlyRent" class="form-control" placeholder="0.00" />
+            <ValidationMessage For="() => Model.MonthlyRent" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Status *</label>
+            <InputSelect @bind-Value="Model.Status" class="form-select">
+                <option value="@ApplicationConstants.PropertyStatuses.Available">Available</option>
+                <option value="@ApplicationConstants.PropertyStatuses.ApplicationPending">Application Pending</option>
+                <option value="@ApplicationConstants.PropertyStatuses.LeasePending">Lease Pending</option>
+                <option value="@ApplicationConstants.PropertyStatuses.Occupied">Occupied</option>
+                <option value="@ApplicationConstants.PropertyStatuses.UnderRenovation">Under Renovation</option>
+                <option value="@ApplicationConstants.PropertyStatuses.OffMarket">Off Market</option>
+            </InputSelect>
+            <ValidationMessage For="() => Model.Status" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Bedrooms</label>
+            <InputNumber @bind-Value="Model.Bedrooms" class="form-control" />
+            <ValidationMessage For="() => Model.Bedrooms" class="text-danger" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Bathrooms</label>
+            <InputNumber @bind-Value="Model.Bathrooms" class="form-control" />
+            <ValidationMessage For="() => Model.Bathrooms" class="text-danger" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Square Feet</label>
+            <InputNumber @bind-Value="Model.SquareFeet" class="form-control" />
+            <ValidationMessage For="() => Model.SquareFeet" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Description</label>
+            <InputTextArea @bind-Value="Model.Description" class="form-control" rows="4" placeholder="Property description and features" />
+            <ValidationMessage For="() => Model.Description" class="text-danger" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <div class="form-check">
+                <InputCheckbox @bind-Value="Model.IsAvailable" class="form-check-input" />
+                <label class="form-check-label">
+                    Property is available for rent
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+            @if (IsSubmitting)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            @SubmitButtonText
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="() => OnCancel.InvokeAsync()">Cancel</button>
+    </div>
+</EditForm>
+@code {
+
+    [Parameter, EditorRequired]
+    public PropertyFormModel Model {get; set;} = new PropertyFormModel(); 
+                        
+    [Parameter]
+    public string FormName { get; set; } = "create-property";
+
+    [Parameter]
+    public string SubmitButtonText { get; set; } = "Submit";
+
+    [Parameter]
+    public bool IsSubmitting { get; set; } = false;
+
+    [Parameter]
+    public string ErrorMessage { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<PropertyFormModel> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+}

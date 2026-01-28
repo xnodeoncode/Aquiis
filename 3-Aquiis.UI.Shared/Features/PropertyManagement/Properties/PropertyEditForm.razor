@@ -1,0 +1,183 @@
+@using Aquiis.Core.Entities
+@using Aquiis.Core.Constants
+@using Aquiis.UI.Shared.Components.Entities.Properties
+@using Microsoft.AspNetCore.Components.Authorization
+@inject PropertyService PropertyService
+@inject NavigationManager NavigationManager
+@namespace Aquiis.UI.Shared.Features.PropertyManagement.Properties
+
+@if (property == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="alert alert-danger">
+        <h4>Access Denied</h4>
+        <p>You don't have permission to edit this property.</p>
+        <a href="/propertymanagement/properties" class="btn btn-primary">Back to Properties</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Edit Property</h3>
+                </div>
+                <div class="card-body">
+                    <PropertyForm 
+                        Model="@propertyModel" 
+                        FormName="edit-property"
+                        SubmitButtonText="Update Property"
+                        IsSubmitting="@isSubmitting"
+                        ErrorMessage="@errorMessage"
+                        OnValidSubmit="UpdatePropertyAsync"
+                        OnCancel="Cancel" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Property Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" @onclick="ViewProperty">
+                            <i class="bi bi-eye"></i> View Property
+                        </button>
+                        <button class="btn btn-outline-danger" @onclick="DeleteProperty">
+                            <i class="bi bi-trash"></i> Delete Property
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <PropertyDetails Property="@property" ShowDates="true" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid PropertyId { get; set; }
+
+    private string errorMessage = string.Empty;
+    private Property? property;
+    private PropertyFormModel propertyModel = new();
+    private bool isSubmitting = false;
+    private bool isAuthorized = true;
+    private string successMessage = string.Empty;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPropertyAsync();
+    }
+
+    private async Task LoadPropertyAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            isAuthorized = false;
+            return;
+        }
+
+        property = await PropertyService.GetByIdAsync(PropertyId);
+
+        if (property == null)
+        {
+            isAuthorized = false;
+            return;
+        }
+
+        propertyModel = new PropertyFormModel
+        {
+            Address = property.Address,
+            UnitNumber = property.UnitNumber,
+            City = property.City,
+            State = property.State,
+            ZipCode = property.ZipCode,
+            PropertyType = property.PropertyType,
+            MonthlyRent = property.MonthlyRent,
+            Bedrooms = property.Bedrooms,
+            Bathrooms = property.Bathrooms,
+            SquareFeet = property.SquareFeet,
+            Description = property.Description,
+            Status = property.Status,
+            IsAvailable = property.IsAvailable
+        };
+    }
+
+    private async Task DeleteProperty()
+    {
+        if (property != null)
+        {
+            await PropertyService.DeleteAsync(property.Id);
+            NavigationManager.NavigateTo("/propertymanagement/properties");
+        }
+    }
+
+    private void ViewProperty()
+    {
+        if (property != null)
+        {
+            NavigationManager.NavigateTo($"/propertymanagement/properties/{property.Id}");
+        }
+    }
+
+    private async Task UpdatePropertyAsync(PropertyFormModel model)
+    {
+        if (property != null)
+        {
+            try
+            {
+                isSubmitting = true;
+                errorMessage = string.Empty;
+                successMessage = string.Empty;
+
+                property.Address = model.Address;
+                property.UnitNumber = model.UnitNumber;
+                property.City = model.City;
+                property.State = model.State;
+                property.ZipCode = model.ZipCode;
+                property.PropertyType = model.PropertyType;
+                property.MonthlyRent = model.MonthlyRent;
+                property.Bedrooms = model.Bedrooms;
+                property.Bathrooms = model.Bathrooms;
+                property.SquareFeet = model.SquareFeet;
+                property.Description = model.Description;
+                property.Status = model.Status;
+                property.IsAvailable = model.IsAvailable;
+
+                await PropertyService.UpdateAsync(property);
+                NavigationManager.NavigateTo("/propertymanagement/properties");
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"An error occurred while updating the property: {ex.Message}";
+            }
+            finally
+            {
+                isSubmitting = false;
+            }
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/propertymanagement/properties");
+    }
+}

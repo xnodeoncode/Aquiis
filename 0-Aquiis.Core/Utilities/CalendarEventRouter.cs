@@ -19,9 +19,9 @@ namespace Aquiis.Core.Utilities
 
             return evt.SourceEntityType switch
             {
-                nameof(Tour) => $"/PropertyManagement/Tours/Details/{evt.SourceEntityId}",
-                nameof(Inspection) => $"/PropertyManagement/Inspections/View/{evt.SourceEntityId}",
-                nameof(MaintenanceRequest) => $"/PropertyManagement/Maintenance/View/{evt.SourceEntityId}",
+                nameof(Tour) => $"/PropertyManagement/Tours/{evt.SourceEntityId}",
+                nameof(Inspection) => $"/PropertyManagement/Inspections/{evt.SourceEntityId}",
+                nameof(MaintenanceRequest) => $"/PropertyManagement/Maintenance/{evt.SourceEntityId}",
                 // Add new schedulable entity routes here as they are created
                 _ => null
             };
