@@ -77,7 +77,8 @@ namespace Aquiis.Application.Services
                         .SumAsync(p => p.Amount);
 
                     var totalWithThisPayment = existingPayments + entity.Amount;
-                    var invoiceTotal = invoice.Amount + (invoice.LateFeeAmount ?? 0);
+                    // Invoice amount already includes late fees (added by ScheduledTaskService)
+                    var invoiceTotal = invoice.Amount;
 
                     if (totalWithThisPayment > invoiceTotal)
                     {
@@ -419,7 +420,8 @@ namespace Aquiis.Application.Services
 
                     invoice.AmountPaid = totalPaid;
 
-                    var totalDue = invoice.Amount + (invoice.LateFeeAmount ?? 0);
+                    // Total due is the invoice amount (which includes late fees already added by ScheduledTaskService)
+                    var totalDue = invoice.Amount;
 
                     // Update invoice status based on payment
                     // Don't change status if invoice is Cancelled or Voided

@@ -196,7 +196,6 @@
         
         var orgId = await UserContext.GetActiveOrganizationIdAsync();
         OrganizationId = orgId?.ToString() ?? string.Empty;
-        Console.WriteLine($"NavMenu initialized. OrganizationId: {OrganizationId}");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -211,23 +210,16 @@
                 var domBrandTheme = await JSRuntime.InvokeAsync<string>("eval", 
                     "document.documentElement.getAttribute('data-brand-theme') || localStorage.getItem('brandTheme') || 'bootstrap'");
                 
-                Console.WriteLine($"NavMenu OnAfterRenderAsync - DOM theme: {domTheme}, brand: {domBrandTheme}");
-                Console.WriteLine($"NavMenu OnAfterRenderAsync - Service BEFORE sync: {ThemeService.CurrentTheme}, brand: {ThemeService.CurrentBrandTheme}");
-                
                 // Sync the service with the DOM state (which was set by theme.js)
                 if (ThemeService.CurrentTheme != domTheme)
                 {
-                    Console.WriteLine($"Syncing theme service: {ThemeService.CurrentTheme} -> {domTheme}");
                     ThemeService.SetTheme(domTheme);
                 }
                 
                 if (ThemeService.CurrentBrandTheme != domBrandTheme)
                 {
-                    Console.WriteLine($"Syncing brand theme service: {ThemeService.CurrentBrandTheme} -> {domBrandTheme}");
                     ThemeService.SetBrandTheme(domBrandTheme);
                 }
-                
-                Console.WriteLine($"NavMenu OnAfterRenderAsync - Service AFTER sync: {ThemeService.CurrentTheme}, brand: {ThemeService.CurrentBrandTheme}");
                 
                 // Force UI refresh to reflect synced theme
                 StateHasChanged();

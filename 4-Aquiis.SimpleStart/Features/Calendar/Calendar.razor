@@ -9,6 +9,7 @@
 
 
 @using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
 @attribute [OrganizationAuthorize("Owner", "Administrator", "PropertyManager")]
 @inject CalendarEventService CalendarEventService
 @inject CalendarSettingsService CalendarSettingsService
@@ -502,43 +503,43 @@
                     <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add Custom Event</h5>
                     <button type="button" class="btn-close" @onclick="CloseAddEventModal"></button>
                 </div>
-                <EditForm Model="newEvent" OnValidSubmit="SaveCustomEvent">
+                <EditForm Model="newEventViewModel" OnValidSubmit="SaveCustomEvent">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="alert alert-danger" />
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Title <span class="text-danger">*</span></label>
-                                <InputText @bind-Value="newEvent.Title" class="form-control" placeholder="Event title" />
-                                <ValidationMessage For="@(() => newEvent.Title)" />
+                                <InputText @bind-Value="newEventViewModel.Title" class="form-control" placeholder="Event title" />
+                                <ValidationMessage For="@(() => newEventViewModel.Title)" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Event Type <span class="text-danger">*</span></label>
-                                <InputSelect @bind-Value="newEvent.EventType" class="form-select">
+                                <InputSelect @bind-Value="newEventViewModel.EventType" @bind-Value:after="OnEventTypeChanged" class="form-select">
                                     <option value="">Select type...</option>
                                     @foreach (var type in CalendarEventTypes.GetAllTypes())
                                     {
                                         <option value="@type">@CalendarEventTypes.GetDisplayName(type)</option>
                                     }
                                 </InputSelect>
-                                <ValidationMessage For="@(() => newEvent.EventType)" />
+                                <ValidationMessage For="@(() => newEventViewModel.EventType)" />
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Start Date & Time <span class="text-danger">*</span></label>
-                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="newEvent.StartOn" class="form-control" />
-                                <ValidationMessage For="@(() => newEvent.StartOn)" />
+                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="newEventViewModel.StartOn" class="form-control" />
+                                <ValidationMessage For="@(() => newEventViewModel.StartOn)" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">End Date & Time</label>
-                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="newEvent.EndOn" class="form-control" />
+                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="newEventViewModel.EndOn" class="form-control" />
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status</label>
-                                <InputSelect @bind-Value="newEvent.Status" class="form-select">
+                                <InputSelect @bind-Value="newEventViewModel.Status" class="form-select">
                                     <option value="Scheduled">Scheduled</option>
                                     <option value="Confirmed">Confirmed</option>
                                     <option value="Completed">Completed</option>
@@ -548,7 +549,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Location</label>
-                                <InputText @bind-Value="newEvent.Location" class="form-control" placeholder="Event location" />
+                                <InputText @bind-Value="newEventViewModel.Location" class="form-control" placeholder="Event location" />
                             </div>
                         </div>
                         <div class="mb-3">
@@ -560,14 +561,14 @@
                                        @oninput="OnPropertySearchInput"
                                        placeholder="Search by address..."
                                        autocomplete="off" />
-                                @if (newEvent.PropertyId.HasValue && selectedPropertyForEvent != null)
+                                @if (newEventViewModel.PropertyId.HasValue && selectedPropertyForEvent != null)
                                 {
                                     <button type="button" class="btn btn-outline-secondary" @onclick="ClearPropertySelection">
                                         <i class="bi bi-x"></i>
                                     </button>
                                 }
                             </div>
-                            @if (newEvent.PropertyId.HasValue && selectedPropertyForEvent != null)
+                            @if (newEventViewModel.PropertyId.HasValue && selectedPropertyForEvent != null)
                             {
                                 <div class="alert alert-info mt-2 mb-0">
                                     <i class="bi bi-house"></i> <strong>@selectedPropertyForEvent.Address</strong>, @selectedPropertyForEvent.City, @selectedPropertyForEvent.State @selectedPropertyForEvent.ZipCode
@@ -589,17 +590,22 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Description</label>
-                            <InputTextArea @bind-Value="newEvent.Description" class="form-control" rows="3" placeholder="Event description" />
+                            <InputTextArea @bind-Value="newEventViewModel.Description" class="form-control" rows="3" placeholder="Event description" />
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Color</label>
-                                <InputText type="color" @bind-Value="newEvent.Color" class="form-control form-control-color" />
+                                <InputText type="color" @bind-Value="newEventViewModel.Color" class="form-control form-control-color" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Icon</label>
-                                <InputSelect @bind-Value="newEvent.Icon" class="form-select">
-                                    <option value="bi-calendar-event">📅 Calendar Event</option>
+                                <InputSelect @bind-Value="newEventViewModel.Icon" class="form-select">
+                                    <option value="bi-calendar-event">📅 Calendar Event (Custom)</option>
+                                    <option value="bi-calendar-check">✅ Tour</option>
+                                    <option value="bi-clipboard-check">📋 Inspection</option>
+                                    <option value="bi-tools">🔧 Maintenance</option>
+                                    <option value="bi-calendar-x">❌ Lease Expiry</option>
+                                    <option value="bi-cash-coin">💰 Rent Due</option>
                                     <option value="bi-bell">🔔 Bell</option>
                                     <option value="bi-clock">🕐 Clock</option>
                                     <option value="bi-flag">🚩 Flag</option>
@@ -607,7 +613,6 @@
                                     <option value="bi-geo-alt">📍 Location Pin</option>
                                     <option value="bi-people">👥 People</option>
                                     <option value="bi-briefcase">💼 Briefcase</option>
-                                    <option value="bi-calendar-check">✅ Calendar Check</option>
                                 </InputSelect>
                                 <small class="text-muted">Choose an icon for this event</small>
                             </div>
@@ -632,12 +637,12 @@
     private Inspection? selectedInspection;
     private MaintenanceRequest? selectedMaintenanceRequest;
     private bool loading = true;
-    private string viewMode = "week"; // day, week, month
+    private string viewMode = "month"; // day, week, month
     private DateTime currentDate = DateTime.Today;
     private List<string> selectedEventTypes = new();
     private bool showFilters = false;
     private bool showAddEventModal = false;
-    private CalendarEvent newEvent = new();
+    private CalendarEventViewModel newEventViewModel = new();
     private string propertySearchTerm = string.Empty;
     private List<Property> propertySearchResults = new();
     private bool showPropertySearchResults = false;
@@ -735,19 +740,12 @@
 
     private async Task ShowAddEventModal()
     {
-        var organizationId = await UserContext.GetActiveOrganizationIdAsync();
-        var userId = await UserContext.GetUserIdAsync();
-        
-        newEvent = new CalendarEvent
+        // Create fresh ViewModel instance - service will set tracking fields
+        newEventViewModel = new CalendarEventViewModel
         {
             StartOn = currentDate.Date.AddHours(9), // Default to 9 AM on current date
-            Color = "#6c757d",
-            Icon = "bi-calendar-event",
-            EventType = CalendarEventTypes.Custom,
             Status = "Scheduled",
-            OrganizationId = organizationId.HasValue ? organizationId.Value : Guid.Empty,
-            CreatedBy = !string.IsNullOrEmpty(userId) ? userId : string.Empty,
-            CreatedOn = DateTime.UtcNow
+            EventType = string.Empty
         };
         showAddEventModal = true;
     }
@@ -755,7 +753,7 @@
     private void CloseAddEventModal()
     {
         showAddEventModal = false;
-        newEvent = new();
+        newEventViewModel = new();
         propertySearchTerm = string.Empty;
         propertySearchResults.Clear();
         showPropertySearchResults = false;
@@ -787,7 +785,7 @@
     private void SelectProperty(Property property)
     {
         selectedPropertyForEvent = property;
-        newEvent.PropertyId = property.Id;
+        newEventViewModel.PropertyId = property.Id;
         propertySearchTerm = $"{property.Address}, {property.City}, {property.State} {property.ZipCode}";
         showPropertySearchResults = false;
         propertySearchResults.Clear();
@@ -796,10 +794,20 @@
     private void ClearPropertySelection()
     {
         selectedPropertyForEvent = null;
-        newEvent.PropertyId = null;
+        newEventViewModel.PropertyId = null;
         propertySearchTerm = string.Empty;
         propertySearchResults.Clear();
         showPropertySearchResults = false;
+    }
+
+    private void OnEventTypeChanged()
+    {
+        if (!string.IsNullOrEmpty(newEventViewModel.EventType))
+        {
+            // Auto-update color and icon based on event type
+            newEventViewModel.Color = CalendarEventTypes.GetColor(newEventViewModel.EventType);
+            newEventViewModel.Icon = CalendarEventTypes.GetIcon(newEventViewModel.EventType);
+        }
     }
 
     private async Task SaveCustomEvent()
@@ -807,12 +815,28 @@
         try
         {
             // Calculate duration if end time is set
-            if (newEvent.EndOn.HasValue)
+            if (newEventViewModel.EndOn.HasValue)
             {
-                newEvent.DurationMinutes = (int)(newEvent.EndOn.Value - newEvent.StartOn).TotalMinutes;
+                newEventViewModel.DurationMinutes = (int)(newEventViewModel.EndOn.Value - newEventViewModel.StartOn).TotalMinutes;
             }
 
-            await CalendarEventService.CreateCustomEventAsync(newEvent);
+            // Convert ViewModel to Entity for service
+            var calendarEvent = new CalendarEvent
+            {
+                Title = newEventViewModel.Title,
+                StartOn = newEventViewModel.StartOn,
+                EndOn = newEventViewModel.EndOn,
+                DurationMinutes = newEventViewModel.DurationMinutes,
+                EventType = newEventViewModel.EventType,
+                Status = newEventViewModel.Status,
+                Description = newEventViewModel.Description,
+                PropertyId = newEventViewModel.PropertyId,
+                Location = newEventViewModel.Location,
+                Color = newEventViewModel.Color,
+                Icon = newEventViewModel.Icon
+            };
+
+            await CalendarEventService.CreateCustomEventAsync(calendarEvent);
             
             ToastService.ShowSuccess("Event created successfully");
             CloseAddEventModal();
@@ -951,8 +975,9 @@
                 
                 builder.OpenElement(70, "div");
                 builder.OpenElement(71, "span");
-                builder.AddAttribute(72, "class", $"badge bg-secondary");
-                builder.AddContent(73, CalendarEventTypes.GetDisplayName(evt.EventType));
+                builder.AddAttribute(72, "class", "badge");
+                builder.AddAttribute(73, "style", $"background-color: {CalendarEventTypes.GetColor(evt.EventType)}; color: white;");
+                builder.AddContent(74, CalendarEventTypes.GetDisplayName(evt.EventType));
                 builder.CloseElement();
                 if (!string.IsNullOrEmpty(evt.Status))
                 {
@@ -1059,8 +1084,8 @@
                     builder.OpenElement(index + 40, "small");
                     builder.AddAttribute(index + 41, "class", "d-block text-truncate text-muted");
                     builder.OpenElement(index + 42, "span");
-                    builder.AddAttribute(index + 43, "class", "badge bg-secondary" );
-                    builder.AddAttribute(index + 44, "style", "font-size: 0.65rem;");
+                    builder.AddAttribute(index + 43, "class", "badge");
+                    builder.AddAttribute(index + 44, "style", $"font-size: 0.65rem; background-color: {CalendarEventTypes.GetColor(evt.EventType)}; color: white;");
                     builder.AddContent(index + 45, CalendarEventTypes.GetDisplayName(evt.EventType));
                     builder.CloseElement();
                     if (!string.IsNullOrEmpty(evt.Status))
@@ -1308,7 +1333,7 @@
         {
             if (selectedTour.ChecklistId.HasValue)
             {
-                Navigation.NavigateTo($"/PropertyManagement/Checklists/View/{selectedTour.ChecklistId.Value}");
+                Navigation.NavigateTo($"/PropertyManagement/Checklists/{selectedTour.ChecklistId.Value}");
             }
             else
             {
@@ -1353,7 +1378,7 @@
                     CloseModal();
                     if (tour.ChecklistId.HasValue)
                     {
-                        Navigation.NavigateTo($"/PropertyManagement/Checklists/View/{tour.ChecklistId.Value}");
+                        Navigation.NavigateTo($"/PropertyManagement/Checklists/{tour.ChecklistId.Value}");
                     }
                     else
                     {
@@ -1666,5 +1691,55 @@
         }
         
         return "bg-secondary";
+    }
+
+    /// <summary>
+    /// View model for creating/editing calendar events from the UI.
+    /// Excludes tracking fields (OrganizationId, CreatedBy, etc.) which are set by the service.
+    /// </summary>
+    public class CalendarEventViewModel
+    {
+        [Required]
+        [StringLength(200)]
+        [Display(Name = "Title")]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        [Display(Name = "Start Date & Time")]
+        public DateTime StartOn { get; set; } = DateTime.Now;
+
+        [Display(Name = "End Date & Time")]
+        public DateTime? EndOn { get; set; }
+
+        [Display(Name = "Duration (Minutes)")]
+        public int DurationMinutes { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        [Display(Name = "Event Type")]
+        public string EventType { get; set; } = string.Empty;
+
+        [StringLength(50)]
+        [Display(Name = "Status")]
+        public string Status { get; set; } = "Scheduled";
+
+        [StringLength(2000)]
+        [Display(Name = "Description")]
+        public string? Description { get; set; }
+
+        [Display(Name = "Property")]
+        public Guid? PropertyId { get; set; }
+
+        [StringLength(500)]
+        [Display(Name = "Location")]
+        public string? Location { get; set; }
+
+        [StringLength(20)]
+        [Display(Name = "Color")]
+        public string Color { get; set; } = "#6c757d";
+
+        [StringLength(50)]
+        [Display(Name = "Icon")]
+        public string Icon { get; set; } = "bi-calendar-event";
     }
 }

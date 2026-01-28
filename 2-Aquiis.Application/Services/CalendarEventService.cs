@@ -142,12 +142,28 @@ namespace Aquiis.Application.Services
         /// </summary>
         public async Task<CalendarEvent> CreateCustomEventAsync(CalendarEvent calendarEvent)
         {
-            calendarEvent.EventType = CalendarEventTypes.Custom;
+            // Service sets tracking fields - UI should not set these
+            var organizationId = await _userContextService.GetActiveOrganizationIdAsync();
+            var userId = await _userContextService.GetUserIdAsync();
+            
+            calendarEvent.Id = Guid.NewGuid();
+            calendarEvent.OrganizationId = organizationId ?? Guid.Empty;
+            calendarEvent.CreatedBy = userId ?? string.Empty;
+            calendarEvent.CreatedOn = DateTime.UtcNow;
+            
+            // Not linked to a source entity (user-created from calendar UI)
             calendarEvent.SourceEntityId = null;
             calendarEvent.SourceEntityType = null;
-            calendarEvent.Color = CalendarEventTypes.GetColor(CalendarEventTypes.Custom);
-            calendarEvent.Icon = CalendarEventTypes.GetIcon(CalendarEventTypes.Custom);
-            calendarEvent.CreatedOn = DateTime.UtcNow;
+            
+            // Set color and icon from event type if not already set
+            if (string.IsNullOrEmpty(calendarEvent.Color))
+            {
+                calendarEvent.Color = CalendarEventTypes.GetColor(calendarEvent.EventType ?? CalendarEventTypes.Custom);
+            }
+            if (string.IsNullOrEmpty(calendarEvent.Icon))
+            {
+                calendarEvent.Icon = CalendarEventTypes.GetIcon(calendarEvent.EventType ?? CalendarEventTypes.Custom);
+            }
 
             _context.CalendarEvents.Add(calendarEvent);
             await _context.SaveChangesAsync();
@@ -160,9 +176,12 @@ namespace Aquiis.Application.Services
         /// </summary>
         public async Task<CalendarEvent?> UpdateCustomEventAsync(CalendarEvent calendarEvent)
         {
+            var organizationId = await _userContextService.GetActiveOrganizationIdAsync();
+            var userId = await _userContextService.GetUserIdAsync();
+            
             var existing = await _context.CalendarEvents
                 .FirstOrDefaultAsync(e => e.Id == calendarEvent.Id 
-                    && e.OrganizationId == calendarEvent.OrganizationId 
+                    && e.OrganizationId == organizationId
                     && e.SourceEntityType == null
                     && !e.IsDeleted);
 
@@ -176,8 +195,10 @@ namespace Aquiis.Application.Services
             existing.PropertyId = calendarEvent.PropertyId;
             existing.Location = calendarEvent.Location;
             existing.Status = calendarEvent.Status;
-            existing.LastModifiedBy = calendarEvent.LastModifiedBy;
-            existing.LastModifiedOn = calendarEvent.LastModifiedOn;
+            
+            // Service sets tracking fields
+            existing.LastModifiedBy = userId ?? string.Empty;
+            existing.LastModifiedOn = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 

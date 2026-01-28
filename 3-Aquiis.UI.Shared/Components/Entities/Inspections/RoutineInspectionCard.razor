@@ -8,13 +8,13 @@
         @if (ShowScheduleButton && OnCompleteInspection.HasDelegate)
         {
             <button class="btn btn-sm btn-primary" @onclick="OnCompleteInspection">
-                <i class="bi bi-calendar-plus"></i> Schedule Inspection
+                <i class="bi bi-clipboard-check"></i> Complete Inspection
             </button>
         }
     </div>
     <div class="card-body">
         <div class="row">
-            @if (LastInspection != null)
+            @if (LastInspection != null && LastInspection.Id != Guid.Empty)
             {
                 <div class="col-md-6">
                     <div class="border-end pe-3">
@@ -50,12 +50,12 @@
                 <div class="col-md-6">
                     <div class="border-end pe-3">
                         <h6 class="text-muted mb-2">Last Inspection</h6>
-                        <p class="text-muted">No inspections recorded</p>
+                        <p class="text-muted"><small>No inspections recorded.</small></p>
                     </div>
                 </div>
             }
 
-            <div class="col-md-6 @(LastInspection != null ? "ps-3" : "")">
+            <div class="col-md-6 @(LastInspection != null && LastInspection.Id != Guid.Empty ? "ps-3" : "")">
                 <h6 class="text-muted mb-2">Next Inspection</h6>
                 @if (NextInspectionDate.HasValue)
                 {
@@ -92,7 +92,7 @@
                     @if (ShowScheduleButton && OnCompleteInspection.HasDelegate)
                     {
                         <button class="btn btn-sm btn-warning" @onclick="OnCompleteInspection">
-                            <i class="bi bi-calendar-plus"></i> Schedule Now
+                            <i class="bi bi-clipboard-check"></i> Complete Inspection
                         </button>
                     }
                 }

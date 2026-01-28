@@ -187,10 +187,32 @@
 </div>
 
 @code {
-    private DateTime startDate = new DateTime(DateTime.Now.Year, 1, 1);
-    private DateTime endDate = DateTime.Now;
+    private DateTime startDate = GetFiscalYearStart();
+    private DateTime endDate = GetFiscalYearEnd();
     private List<PropertyPerformance> performanceItems = new();
     private bool isLoading = false;
+    
+    private static DateTime GetFiscalYearStart()
+    {
+        var today = DateTime.Now;
+        // Fiscal year runs April 1 - March 31
+        // If current month is April or later, fiscal year started April 1 of current year
+        // If current month is before April, fiscal year started April 1 of previous year
+        return today.Month >= 4 
+            ? new DateTime(today.Year, 4, 1) 
+            : new DateTime(today.Year - 1, 4, 1);
+    }
+    
+    private static DateTime GetFiscalYearEnd()
+    {
+        var today = DateTime.Now;
+        // Fiscal year ends March 31
+        // If current month is April or later, fiscal year ends March 31 of next year
+        // If current month is before April, fiscal year ends March 31 of current year
+        return today.Month >= 4 
+            ? new DateTime(today.Year + 1, 3, 31) 
+            : new DateTime(today.Year, 3, 31);
+    }
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }

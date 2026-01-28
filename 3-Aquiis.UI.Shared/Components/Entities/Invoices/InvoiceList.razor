@@ -7,7 +7,7 @@
         @if (Invoices.Any())
         {
             <div class="list-group list-group-flush">
-                @foreach (var invoice in Invoices)
+                @foreach (var invoice in Invoices.OrderByDescending(i => i.InvoiceNumber))
                 {
                     <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">

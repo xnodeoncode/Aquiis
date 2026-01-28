@@ -51,9 +51,9 @@
         }
         else if (filterProperty != null)
         {
-            <button class="btn btn-outline-success" @onclick="CreateLeaseForProperty">
+            @* <button class="btn btn-outline-success" @onclick="CreateLeaseForProperty">
                 <i class="bi bi-plus-lg"></i> Add Lease for This Property
-            </button>
+            </button> *@
         }
     </div>
 </div>
@@ -86,7 +86,7 @@ else if (!leases.Any())
         else
         {
             <h4>No Leases Found</h4>
-            <p>Get started by converting a lease offer to your first lease agreement.</p>
+            <p>Get started by completing your first lease agreement.</p>
             <button class="btn btn-primary" @onclick="CreateLease">Create First Lease</button>
         }
     </div>
@@ -446,10 +446,10 @@ else
         {
             activeCount = filteredLeases.Count(l => l.Status == "Active");
             
-            // Expiring within 30 days
-            var thirtyDaysFromNow = DateTime.Now.AddDays(30);
+            // Expiring within 90 days
+            var ninetyDaysFromNow = DateTime.Now.AddDays(90);
             expiringSoonCount = filteredLeases.Count(l => 
-                l.Status == "Active" && l.EndDate <= thirtyDaysFromNow);
+                l.Status == "Active" && l.EndDate <= ninetyDaysFromNow);
             
             totalMonthlyRent = filteredLeases
                 .Where(l => l.Status == "Active")

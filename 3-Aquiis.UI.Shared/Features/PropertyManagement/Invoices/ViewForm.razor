@@ -57,7 +57,14 @@ else
                                     @if (invoice.IsOverdue)
                                     {
                                         <br />
-                                        <small>(@invoice.DaysOverdue days overdue)</small>
+                                        @if(invoice.DaysOverdue == 1)
+                                        {
+                                            <small>(1 day overdue)</small>
+                                        }
+                                        else
+                                        {
+                                            <small>(@invoice.DaysOverdue days overdue)</small>
+                                        }
                                     }
                                 </div>
                             </div>

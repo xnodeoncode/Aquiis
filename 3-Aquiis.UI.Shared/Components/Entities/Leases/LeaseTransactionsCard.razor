@@ -8,7 +8,7 @@
     </div>
     <div class="card-body">
         <div class="list-group">
-            @foreach (var invoice in LeaseInvoices.OrderByDescending(i => i.InvoicedOn))
+            @foreach (var invoice in LeaseInvoices.OrderByDescending(i => i.InvoiceNumber))
             {
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between align-items-start">

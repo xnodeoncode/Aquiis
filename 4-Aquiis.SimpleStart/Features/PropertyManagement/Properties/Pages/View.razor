@@ -82,8 +82,11 @@
                 </div>
                 <!-- #endregion Quick Actions Card-->
             <div class="mt-4">
-            <RoutineInspectionCard LastInspection="lastInspection" OnCompleteInspection="CompleteInspection"
+            <RoutineInspectionCard
+                LastInspection="lastInspection"
+                OnCompleteInspection="CompleteInspection"
                 OnViewInspection="ViewInspection"
+                ShowViewButton = "@showInspectionViewButton"
                 NextInspectionDate="@property.NextRoutineInspectionDueDate" />
             </div>
         </div>
@@ -219,6 +222,7 @@
     private bool showLeaseModal = false;
     private bool showRepairModal = false;
     private bool showInspectionModal = false;
+    private bool showInspectionViewButton => lastInspection != null && lastInspection.Id != Guid.Empty && property.LastRoutineInspectionDate.HasValue;
 
     // Selected entities for modals
     private Lease? selectedLease;

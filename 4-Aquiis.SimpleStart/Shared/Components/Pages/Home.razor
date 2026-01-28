@@ -69,7 +69,7 @@
                             OnViewRepair="ViewRepair" ShowTotalCost="true" />
                         </div>
                         <div class="col-md-6 mb-4">
-                        <LeaseRenewalList Leases="leases" Title="Pending Lease Renewals" 
+                        <LeaseRenewalList Leases="leases" Title="Upcoming Lease Renewals" 
                             OnViewAll="ViewAllLeases"
                             OnViewLease="ViewLease" />
                         <PropertyList Properties="availablePropertiesList" Title="Available Properties"
@@ -225,7 +225,6 @@
                 .ToList();
 
             occupancyRate = await PropertyService.CalculatePortfolioOccupancyRateAsync();
-            Console.WriteLine($"Calculated occupancy rate: {occupancyRate}%");
             totalMonthlyIncome = leases
                                     .Where(l => !l.IsDeleted && l.Status == ApplicationConstants.LeaseStatuses.Active)
                                     .Sum(l => l.MonthlyRent);
