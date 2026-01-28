@@ -3,6 +3,12 @@
   "splashscreen": {
     "imageFile": "wwwroot/assets/splash.png"
   },
+  "electronCLIFlags": [
+    "--no-sandbox",
+    "--disable-gpu-sandbox",
+    "--enable-features=VaapiVideoDecoder",
+    "--disable-dev-shm-usage"
+  ],
   "name": "aquiis-property-management",
   "description": "Desktop property management application for landlords managing up to 9 residential properties",
   "author": "Aquiis",
@@ -14,7 +20,7 @@
     "productName": "AquiisPropertyManagement",
     "copyright": "Copyright © 2026",
     "buildVersion": "1.0.0",
-    "compression": "maximum",
+    "compression": "normal",
     "directories": {
       "output": "../../../bin/Desktop"
     },
