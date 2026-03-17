@@ -5,7 +5,7 @@
 #
 # Usage: 
 #   First make this script executable: chmod +x install-desktop-integration.sh
-#   Then run: ./install-desktop-integration.sh /path/to/Aquiis-1.1.0-x86_64.AppImage
+#   Then run: ./install-desktop-integration.sh /path/to/Aquiis-1.1.3-x86_64.AppImage
 #
 
 set -e
@@ -35,6 +35,7 @@ fi
 APPIMAGE_PATH="$(readlink -f "$APPIMAGE_PATH")"
 APPIMAGE_DIR="$(dirname "$APPIMAGE_PATH")"
 APPIMAGE_NAME="$(basename "$APPIMAGE_PATH")"
+APPIMAGE_VERSION=$(echo "$APPIMAGE_NAME" | grep -oP '\d+\.\d+\.\d+' | head -1)
 
 echo -e "${GREEN}Aquiis Desktop Integration Installer${NC}"
 echo "========================================"
@@ -118,7 +119,7 @@ Type=Application
 Categories=Office;Finance;
 Terminal=false
 StartupWMClass=Aquiis Property Management
-X-AppImage-Version=1.1.0
+X-AppImage-Version=${APPIMAGE_VERSION}
 Keywords=property;management;landlord;rental;lease;tenant;invoice;
 EOF
 
